@@ -10,7 +10,7 @@ import './libraries/SafeMath.sol';
 import './interfaces/IERC20.sol';
 import './interfaces/IWETH.sol';
 
-contract FeSwapRouter is IFeSwapRouter {
+contract FeSwapRouter is IFeSwapRouter{
     using SafeMath for uint;
 
     address public immutable override factory;
@@ -31,7 +31,7 @@ contract FeSwapRouter is IFeSwapRouter {
     }
 
     // **** CREATE SWAP PAIR ****
-    function createFortPair(
+    function createFeswaPair(
         address tokenA,
         address tokenB,
         address payTo,     

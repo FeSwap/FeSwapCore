@@ -7,7 +7,7 @@ interface IFeSwapRouter {
     function factory() external pure returns (address);
     function WETH() external pure returns (address);
 
-    function createFortPair(
+    function createFeswaPair(
         address tokenA,
         address tokenB,
         address payTo,
