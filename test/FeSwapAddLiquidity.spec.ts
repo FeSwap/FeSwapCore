@@ -330,7 +330,7 @@ describe('FeSwapAddLiquidity', () => {
           )
 
         const receipt = await tx.wait()
-        expect(receipt.gasUsed).to.eq(233263)    // 229016, 228994  Uniswap 213957
+        expect(receipt.gasUsed).to.eq(233241)    // 229016, 228994  Uniswap 213957
       }).retries(3)
 
       it('Add Liquidity GAS usage： Double Pool ', async () => {
@@ -352,7 +352,7 @@ describe('FeSwapAddLiquidity', () => {
           )
 
         const receipt = await tx.wait()
-        expect(receipt.gasUsed).to.eq(433944)    // 425472, 425406
+        expect(receipt.gasUsed).to.eq(433922)    // 425472, 425406
       }).retries(3)
 
     })

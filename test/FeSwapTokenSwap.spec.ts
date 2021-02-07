@@ -141,7 +141,7 @@ describe('FeSwapTokenSwap', () => {
             overrides
           )
           const receipt = await tx.wait()
-          expect(receipt.gasUsed).to.eq(176003)     // 189689 192574 // 110796
+          expect(receipt.gasUsed).to.eq(175981)     // 189689 192574 // 110796
         }).retries(3)
         
       })
@@ -189,7 +189,7 @@ describe('FeSwapTokenSwap', () => {
               overrides
             )
           const receipt = await tx.wait()
-          expect(receipt.gasUsed).to.eq(133594)     // 189689 192574 // 110796
+          expect(receipt.gasUsed).to.eq(133572)     // 189689 192574 // 110796
         }).retries(3)
 
         it('amounts', async () => {
@@ -272,7 +272,7 @@ describe('FeSwapTokenSwap', () => {
             }
           )
           const receipt = await tx.wait()
-          expect(receipt.gasUsed).to.eq(213415)    // 228000,  Why increase so much 118034
+          expect(receipt.gasUsed).to.eq(171456)    // 228000,  Why increase so much 118034
         }).retries(3)
       })
 
@@ -324,7 +324,7 @@ describe('FeSwapTokenSwap', () => {
               overrides
             )
             const receipt = await tx.wait()
-            expect(receipt.gasUsed).to.eq(224878)    // 228000,  Why increase so much 118034
+            expect(receipt.gasUsed).to.eq(224922)    // 228000,  Why increase so much 118034
         }).retries(3)                      
 
         it('amounts', async () => {
@@ -392,7 +392,7 @@ describe('FeSwapTokenSwap', () => {
             overrides
           )
           const receipt = await tx.wait()
-          expect(receipt.gasUsed).to.eq(224495)    // 228000,  Why increase so much 118034
+          expect(receipt.gasUsed).to.eq(224473)    // 228000,  Why increase so much 118034
         }).retries(3)
 
         it('amounts', async () => {
