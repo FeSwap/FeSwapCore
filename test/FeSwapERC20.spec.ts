@@ -30,7 +30,7 @@ describe('FeSwapERC20', () => {
   it('name, symbol, decimals, totalSupply, balanceOf, nonces, DOMAIN_SEPARATOR, PERMIT_TYPEHASH', async () => {
     const name = await token.name()
     expect(name).to.eq('FeSwap')
-    expect(await token.symbol()).to.eq('FTS')
+    expect(await token.symbol()).to.eq('FES')
     expect(await token.decimals()).to.eq(18)
     expect(await token.totalSupply()).to.eq(TOTAL_SUPPLY)
     expect(await token.balanceOf(wallet.address)).to.eq(TOTAL_SUPPLY)
