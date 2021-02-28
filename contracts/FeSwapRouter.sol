@@ -9,11 +9,13 @@ import './libraries/FeSwapLibrary.sol';
 import './libraries/SafeMath.sol';
 import './interfaces/IERC20.sol';
 import './interfaces/IWETH.sol';
+import './interfaces/IFeswaNFT.sol';
 
 contract FeSwapRouter is IFeSwapRouter{
     using SafeMath for uint;
 
     address public immutable override factory;
+    address public immutable override feswaNFT;
     address public immutable override WETH;
 
     modifier ensure(uint deadline) {
@@ -21,8 +23,9 @@ contract FeSwapRouter is IFeSwapRouter{
         _;
     }
 
-    constructor(address _factory, address _WETH) public {
+    constructor(address _factory, address _feswaNFT, address _WETH) public {
         factory = _factory;
+        feswaNFT = _feswaNFT;
         WETH = _WETH;
     }
 
@@ -32,19 +35,17 @@ contract FeSwapRouter is IFeSwapRouter{
 
     // **** CREATE SWAP PAIR ****
     function createFeswaPair(
-        address tokenA,
-        address tokenB,
+        uint256 tokenID,
         address payTo,     
         uint deadline        
-    ) external virtual override payable ensure(deadline) returns (address pairAAB, address pairABB) {
+    ) external virtual override ensure(deadline) returns (address pairAAB, address pairABB) {
+        require(msg.sender == IFeswaNFT(feswaNFT).ownerOf(tokenID), 'FeSwap: NOT TOKEN OWNER');
+        (address tokenA, address tokenB) = IFeswaNFT(feswaNFT).getPoolTokens(tokenID);
+
         require(IFeSwapFactory(factory).getPair(tokenA, tokenB) == address(0), 'FeSwap: CREATED BEFORE'); // sufficient check
         
-        uint _feeCreatePair = IFeSwapFactory(factory).feeToCreatePair();
-        require(msg.value >= _feeCreatePair,  'FeSwap: PAY LESS');
+         (pairAAB, pairABB) = IFeSwapFactory(factory).createPair(tokenA, tokenB, payTo);  
 
-        (pairAAB, pairABB) = IFeSwapFactory(factory).createPair(tokenA, tokenB, payTo);  
-
-        if (msg.value > _feeCreatePair) TransferHelper.safeTransferETH(msg.sender, msg.value - _feeCreatePair);
     }
 
     // **** ADD LIQUIDITY ****
@@ -82,8 +83,11 @@ contract FeSwapRouter is IFeSwapRouter{
     ) external virtual override ensure(deadline) returns (uint amountA, uint amountB, uint liquidityAAB, uint liquidityABB) {
         require(ratio <= 100,  'FeSwap: RATIO EER');
         if(ratio != uint(0)) {
+            // (liquidityAAB, liquidityABB) reused to solve "Stack too deep" issue
             address pairA2B;
-            (amountA, amountB, pairA2B) = _addLiquidity(tokenA, tokenB, amountADesired*ratio/100, amountBDesired*ratio/100);
+            liquidityAAB = amountADesired.mul(ratio)/100; 
+            liquidityABB = amountBDesired.mul(ratio)/100;
+            (amountA, amountB, pairA2B) = _addLiquidity(tokenA, tokenB, liquidityAAB, liquidityABB);
             TransferHelper.safeTransferFrom(tokenA, msg.sender, pairA2B, amountA);
             TransferHelper.safeTransferFrom(tokenB, msg.sender, pairA2B, amountB);
             liquidityAAB = IFeSwapPair(pairA2B).mint(to);
@@ -99,6 +103,7 @@ contract FeSwapRouter is IFeSwapRouter{
             amountB += amountBDesired;
         }
     }
+
     function addLiquidityETH(
         address token,
         uint amountTokenDesired,
@@ -109,7 +114,7 @@ contract FeSwapRouter is IFeSwapRouter{
         require(ratio <= 100,  'FeSwap: RATIO EER');
         if(ratio != uint(0)) {        
             address pairTTE;
-            (amountToken, amountETH, pairTTE) = _addLiquidity(token, WETH, amountTokenDesired*ratio/100, msg.value*ratio/100);
+            (amountToken, amountETH, pairTTE) = _addLiquidity(token, WETH, amountTokenDesired.mul(ratio)/100, msg.value.mul(ratio)/100);
             TransferHelper.safeTransferFrom(token, msg.sender, pairTTE, amountToken);
             IWETH(WETH).deposit{value: amountETH}();
             assert(IWETH(WETH).transfer(pairTTE, amountETH));
@@ -445,46 +450,32 @@ contract FeSwapRouter is IFeSwapRouter{
     }
 
     // **** LIBRARY FUNCTIONS ****
-    function quote(uint amountA, uint reserveA, uint reserveB) public pure virtual override returns (uint amountB) {
+    function quote(uint amountA, uint reserveA, uint reserveB) 
+                public pure virtual override returns (uint amountB) 
+    {
         return FeSwapLibrary.quote(amountA, reserveA, reserveB);
     }
 
     function getAmountOut(uint amountIn, uint reserveIn, uint reserveOut)
-        public
-        view
-        virtual
-        override
-        returns (uint amountOut)
+                public view virtual override returns (uint amountOut)
     {
         return FeSwapLibrary.getAmountOut(amountIn, reserveIn, reserveOut);
     }
 
     function getAmountIn(uint amountOut, uint reserveIn, uint reserveOut)
-        public
-        view
-        virtual
-        override
-        returns (uint amountIn)
+                public view virtual override returns (uint amountIn)
     {
         return FeSwapLibrary.getAmountIn(amountOut, reserveIn, reserveOut);
     }
 
     function estimateAmountsOut(uint amountIn, address[] calldata path)
-        public
-        view
-        virtual
-        override
-        returns (uint[] memory amounts)
+                public view virtual override returns (uint[] memory amounts)
     {
         return FeSwapLibrary.estimateAmountsOut(factory, amountIn, path);
     }
 
     function estimateAmountsIn(uint amountOut, address[] calldata path)
-        public
-        view
-        virtual
-        override        
-        returns (uint[] memory amounts)
+                public view virtual override returns (uint[] memory amounts)
     {
         return FeSwapLibrary.estimateAmountsIn(factory, amountOut, path);
     }

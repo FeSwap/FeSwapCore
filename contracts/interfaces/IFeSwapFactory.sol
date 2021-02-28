@@ -7,7 +7,6 @@ interface IFeSwapFactory {
     function feeTo() external view returns (address);
     function feeToSetter() external view returns (address);
     function routerFeSwap() external view returns (address);  
-    function feeToCreatePair() external view returns (uint);
 
     function getPair(address tokenA, address tokenB) external view returns (address pair);
     function allPairs(uint) external view returns (address pair);
@@ -18,5 +17,4 @@ interface IFeSwapFactory {
     function setFeeTo(address) external;
     function setFeeToSetter(address) external;
     function setRouterFeSwap(address) external;
-    function setFeeToCreatePair(uint) external;
 }

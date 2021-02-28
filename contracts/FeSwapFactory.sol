@@ -8,7 +8,6 @@ contract FeSwapFactory is IFeSwapFactory {
     address public override feeTo;
     address public override feeToSetter;
     address public override routerFeSwap;
-    uint    public override feeToCreatePair;
 
     mapping(address => mapping(address => address)) public override getPair;
     address[] public override allPairs;
@@ -18,7 +17,6 @@ contract FeSwapFactory is IFeSwapFactory {
     constructor(address _feeToSetter) public {
         feeToSetter     = _feeToSetter;
         feeTo           = _feeToSetter;
-        feeToCreatePair = 1 ether;
     }
 
     function allPairsLength() external view override returns (uint) {
@@ -26,7 +24,7 @@ contract FeSwapFactory is IFeSwapFactory {
     }
 
     function createPair(address tokenA, address tokenB, address _pairCreator) external override returns (address pairAAB, address pairABB ) {
-        require(msg.sender == feeToSetter || msg.sender == routerFeSwap , 'FeSwap: FORBIDDEN');
+        require((msg.sender == feeToSetter) || (msg.sender == routerFeSwap) , 'FeSwap: FORBIDDEN');
         require(tokenA != tokenB, 'FeSwap: IDENTICAL_ADDRESSES');
         require(tokenA != address(0) && tokenB != address(0) && routerFeSwap != address(0) , 'FeSwap: ZERO_ADDRESS');
         require(getPair[tokenA][tokenB] == address(0), 'FeSwap: PAIR_EXISTS');   // single check is sufficient
@@ -64,9 +62,4 @@ contract FeSwapFactory is IFeSwapFactory {
         require(msg.sender == feeToSetter, 'FeSwap: FORBIDDEN');
         routerFeSwap = _routerFeSwap;
     }    
-
-    function setFeeToCreatePair(uint _feeToCreatePair) external override {
-        require(msg.sender == feeToSetter, 'FeSwap: FORBIDDEN');
-        feeToCreatePair = _feeToCreatePair;
-    }
 }

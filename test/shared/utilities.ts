@@ -10,6 +10,8 @@ import {
   solidityPack
 } from 'ethers/utils'
 
+import FeSwapPair from '../../build/FeSwapPair.json'
+
 export const MINIMUM_LIQUIDITY = bigNumberify(10).pow(3)
 
 const PERMIT_TYPEHASH = keccak256(
@@ -63,6 +65,12 @@ export function getCreate2Address(
   return getAddress(`0x${keccak256(sanitizedInputs).slice(-40)}`)
 }
 
+export function getFeSwapCodeHash():string {
+  const bytecode = `0x${FeSwapPair.evm.bytecode.object}`
+  console.log("keccak256(bytecode): ", keccak256(bytecode)) 
+  return  keccak256(bytecode)
+}
+
 export function getCreate2AddressFeSwap(
   factoryAddress: string,
   [tokenA, tokenB]: [string, string],
@@ -74,7 +82,6 @@ export function getCreate2AddressFeSwap(
     keccak256(solidityPack(['address', 'address'], [tokenA, tokenB])),
     keccak256(bytecode)
   ]
-  console.log("keccak256(bytecode): ", keccak256(bytecode)) 
   const sanitizedInputsAAB = `0x${create2Inputs.map(i => i.slice(2)).join('')}`
   return getAddress(`0x${keccak256(sanitizedInputsAAB).slice(-40)}`)
 }
@@ -127,3 +134,4 @@ export async function mineBlock(provider: Web3Provider, timestamp: number): Prom
 export function encodePrice(reserve0: BigNumber, reserve1: BigNumber) {
   return [reserve1.mul(bigNumberify(2).pow(112)).div(reserve0), reserve0.mul(bigNumberify(2).pow(112)).div(reserve1)]
 }
+

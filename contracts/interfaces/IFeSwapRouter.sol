@@ -5,14 +5,14 @@ import './IFeSwapRouter.sol';
 
 interface IFeSwapRouter {
     function factory() external pure returns (address);
+    function feswaNFT() external pure returns (address);
     function WETH() external pure returns (address);
 
     function createFeswaPair(
-        address tokenA,
-        address tokenB,
+        uint256 tokenID,
         address payTo,
         uint deadline
-    ) external payable returns (address pairAAB, address pairABB);
+    ) external returns (address pairAAB, address pairABB);
    
     function addLiquidity(
         address tokenA,

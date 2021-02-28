@@ -3,6 +3,7 @@
     "version": "1.0.0",
     "description": "🌈 Core contracts for the FeSwap DEX and FreeSwap protocol",
     "author": "Derik Lu",
+    "license": "GPL-3.0-or-later",
     "keywords": [
         "FeSwap",
         "ethereum",
@@ -34,11 +35,7 @@
         "lint": "yarn prettier ./test/*.ts --check",
         "lint:fix": "yarn prettier ./test/*.ts --write",
         "clean": "rimraf ./build/",
-        "precompile": "yarn clean",
         "compile": "waffle .waffle.json",
-        "pretest": "yarn compile",
-        "test": "mocha",
-        "prepublishOnly": "yarn test"
-    },
-    "license": "GPL-3.0-or-later"
+        "test": "mocha"
+    }
 }

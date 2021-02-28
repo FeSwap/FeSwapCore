@@ -49,7 +49,7 @@ interface UserState {
     liquityUni: BigNumber
 } 
 
-describe('FeSwapPair', () => {
+describe('FeSwapSimuStress: ', () => {
     const provider = new MockProvider({
         hardfork: 'istanbul',
         mnemonic: 'horn horn horn horn horn horn horn horn horn horn horn horn',

@@ -16,7 +16,7 @@ library FeSwapLibrary {
                 hex'ff',
                 factory,
                 keccak256(abi.encodePacked(tokenA, tokenB)),
-                hex'adc74b9e55a9de24c7f573fbc4b5c75b28fc7e6a793ba3aa45572d2f2ef84c7e' // init code hash // save 9916 gas
+                hex'407d452650f456571f567186ea081908c484fed9b69ce4393f115da4083ade08' // init code hash // save 9916 gas
             ))));
 //        pair = IFeSwapFactory(factory).getPair(tokenA,tokenB); 
     }
@@ -49,7 +49,8 @@ library FeSwapLibrary {
         require(reserveIn > 0 && reserveOut > 0, 'FeSwapLibrary: INSUFFICIENT_LIQUIDITY');
         uint numerator = reserveIn.mul(amountOut);
         uint denominator = reserveOut.sub(amountOut);
-        amountIn = (numerator / denominator).add(1);
+//        amountIn = (numerator / denominator).add(1);
+        amountIn = (numerator.add(denominator)) / denominator;
     }
 
     function arbitragePairPools(address factory, address tokenA, address tokenB) internal returns (uint reserveIn, uint reserveOut, address pair) {

@@ -1,14 +1,14 @@
 import chai, { expect } from 'chai'
 import { solidity, MockProvider, createFixtureLoader, deployContract } from 'ethereum-waffle'
 import { Contract } from 'ethers'
-import { BigNumber, bigNumberify } from 'ethers/utils'
+import { BigNumber, bigNumberify, keccak256, solidityPack } from 'ethers/utils'
 import { MaxUint256 } from 'ethers/constants'
 import IUniswapV2Pair from '../build/IFeSwapPair.json'
 import FeSwapPair from '../build/FeSwapPair.json'
 import { AddressZero } from 'ethers/constants'
 
 import { v2Fixture } from './shared/Routerfixtures'
-import { expandTo18Decimals, getApprovalDigest, MINIMUM_LIQUIDITY } from './shared/utilities'
+import { expandTo18Decimals, getApprovalDigest, MINIMUM_LIQUIDITY, getFeSwapCodeHash, mineBlock } from './shared/utilities'
 
 import DeflatingERC20 from '../build/DeflatingERC20.json'
 import { ecsign } from 'ethereumjs-util'
@@ -18,6 +18,10 @@ chai.use(solidity)
 const overrides = {
   gasLimit: 9999999
 }
+
+const initPoolPrice = expandTo18Decimals(1).div(5)
+const BidStartTime: number = 1615338000   // 2021/02/22 03/10 9:00
+const OPEN_BID_DURATION: number =  (3600 * 24 * 14)
 
 describe('FeSwapRouter', () => {
   const provider = new MockProvider({
@@ -32,7 +36,11 @@ describe('FeSwapRouter', () => {
   let tokenA: Contract
   let tokenB: Contract
   let router: Contract
+  let WETHPartner: Contract 
   let WETH: Contract
+  let Feswa:  Contract
+  let FeswaNFT:   Contract
+  let tokenIDMatch: string
 
   beforeEach(async ()=> {
     const fixture = await loadFixture(v2Fixture)
@@ -40,12 +48,19 @@ describe('FeSwapRouter', () => {
     tokenA = fixture.tokenA
     tokenB = fixture.tokenB
     router = fixture.routerFS
+    WETHPartner = fixture.WETHPartner
     WETH = fixture.WETH
+    Feswa = fixture.Feswa
+    FeswaNFT = fixture.FeswaNFT   
+    tokenIDMatch = fixture.tokenIDMatch   
   })
 
   it('Router initialized with factory, WETH', async () => {
+//    getFeSwapCodeHash()
     expect(await router.factory()).to.eq(factory.address)
+    expect(await router.feswaNFT()).to.eq(FeswaNFT.address)
     expect(await router.WETH()).to.eq(WETH.address)
+
   })
 
   it('quote', async () => {
@@ -64,7 +79,8 @@ describe('FeSwapRouter', () => {
 
   it('getAmountOut', async () => {
     expect(await router.getAmountOut(bigNumberify(2), bigNumberify(100), bigNumberify(100))).to.eq(bigNumberify(1))
-    expect(await router.getAmountOut(expandTo18Decimals(2), expandTo18Decimals(100), expandTo18Decimals(100))).to.eq(new BigNumber('1960784313725490196'))
+    expect(await router.getAmountOut(expandTo18Decimals(2), expandTo18Decimals(100), expandTo18Decimals(100)))
+            .to.eq(new BigNumber('1960784313725490196'))
     await expect(router.getAmountOut(bigNumberify(0), bigNumberify(100), bigNumberify(100))).to.be.revertedWith(
       'FeSwapLibrary: INSUFFICIENT_INPUT_AMOUNT'
     )
@@ -78,6 +94,8 @@ describe('FeSwapRouter', () => {
 
   it('getAmountIn', async () => {
     expect(await router.getAmountIn(bigNumberify(1), bigNumberify(100), bigNumberify(100))).to.eq(bigNumberify(2))
+    expect(await router.getAmountIn(expandTo18Decimals(1), expandTo18Decimals(100), expandTo18Decimals(100)))
+            .to.eq(new BigNumber('1010101010101010102'))
     await expect(router.getAmountIn(bigNumberify(0), bigNumberify(100), bigNumberify(100))).to.be.revertedWith(
       'FeSwapLibrary: INSUFFICIENT_OUTPUT_AMOUNT'
     )
@@ -89,19 +107,11 @@ describe('FeSwapRouter', () => {
     )
   })
 
-  it('getAmountsOut', async () => {
+  it('getAmountsOutMinor', async () => {
     await tokenA.approve(router.address, MaxUint256)
     await tokenB.approve(router.address, MaxUint256)
-    await router.addLiquidity(
-      tokenA.address,
-      tokenB.address,
-      bigNumberify(10000),
-      bigNumberify(10000),
-      50,
-      wallet.address,
-      MaxUint256,
-      overrides
-    )
+    await router.addLiquidity( tokenA.address, tokenB.address, expandTo18Decimals(1000), expandTo18Decimals(1000),
+                                50, wallet.address, MaxUint256, overrides)
 
     await expect(router.estimateAmountsOut(bigNumberify(2), [tokenA.address])).to.be.revertedWith(
       'FeSwapLibrary: INVALID_PATH'
@@ -110,29 +120,65 @@ describe('FeSwapRouter', () => {
     expect(await router.estimateAmountsOut(bigNumberify(2), path)).to.deep.eq([bigNumberify(2), bigNumberify(1)])
   })
 
+  it('getAmountsOutNormal', async () => {
+    await tokenA.approve(router.address, MaxUint256)
+    await tokenB.approve(router.address, MaxUint256)
+    await router.addLiquidity( tokenA.address, tokenB.address, expandTo18Decimals(1000), expandTo18Decimals(1000),
+                                50, wallet.address, MaxUint256, overrides)
+
+    const path = [tokenA.address, tokenB.address]
+    expect(await router.estimateAmountsOut(expandTo18Decimals(2), path))
+                    .to.deep.eq([expandTo18Decimals(2), expandTo18Decimals(1000).div(502)])  // = 2*50e18/502
+  })
+
+  it('getAmountsOutTripple', async () => {
+    await tokenA.approve(router.address, MaxUint256)
+    await tokenB.approve(router.address, MaxUint256)
+    await WETHPartner.approve(router.address, MaxUint256)   
+    await router.addLiquidity( tokenA.address, tokenB.address, expandTo18Decimals(1000), expandTo18Decimals(2000),
+                                50, wallet.address, MaxUint256, overrides)
+
+    await router.addLiquidity( tokenB.address, WETHPartner.address, expandTo18Decimals(3000), expandTo18Decimals(5000),
+                                50, wallet.address, MaxUint256, overrides)                                
+
+    const tokenBOut = expandTo18Decimals(2).mul(1000).div(502)
+    const WETHPartnerOut = expandTo18Decimals(2500).mul(tokenBOut).div(expandTo18Decimals(1500).add(tokenBOut))
+    const path = [tokenA.address, tokenB.address, WETHPartner.address]
+    expect(await router.estimateAmountsOut(expandTo18Decimals(2), path))
+                    .to.deep.eq([expandTo18Decimals(2), tokenBOut, WETHPartnerOut])  
+  })
+
   it('getAmountsIn', async () => {
     await tokenA.approve(router.address, MaxUint256)
     await tokenB.approve(router.address, MaxUint256)
-    await router.addLiquidity(
-      tokenA.address,
-      tokenB.address,
-      bigNumberify(10000),
-      bigNumberify(10000),
-      50,
-      wallet.address,
-      MaxUint256,
-      overrides
-    )
+    await router.addLiquidity( tokenA.address, tokenB.address, expandTo18Decimals(1000), expandTo18Decimals(1000),
+                                50, wallet.address, MaxUint256, overrides)
 
-    await expect(router.estimateAmountsIn(bigNumberify(1), [tokenA.address])).to.be.revertedWith(
-      'FeSwapLibrary: INVALID_PATH'
-    )
+    await expect(router.estimateAmountsIn(bigNumberify(1), [tokenA.address]))
+            .to.be.revertedWith('FeSwapLibrary: INVALID_PATH')
     const path = [tokenA.address, tokenB.address]
     expect(await router.estimateAmountsIn(bigNumberify(1), path)).to.deep.eq([bigNumberify(2), bigNumberify(1)])
   })
+
+  it('getAmountsInTripple', async () => {
+    await tokenA.approve(router.address, MaxUint256)
+    await tokenB.approve(router.address, MaxUint256)
+    await WETHPartner.approve(router.address, MaxUint256)   
+    await router.addLiquidity( tokenA.address, tokenB.address, expandTo18Decimals(1000), expandTo18Decimals(2000),
+                                50, wallet.address, MaxUint256, overrides)
+
+    await router.addLiquidity( tokenB.address, WETHPartner.address, expandTo18Decimals(3000), expandTo18Decimals(5000),
+                                50, wallet.address, MaxUint256, overrides)                                
+
+    const tokenBIn = expandTo18Decimals(2).mul(1500).div(2498).add(1)
+    const tokenAIn = expandTo18Decimals(500).mul(tokenBIn).div(expandTo18Decimals(1000).sub(tokenBIn)).add(1)
+    const path = [tokenA.address, tokenB.address, WETHPartner.address]
+    expect(await router.estimateAmountsIn(expandTo18Decimals(2), path))
+                    .to.deep.eq([tokenAIn, tokenBIn, expandTo18Decimals(2)])  
+  })
 })
 
-describe('fee-on-transfer tokens', () => {
+describe('FeSwapRouter: fee-on-transfer tokens', () => {
   const provider = new MockProvider({
     hardfork: 'istanbul',
     mnemonic: 'horn horn horn horn horn horn horn horn horn horn horn horn',
@@ -349,7 +395,7 @@ describe('fee-on-transfer tokens', () => {
   })
 })
 
-describe('fee-on-transfer tokens: reloaded', () => {
+describe('FeSwapRouter: fee-on-transfer tokens: reloaded', () => {
   const provider = new MockProvider({
     hardfork: 'istanbul',
     mnemonic: 'horn horn horn horn horn horn horn horn horn horn horn horn',
@@ -400,35 +446,35 @@ describe('fee-on-transfer tokens: reloaded', () => {
     )
   }
 
-    it('swapExactTokensForTokensSupportingFeeOnTransferTokens: DTT -> DTT2', async () => {
-      const DTTAmount = expandTo18Decimals(5)
-      const DTT2Amount = expandTo18Decimals(10)
-      const swapAmount = expandTo18Decimals(1)
-      const expectedOutputAmount = bigNumberify('1650000000000000000')
+  it('swapExactTokensForTokensSupportingFeeOnTransferTokens: DTT -> DTT2', async () => {
+    const DTTAmount = expandTo18Decimals(5)
+    const DTT2Amount = expandTo18Decimals(10)
+    const swapAmount = expandTo18Decimals(1)
+    const expectedOutputAmount = bigNumberify('1650000000000000000')
 
-      await addLiquidity(DTTAmount, DTT2Amount)
+    await addLiquidity(DTTAmount, DTT2Amount)
 
-      await expect(
-        router.swapExactTokensForTokensSupportingFeeOnTransferTokens(
-          swapAmount,
-          0,
-          [DTT.address, DTT2.address],
-          wallet.address,
-          MaxUint256,
-          overrides
-        )
+    await expect(
+      router.swapExactTokensForTokensSupportingFeeOnTransferTokens(
+        swapAmount,
+        0,
+        [DTT.address, DTT2.address],
+        wallet.address,
+        MaxUint256,
+        overrides
       )
-        .to.emit(DTT, 'Transfer')
-        .withArgs(wallet.address, AddressZero, swapAmount.div(100))
-        .to.emit(DTT, 'Transfer')
-        .withArgs(wallet.address, pairDTT.address, swapAmount.mul(99).div(100))
-        .to.emit(DTT2, 'Transfer')
-        .withArgs(pairDTT.address, AddressZero, expectedOutputAmount.div(100))
-        .to.emit(DTT2, 'Transfer')
-        .withArgs(pairDTT.address, wallet.address, expectedOutputAmount.mul(99).div(100))        
-        .to.emit(pairDTT, 'Sync')
-        .withArgs((DTTAmount.add(swapAmount)).mul(99).div(100), (DTT2Amount.mul(99).div(100)).sub(expectedOutputAmount))
-        .to.emit(pairDTT, 'Swap')
-        .withArgs(router.address, swapAmount.mul(99).div(100), 0, 0, expectedOutputAmount, wallet.address)
-    })
+    )
+      .to.emit(DTT, 'Transfer')
+      .withArgs(wallet.address, AddressZero, swapAmount.div(100))
+      .to.emit(DTT, 'Transfer')
+      .withArgs(wallet.address, pairDTT.address, swapAmount.mul(99).div(100))
+      .to.emit(DTT2, 'Transfer')
+      .withArgs(pairDTT.address, AddressZero, expectedOutputAmount.div(100))
+      .to.emit(DTT2, 'Transfer')
+      .withArgs(pairDTT.address, wallet.address, expectedOutputAmount.mul(99).div(100))        
+      .to.emit(pairDTT, 'Sync')
+      .withArgs((DTTAmount.add(swapAmount)).mul(99).div(100), (DTT2Amount.mul(99).div(100)).sub(expectedOutputAmount))
+      .to.emit(pairDTT, 'Swap')
+      .withArgs(router.address, swapAmount.mul(99).div(100), 0, 0, expectedOutputAmount, wallet.address)
+  })
 })
