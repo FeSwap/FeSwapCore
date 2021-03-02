@@ -18,7 +18,7 @@ contract FeSwapPair is IFeSwapPair, FeSwapERC20 {
     bytes4 private constant SELECTORFROM = bytes4(keccak256(bytes('transferFrom(address,address,uint256)')));
 
     address public override factory;
-    address public override pairCreator;    
+    address public override pairOwner;    
     address public override tokenIn;
     address public override tokenOut;
 
@@ -71,12 +71,17 @@ contract FeSwapPair is IFeSwapPair, FeSwapERC20 {
     }
 
     // called once by the factory at time of deployment
-    function initialize(address _tokenIn, address _tokenOut, address _pairCreator, address router) external override {
-        require(msg.sender == factory, 'FeSwap: FORBIDDEN'); // sufficient check
+    function initialize(address _tokenIn, address _tokenOut, address _pairOwner, address router) external override {
+        require(msg.sender == factory, 'FeSwap: FORBIDDEN');
         tokenIn = _tokenIn;
         tokenOut = _tokenOut;
-        pairCreator = _pairCreator;
-        IERC20(tokenIn).approve(router, uint(-1));
+        pairOwner = _pairOwner;
+        IERC20(tokenIn).approve(router, uint(-1));      // Approve Rourter to transfer out tokenIn for auto-arbitrage 
+    }
+
+    function setOwner(address _pairOwner) external override {
+        require(msg.sender == factory, 'FeSwap: FORBIDDEN');
+        pairOwner = _pairOwner;
     }
 
     // update reserves and, on the first call per block, price accumulators
@@ -96,26 +101,30 @@ contract FeSwapPair is IFeSwapPair, FeSwapERC20 {
     }
 
     // if fee is on, mint liquidity equivalent to 1/6th of the growth in sqrt(k)
-    function _mintFee(uint112 _reserveIn, uint112 _reserveOut) private {
+    function _mintFee(uint112 _reserveIn, uint112 _reserveOut) private returns (bool feeOn) {
         address feeTo = IFeSwapFactory(factory).feeTo();
-        require (feeTo != address(0), 'FeSwap: Fee Zero Address' );       // this line could be removed !!!
-        uint _kLast = kLast; // gas savings
-        if (_kLast != 0) {
-            uint rootK = Math.sqrt(uint(_reserveIn).mul(_reserveOut));
-            uint rootKLast = Math.sqrt(_kLast);
-            if (rootK > rootKLast) {
-                uint numerator = totalSupply.mul(rootK.sub(rootKLast)).mul(6);
-                uint denominator = rootK.mul(11).add(rootKLast);
-                uint liquidityCreator = numerator / (denominator.mul(10));
-                if (liquidityCreator > 0) {
-                    _mint(pairCreator, liquidityCreator);
-                } 
-                uint liquidityFeSwap = numerator / (denominator.mul(15));
-                if (liquidityFeSwap > 0) {
-                    _mint(feeTo, liquidityFeSwap);
-                } 
+        feeOn = (feeTo != address(0)) || (pairOwner != address(0));
+        uint _kLast = kLast;            // gas savings
+        if (feeOn) {
+            if (_kLast != 0) {
+                uint rootK = Math.sqrt(uint(_reserveIn).mul(_reserveOut));
+                uint rootKLast = Math.sqrt(_kLast);
+                if (rootK > rootKLast) {
+                    uint numerator = totalSupply.mul(rootK.sub(rootKLast)).mul(6);
+                    uint denominator = rootK.mul(11).add(rootKLast);
+                    uint liquidityCreator = numerator / (denominator.mul(10));
+                    if((liquidityCreator > 0) && (pairOwner != address(0))) {
+                        _mint(pairOwner, liquidityCreator);
+                    } 
+                    uint liquidityFeSwap = numerator / (denominator.mul(15));
+                    if((liquidityFeSwap > 0)  && (feeTo != address(0))) {
+                        _mint(feeTo, liquidityFeSwap);
+                    } 
+                }
             }
-        }
+        } else if (_kLast != 0) {
+            kLast = 0;
+        }            
     }
 
     // this low-level function should be called from a contract which performs important safety checks
@@ -127,7 +136,7 @@ contract FeSwapPair is IFeSwapPair, FeSwapERC20 {
         uint amountTokenOut = balanceOut.sub(_reserveOut);
         uint _kVlaue = Math.sqrt(amountTokenIn.mul(amountTokenOut));
 
-        _mintFee(_reserveIn, _reserveOut);
+        bool feeOn = _mintFee(_reserveIn, _reserveOut);
         uint _totalSupply = totalSupply; // gas savings, must be defined here since totalSupply can update in _mintFee
         if (_totalSupply == 0) {
             liquidity = _kVlaue.sub(MINIMUM_LIQUIDITY);
@@ -139,7 +148,7 @@ contract FeSwapPair is IFeSwapPair, FeSwapERC20 {
         _mint(to, liquidity);
 
         _update(balanceIn, balanceOut, _reserveIn, _reserveOut);
-        kLast = uint(reserveIn).mul(reserveOut);                    // reserve0 and reserve1 are up-to-date
+        if (feeOn) kLast = uint(reserveIn).mul(reserveOut);                    // reserve0 and reserve1 are up-to-date
         emit Mint(msg.sender, amountTokenIn, amountTokenOut);
     }
 
@@ -152,7 +161,7 @@ contract FeSwapPair is IFeSwapPair, FeSwapERC20 {
         uint balanceOut = IERC20(_tokenOut).balanceOf(address(this));
         uint liquidity = balanceOf[address(this)];                      // liquidity to remove
 
-        _mintFee(_reserveIn, _reserveOut);
+        bool feeOn = _mintFee(_reserveIn, _reserveOut);
         uint _totalSupply = totalSupply;                        // gas savings, must be defined here since totalSupply can update in _mintFee
         amountIn = liquidity.mul(balanceIn) / _totalSupply;     // using balances ensures pro-rata distribution
         amountOut = liquidity.mul(balanceOut) / _totalSupply;   // using balances ensures pro-rata distribution
@@ -165,7 +174,7 @@ contract FeSwapPair is IFeSwapPair, FeSwapERC20 {
         balanceOut = IERC20(_tokenOut).balanceOf(address(this));
 
         _update(balanceIn, balanceOut, _reserveIn, _reserveOut);
-        kLast = uint(reserveIn).mul(reserveOut); // reserve0 and reserve1 are up-to-date
+        if (feeOn) kLast = uint(reserveIn).mul(reserveOut); // reserve0 and reserve1 are up-to-date
         emit Burn(msg.sender, amountIn, amountOut, to);
     }
 

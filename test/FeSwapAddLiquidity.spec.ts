@@ -18,8 +18,8 @@ describe('FeSwapAddLiquidity', () => {
       mnemonic: 'horn horn horn horn horn horn horn horn horn horn horn horn',
       gasLimit: 9999999
     })
-    const [wallet, feeTo, pairCreator] = provider.getWallets()
-    const loadFixture = createFixtureLoader(provider, [wallet, feeTo, pairCreator])
+    const [wallet, feeTo, pairOwner] = provider.getWallets()
+    const loadFixture = createFixtureLoader(provider, [wallet, feeTo, pairOwner])
 
     let tokenA: Contract
     let tokenB: Contract
@@ -37,8 +37,8 @@ describe('FeSwapAddLiquidity', () => {
       tokenB = fixture.tokenB
       WETH = fixture.WETH
       WETHPartner = fixture.WETHPartner
-      factory = fixture.factoryFS
-      router = fixture.routerFS
+      factory = fixture.factoryFeswa
+      router = fixture.routerFeswa
       pairAAB = fixture.pairAAB
       pairABB = fixture.pairABB      
       WETHPairTTE = fixture.WETHPairTTE
@@ -330,7 +330,7 @@ describe('FeSwapAddLiquidity', () => {
           )
 
         const receipt = await tx.wait()
-        expect(receipt.gasUsed).to.eq(233241)    // 229016, 228994  Uniswap 213957
+        expect(receipt.gasUsed).to.eq(233503)    // 233241, 228994  Uniswap 213957
       }).retries(3)
 
       it('Add Liquidity GAS usage： Double Pool ', async () => {
@@ -352,7 +352,7 @@ describe('FeSwapAddLiquidity', () => {
           )
 
         const receipt = await tx.wait()
-        expect(receipt.gasUsed).to.eq(433922)    // 425472, 425406
+        expect(receipt.gasUsed).to.eq(434183)    // 433922, 425406
       }).retries(3)
 
     })
@@ -587,7 +587,7 @@ describe('FeSwapAddLiquidity', () => {
           )
 
         const receipt = await tx.wait()
-        expect(receipt.gasUsed).to.eq(239993)    // 235746, Uniswap 220495
+        expect(receipt.gasUsed).to.eq(239992)    // 235746, Uniswap 220495
       }).retries(3)
 
       it('Add-Liquidity-ETH GAS usage： Double Pool ', async () => {
@@ -606,7 +606,7 @@ describe('FeSwapAddLiquidity', () => {
           )
 
         const receipt = await tx.wait()
-        expect(receipt.gasUsed).to.eq(452311)  //443839,  443817
+        expect(receipt.gasUsed).to.eq(452567)  //452311,  443817
       }).retries(3)
 
     })  

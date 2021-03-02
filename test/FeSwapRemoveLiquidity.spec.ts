@@ -21,8 +21,8 @@ describe('FeSwapRemoveLiquidity', () => {
       mnemonic: 'horn horn horn horn horn horn horn horn horn horn horn horn',
       gasLimit: 9999999
     })
-    const [wallet, feeTo, pairCreator, other] = provider.getWallets()
-    const loadFixture = createFixtureLoader(provider, [wallet, feeTo, pairCreator, other])
+    const [wallet, feeTo, pairOwner, other] = provider.getWallets()
+    const loadFixture = createFixtureLoader(provider, [wallet, feeTo, pairOwner, other])
 
     let tokenA: Contract
     let tokenB: Contract

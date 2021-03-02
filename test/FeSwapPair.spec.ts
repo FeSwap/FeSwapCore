@@ -26,8 +26,8 @@ describe('FeSwapPair', () => {
     mnemonic: 'horn horn horn horn horn horn horn horn horn horn horn horn',
     gasLimit: 9999999
   })
-  const [wallet, feeTo, pairCreator] = provider.getWallets()
-  const loadFixture = createFixtureLoader(provider, [wallet, feeTo, pairCreator])
+  const [wallet, feeTo, pairOwner] = provider.getWallets()
+  const loadFixture = createFixtureLoader(provider, [wallet, feeTo, pairOwner])
 
   let tokenA: Contract
   let tokenB: Contract
@@ -47,8 +47,8 @@ describe('FeSwapPair', () => {
     tokenB = fixture.tokenB
     WETH = fixture.WETH
     WETHPartner = fixture.WETHPartner
-    factory = fixture.factoryFS
-    router = fixture.routerFS
+    factory = fixture.factoryFeswa
+    router = fixture.routerFeswa
     pairAAB = fixture.pairAAB
     pairABB = fixture.pairABB      
     WETHPairTTE = fixture.WETHPairTTE
@@ -293,7 +293,7 @@ describe('FeSwapPair', () => {
     await mineBlock(provider, (await provider.getBlock('latest')).timestamp + 1)
     const tx = await pairABB.swap(expectedOutputAmount, wallet.address, '0x', overrides)
     const receipt = await tx.wait()
-    expect(receipt.gasUsed).to.eq(72712)      // 73384
+    expect(receipt.gasUsed).to.eq(72734)      // 73384
   })
 
   it('burn', async () => {
@@ -491,9 +491,9 @@ describe('FeSwapPair', () => {
       const LiquityWalletBA = await pairABB.balanceOf(wallet.address) 
 
       const feeToAAB = await pairAAB.balanceOf(feeTo.address)
-      const feeCreateAAB = await pairAAB.balanceOf(pairCreator.address)  
+      const feeCreateAAB = await pairAAB.balanceOf(pairOwner.address)  
       const feeToABB = await pairABB.balanceOf(feeTo.address)
-      const feeCreateABB = await pairABB.balanceOf(pairCreator.address)  
+      const feeCreateABB = await pairABB.balanceOf(pairOwner.address)  
 
       expect(AmountTokeAofWallet).to.eq('7980099492685568592026')
       expect(AmountTokeBofWallet).to.eq('7980000000000000000000')

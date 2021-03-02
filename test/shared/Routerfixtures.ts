@@ -26,10 +26,9 @@ interface V2Fixture {
   tokenB: Contract
   WETH: Contract
   WETHPartner: Contract
-  factoryFS: Contract
-  routerFS: Contract
+  factoryFeswa: Contract
+  routerFeswa: Contract
   routerEventEmitter: Contract
-  router: Contract
   pairAAB: Contract
   pairABB: Contract 
   WETHPairTTE: Contract
@@ -43,7 +42,7 @@ const initPoolPrice = expandTo18Decimals(1).div(5)
 const BidStartTime: number = 1615338000   // 2021/02/22 03/10 9:00
 const OPEN_BID_DURATION: number =  (3600 * 24 * 14)
 
-export async function v2Fixture(provider: Web3Provider, [wallet, feeTo, pairCreator]: Wallet[]): Promise<V2Fixture> {
+export async function v2Fixture(provider: Web3Provider, [wallet, feeTo, pairOwner]: Wallet[]): Promise<V2Fixture> {
   // deploy tokens
   const tokenA = await deployContract(wallet, ERC20, [expandTo18Decimals(10000),"Token A"])
   const tokenB = await deployContract(wallet, ERC20, [expandTo18Decimals(10000),"Token B"])
@@ -59,18 +58,18 @@ export async function v2Fixture(provider: Web3Provider, [wallet, feeTo, pairCrea
   await Feswa.transfer(FeswaNFT.address, expandTo18Decimals(1000_000))
 
   // deploy FeSwap factory
-  const factoryFS = await deployContract(wallet, FeSwapFactory, [wallet.address], overrides)
+  const factoryFeswa = await deployContract(wallet, FeSwapFactory, [wallet.address], overrides)
 
   // deploy FeSwap routers
-  const routerFS = await deployContract(wallet, FeSwapRouter, [factoryFS.address, FeswaNFT.address, WETH.address], overrides)
+  const routerFeswa = await deployContract(wallet, FeSwapRouter, [factoryFeswa.address, FeswaNFT.address, WETH.address], overrides)
 
   // event emitter for testing
   const routerEventEmitter = await deployContract(wallet, RouterEventEmitter, [])
 
   // initialize FeSwap
-  await factoryFS.setFeeTo(feeTo.address)
-  await factoryFS.setRouterFeSwap(routerFS.address)
-//  await factoryFS.createPair(tokenA.address, tokenB.address, pairCreator.address, overrides)
+  await factoryFeswa.setFeeTo(feeTo.address)
+  await factoryFeswa.setRouterFeSwap(routerFeswa.address)
+//  await factoryFeswa.createUpdatePair(tokenA.address, tokenB.address, pairOwner.address, overrides)
 
   await mineBlock(provider, BidStartTime + 1)
   const  tokenIDMatch = keccak256( 
@@ -79,26 +78,26 @@ export async function v2Fixture(provider: Web3Provider, [wallet, feeTo, pairCrea
                             ? [FeswaNFT.address, tokenA.address, tokenB.address] 
                             : [FeswaNFT.address, tokenB.address, tokenA.address] ) )
 
-  await FeswaNFT.connect(pairCreator).BidFeswaPair(tokenA.address, tokenB.address, pairCreator.address,
+  await FeswaNFT.connect(pairOwner).BidFeswaPair(tokenA.address, tokenB.address, pairOwner.address,
                 { ...overrides, value: initPoolPrice } )
 
   // BidDelaying time out
   lastBlock = await provider.getBlock('latest')
   await mineBlock(provider, lastBlock.timestamp + OPEN_BID_DURATION + 1 ) 
-  await FeswaNFT.connect(pairCreator).FeswaPairSettle(tokenIDMatch)
-  await routerFS.connect(pairCreator).createFeswaPair(tokenIDMatch, pairCreator.address, MaxUint256)
+  await FeswaNFT.connect(pairOwner).FeswaPairSettle(tokenIDMatch)
+  await routerFeswa.connect(pairOwner).ManageFeswaPair(tokenIDMatch, pairOwner.address)
 
-  await factoryFS.createPair(tokenB.address, WETHPartner.address, pairCreator.address, overrides)  
-  const pairAddressAAB = await factoryFS.getPair(tokenA.address, tokenB.address)
-  const pairAddressABB = await factoryFS.getPair(tokenB.address, tokenA.address)
+  await factoryFeswa.createUpdatePair(tokenB.address, WETHPartner.address, pairOwner.address, overrides)  
+  const pairAddressAAB = await factoryFeswa.getPair(tokenA.address, tokenB.address)
+  const pairAddressABB = await factoryFeswa.getPair(tokenB.address, tokenA.address)
   const pairAAB = new Contract(pairAddressAAB, JSON.stringify(FeSwapPair.abi), provider).connect(wallet)
   const pairABB = new Contract(pairAddressABB, JSON.stringify(FeSwapPair.abi), provider).connect(wallet)
 
-  await factoryFS.createPair(WETH.address, WETHPartner.address, pairCreator.address, overrides)
-  const WETHPairAddressETHIn = await factoryFS.getPair(WETH.address, WETHPartner.address)
+  await factoryFeswa.createUpdatePair(WETH.address, WETHPartner.address, pairOwner.address, overrides)
+  const WETHPairAddressETHIn = await factoryFeswa.getPair(WETH.address, WETHPartner.address)
   const WETHPairTEE = new Contract(WETHPairAddressETHIn, JSON.stringify(FeSwapPair.abi), provider).connect(wallet)
 
-  const WETHPairAddressETHOut = await factoryFS.getPair(WETHPartner.address, WETH.address)
+  const WETHPairAddressETHOut = await factoryFeswa.getPair(WETHPartner.address, WETH.address)
   const WETHPairTTE = new Contract(WETHPairAddressETHOut, JSON.stringify(FeSwapPair.abi), provider).connect(wallet)
  
   return {
@@ -106,9 +105,8 @@ export async function v2Fixture(provider: Web3Provider, [wallet, feeTo, pairCrea
     tokenB,
     WETH,
     WETHPartner,
-    factoryFS,
-    routerFS,
-    router: routerFS, // the default router, 01 had a minor bug
+    factoryFeswa,
+    routerFeswa,
     routerEventEmitter,
     pairAAB,
     pairABB,

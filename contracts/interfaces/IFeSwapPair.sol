@@ -38,7 +38,7 @@ interface IFeSwapPair is IFeSwapERC20 {
 
     function MINIMUM_LIQUIDITY() external pure returns (uint);
     function factory() external view returns (address);
-    function pairCreator() external view returns (address);
+    function pairOwner() external view returns (address);
     function tokenIn() external view returns (address);
     function tokenOut() external view returns (address);
     function getReserves() external view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast);
@@ -53,4 +53,5 @@ interface IFeSwapPair is IFeSwapERC20 {
     function sync() external returns(uint112 _reserveIn, uint112 _reserveOut);
 
     function initialize(address, address, address,address) external;
+    function setOwner(address _pairOwner) external;
 }

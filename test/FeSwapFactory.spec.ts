@@ -22,101 +22,133 @@ describe('FeSwapFactory', () => {
     mnemonic: 'horn horn horn horn horn horn horn horn horn horn horn horn',
     gasLimit: 9999999
   })
-  const [wallet, other] = provider.getWallets()
+  const [wallet, other, other1] = provider.getWallets()
   const loadFixture = createFixtureLoader(provider, [wallet, other])
 
   let factory: Contract
-  let tokenA: string  
-  let tokenB: string  
+  let tokenA: Contract  
+  let tokenB: Contract  
+  let tokenC: Contract  
+  
   const bytecode = `0x${FeSwapPair.evm.bytecode.object}`
 
   beforeEach(async () => {
     const fixture = await loadFixture(factoryFixture)
     factory = fixture.factory
-
-    const tokenAContract = await deployContract(wallet, ERC20, [expandTo18Decimals(10000),"Token A"], overrides)
-    const tokenBContract = await deployContract(wallet, ERC20, [expandTo18Decimals(10000),"Token B"], overrides)
-    tokenA = tokenAContract.address
-    tokenB = tokenBContract.address
-
+    tokenA = await deployContract(wallet, ERC20, [expandTo18Decimals(10000),"Token A"], overrides)
+    tokenB = await deployContract(wallet, ERC20, [expandTo18Decimals(10000),"Token B"], overrides)
+    tokenC = await deployContract(wallet, ERC20, [expandTo18Decimals(10000),"Token C"], overrides)
   })
 
-  it('feeTo, feeToSetter, routerFeSwap, feeToCreatePair, allPairsLength', async () => {
-    expect(await factory.feeTo()).to.eq(wallet.address)
-    expect(await factory.feeToSetter()).to.eq(wallet.address)
+  it('feeTo, factoryAdmin, routerFeSwap, allPairsLength', async () => {
+    expect(await factory.feeTo()).to.eq(AddressZero)
+    expect(await factory.factoryAdmin()).to.eq(wallet.address)
     expect(await factory.routerFeSwap()).to.eq(AddressZero)
-    expect(await factory.feeToCreatePair()).to.eq(WeiPerEther)   
     expect(await factory.allPairsLength()).to.eq(0)
   })
 
-  async function testCreatePair(tokens: [string, string, string]) {
-    const [tokenIn, tokenOut, pairCreator ] = [...tokens]
+  it('createUpdatePair: Basic checking', async () => {
+    await expect(factory.connect(other1).createUpdatePair(tokenA.address, tokenA.address, other1.address))
+      .to.be.revertedWith('FeSwap: IDENTICAL_ADDRESSES')                    // FeSwap: IDENTICAL_ADDRESSES
 
-    const create2AddressAAB  = getCreate2AddressFeSwap(factory.address, [tokenIn, tokenOut], bytecode)
-    const create2AddressABB  = getCreate2AddressFeSwap(factory.address, [tokenOut, tokenIn], bytecode)
+    await expect(factory.connect(other1).createUpdatePair(tokenA.address, tokenB.address, other1.address))
+      .to.be.revertedWith('FeSwap: ZERO_ADDRESS')                           // FeSwap: ZERO_ADDRESS
 
-    await expect(factory.connect(other).createPair(tokenIn, tokenOut, pairCreator))
-      .to.be.revertedWith('FeSwap: FORBIDDEN')                          // FeSwap: FORBIDDEN
+    await factory.setRouterFeSwap(other.address)  
+    await expect(factory.connect(other1).createUpdatePair(tokenA.address, tokenB.address, other1.address))
+      .to.be.revertedWith('FeSwap: FORBIDDEN')                              // FeSwap: FORBIDDEN  
+      
+    await expect(factory.createUpdatePair(tokenA.address, AddressZero, wallet.address))
+      .to.be.revertedWith('FeSwap: ZERO_ADDRESS')                           // FeSwap: FeSwap: ZERO_ADDRESS
 
-    const simuRouter = pairCreator  
-    await factory.setRouterFeSwap(simuRouter)                          // fake router, just for test
+    await expect(factory.createUpdatePair(AddressZero, tokenB.address, wallet.address))
+      .to.be.revertedWith('FeSwap: ZERO_ADDRESS')                           // FeSwap: FeSwap: ZERO_ADDRESS      
 
-    await expect(factory.createPair(tokenIn, tokenOut, pairCreator))
+    await factory.createUpdatePair(tokenA.address, tokenB.address, wallet.address)
+    
+    // simulate creating from router
+    await factory.connect(other).createUpdatePair(tokenA.address, tokenC.address, other.address)     
+  })  
+
+  it('createUpdatePair: Normal function checking', async () => {
+    const create2AddressAAB  = getCreate2AddressFeSwap(factory.address, [tokenA.address, tokenB.address], bytecode)
+    const create2AddressABB  = getCreate2AddressFeSwap(factory.address, [tokenB.address, tokenA.address], bytecode)
+
+    await factory.setRouterFeSwap(other1.address)                          // simulate router, just for test
+
+    await expect(factory.createUpdatePair(tokenA.address, tokenB.address, other.address))
       .to.emit(factory, 'PairCreated')
-      .withArgs(tokenIn, tokenOut, create2AddressAAB, create2AddressABB, bigNumberify(2))
+      .withArgs(tokenA.address, tokenB.address, create2AddressAAB, create2AddressABB, bigNumberify(2))
 
-    await expect(factory.createPair(tokenIn, tokenIn, pairCreator))
-                .to.be.revertedWith('FeSwap: IDENTICAL_ADDRESSES')      // FeSwap: IDENTICAL_ADDRESSES
-    await expect(factory.createPair(tokenOut, tokenOut, pairCreator))
-                .to.be.revertedWith('FeSwap: IDENTICAL_ADDRESSES')      // FeSwap: IDENTICAL_ADDRESSES
-    await expect(factory.createPair(tokenIn, tokenOut, pairCreator))
-                .to.be.revertedWith('FeSwap: PAIR_EXISTS')              // FeSwap: PAIR_EXISTS
-    await expect(factory.createPair(tokenOut, tokenIn, pairCreator))
-                .to.be.revertedWith('FeSwap: PAIR_EXISTS')              // FeSwap: PAIR_EXISTS
-    await expect(factory.createPair(tokenIn, AddressZero, pairCreator))
-                .to.be.revertedWith('FeSwap: ZERO_ADDRESS')             // FeSwap: FeSwap: ZERO_ADDRESS
-    await expect(factory.createPair(AddressZero, tokenOut, pairCreator))
-                .to.be.revertedWith('FeSwap: ZERO_ADDRESS')             // FeSwap: FeSwap: ZERO_ADDRESS
-
-    expect(await factory.getPair(tokenIn, tokenOut)).to.eq(create2AddressAAB)
-    expect(await factory.getPair(tokenOut, tokenIn)).to.eq(create2AddressABB)
+    expect(await factory.getPair(tokenA.address, tokenB.address)).to.eq(create2AddressAAB)
+    expect(await factory.getPair(tokenB.address, tokenA.address)).to.eq(create2AddressABB)
     expect(await factory.allPairs(0)).to.eq(create2AddressAAB)
     expect(await factory.allPairs(1)).to.eq(create2AddressABB)  
     expect(await factory.allPairsLength()).to.eq(2)
 
     const pairAAB = new Contract(create2AddressAAB, JSON.stringify(FeSwapPair.abi), provider)
     expect(await pairAAB.factory()).to.eq(factory.address)
-    expect(await pairAAB.pairCreator()).to.eq(pairCreator)
-    expect(await pairAAB.tokenIn()).to.eq(tokenIn)
-    expect(await pairAAB.tokenOut()).to.eq(tokenOut)
+    expect(await pairAAB.pairOwner()).to.eq(other.address)
+    expect(await pairAAB.tokenIn()).to.eq(tokenA.address)
+    expect(await pairAAB.tokenOut()).to.eq(tokenB.address)
     
     const pairABB = new Contract(create2AddressABB, JSON.stringify(FeSwapPair.abi), provider)
     expect(await pairABB.factory()).to.eq(factory.address)
-    expect(await pairABB.pairCreator()).to.eq(pairCreator)    
-    expect(await pairABB.tokenIn()).to.eq(tokenOut)
-    expect(await pairABB.tokenOut()).to.eq(tokenIn)
+    expect(await pairABB.pairOwner()).to.eq(other.address)    
+    expect(await pairABB.tokenIn()).to.eq(tokenB.address)
+    expect(await pairABB.tokenOut()).to.eq(tokenA.address)
 
-    // Check that the two pools approve to each other
-    const tokenInContract = new Contract(tokenIn, JSON.stringify(ERC20.abi), provider)
-    const tokenOutContract = new Contract(tokenOut, JSON.stringify(ERC20.abi), provider)  
+    // Check that the two pools approve to router
+    const tokenAContract = new Contract(tokenA.address, JSON.stringify(ERC20.abi), provider)
+    const tokenBContract = new Contract(tokenB.address, JSON.stringify(ERC20.abi), provider)  
 
-    expect(await tokenInContract.allowance(create2AddressAAB,simuRouter)).to.eq(MaxUint256)
-    expect(await tokenOutContract.allowance(create2AddressABB,simuRouter)).to.eq(MaxUint256) 
-  }
-
-  it('createPair', async () => {
-    await testCreatePair([tokenA, tokenB, wallet.address])
+    expect(await tokenAContract.allowance(create2AddressAAB, other1.address)).to.eq(MaxUint256)
+    expect(await tokenBContract.allowance(create2AddressABB, other1.address)).to.eq(MaxUint256) 
   })
 
-  it('createPair:reverse', async () => {
-    await testCreatePair([tokenB, tokenA, wallet.address])
+  it('createUpdatePair: Create two liquidity pools', async () => {
+    const create2AddressAAB  = getCreate2AddressFeSwap(factory.address, [tokenA.address, tokenB.address], bytecode)
+    const create2AddressABB  = getCreate2AddressFeSwap(factory.address, [tokenB.address, tokenA.address], bytecode)
+
+    const create2AddressAAC  = getCreate2AddressFeSwap(factory.address, [tokenA.address, tokenC.address], bytecode)
+    const create2AddressACC  = getCreate2AddressFeSwap(factory.address, [tokenC.address, tokenA.address], bytecode)
+
+    await factory.setRouterFeSwap(other1.address)                          // simulate router, just for test
+
+    await expect(factory.createUpdatePair(tokenA.address, tokenB.address, wallet.address))
+      .to.emit(factory, 'PairCreated')
+      .withArgs(tokenA.address, tokenB.address, create2AddressAAB, create2AddressABB, bigNumberify(2))
+
+    await expect(factory.connect(other1).createUpdatePair(tokenA.address, tokenC.address, other.address))
+      .to.emit(factory, 'PairCreated')
+      .withArgs(tokenA.address, tokenC.address, create2AddressAAC, create2AddressACC, bigNumberify(4))
   })
 
-  it('createPair:gas', async () => {
+  it('createUpdatePair: Update owner of liquidity pools', async () => {
+    const create2AddressAAB  = getCreate2AddressFeSwap(factory.address, [tokenA.address, tokenB.address], bytecode)
+    const create2AddressABB  = getCreate2AddressFeSwap(factory.address, [tokenB.address, tokenA.address], bytecode)
+
+    await factory.setRouterFeSwap(other1.address)                          // simulate router, just for test
+
+    await expect(factory.connect(other1).createUpdatePair(tokenA.address, tokenB.address, other.address))
+      .to.emit(factory, 'PairCreated')
+      .withArgs(tokenA.address, tokenB.address, create2AddressAAB, create2AddressABB, bigNumberify(2))
+
+    await expect(factory.connect(other1).createUpdatePair(tokenA.address, tokenB.address, other1.address))
+      .to.emit(factory, 'PairOwnerChanged')
+      .withArgs(create2AddressAAB, create2AddressABB, other.address, other1.address )
+  })
+
+  it('createUpdatePair:gas', async () => {
     await factory.setRouterFeSwap( wallet.address)
-    const tx = await factory.createPair(tokenA, tokenB, wallet.address)
-    const receipt = await tx.wait()
-    expect(receipt.gasUsed).to.eq(5096745)        // 5122392, 4913779,   UniSwap: 2512920
+    let tx = await factory.createUpdatePair(tokenA.address, tokenB.address, wallet.address)
+    let receipt = await tx.wait()
+    expect(receipt.gasUsed).to.eq(5226291)        // 5203824, 4913779,   UniSwap: 2512920
+
+    // update owneer
+    tx = await factory.createUpdatePair(tokenA.address, tokenB.address, other.address)
+    receipt = await tx.wait()
+    expect(receipt.gasUsed).to.eq(48059)        // 48059
   })
 
   it('setFeeTo', async () => {
@@ -125,28 +157,24 @@ describe('FeSwapFactory', () => {
     expect(await factory.feeTo()).to.eq(other.address)
   })
 
-  it('setFeeToSetter', async () => {
-    await expect(factory.connect(other).setFeeToSetter(other.address)).to.be.revertedWith('FeSwap: FORBIDDEN')
-    await factory.setFeeToSetter(other.address)
-    expect(await factory.feeToSetter()).to.eq(other.address)
-    await expect(factory.setFeeToSetter(wallet.address)).to.be.revertedWith('FeSwap: FORBIDDEN')
-    await factory.connect(other).setFeeTo(other.address)
+  it('setFactoryAdmin', async () => {
+    await expect(factory.connect(other).setFactoryAdmin(other.address)).to.be.revertedWith('FeSwap: FORBIDDEN')
+
+    await factory.setFactoryAdmin(other.address)
+    expect(await factory.factoryAdmin()).to.eq(other.address)
+    
+    await expect(factory.setFactoryAdmin(wallet.address)).to.be.revertedWith('FeSwap: FORBIDDEN')
+    await factory.connect(other).setFeeTo(wallet.address)
   })
 
   it('setRouterFeSwap', async () => {
     await expect(factory.connect(other).setRouterFeSwap(other.address)).to.be.revertedWith('FeSwap: FORBIDDEN')
+
     await factory.setRouterFeSwap(other.address)
     expect(await factory.routerFeSwap()).to.eq(other.address)
+    
     await factory.setRouterFeSwap(wallet.address)
     expect(await factory.routerFeSwap()).to.eq(wallet.address)  
   })
 
-  it('setFeeToCreatePair', async () => {
-    const _feeCreatePair = expandTo18Decimals(2)
-    await expect(factory.connect(other).setFeeToCreatePair(_feeCreatePair)).to.be.revertedWith('FeSwap: FORBIDDEN')
-    await factory.setFeeToCreatePair(_feeCreatePair)
-    expect(await factory.feeToCreatePair()).to.eq(_feeCreatePair)
-    await factory.setFeeToCreatePair(expandTo18Decimals(5))
-    expect(await factory.feeToCreatePair()).to.eq(expandTo18Decimals(5))  
-  })
 })

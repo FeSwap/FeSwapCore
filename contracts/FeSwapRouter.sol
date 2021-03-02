@@ -34,18 +34,13 @@ contract FeSwapRouter is IFeSwapRouter{
     }
 
     // **** CREATE SWAP PAIR ****
-    function createFeswaPair(
+    function ManageFeswaPair(
         uint256 tokenID,
-        address payTo,     
-        uint deadline        
-    ) external virtual override ensure(deadline) returns (address pairAAB, address pairABB) {
+        address pairOwner   
+    ) external virtual override returns (address pairAAB, address pairABB) {
         require(msg.sender == IFeswaNFT(feswaNFT).ownerOf(tokenID), 'FeSwap: NOT TOKEN OWNER');
         (address tokenA, address tokenB) = IFeswaNFT(feswaNFT).getPoolTokens(tokenID);
-
-        require(IFeSwapFactory(factory).getPair(tokenA, tokenB) == address(0), 'FeSwap: CREATED BEFORE'); // sufficient check
-        
-         (pairAAB, pairABB) = IFeSwapFactory(factory).createPair(tokenA, tokenB, payTo);  
-
+        (pairAAB, pairABB) = IFeSwapFactory(factory).createUpdatePair(tokenA, tokenB, pairOwner); 
     }
 
     // **** ADD LIQUIDITY ****
@@ -217,8 +212,8 @@ contract FeSwapRouter is IFeSwapRouter{
         (amountToken, amountETH) = removeLiquidityETH(token, liquidityTTE, 0, amountTokenMin, amountETHMin, to, deadline);
     }
 
-    // **** REMOVE LIQUIDITY (supporting fee-on-transfer tokens) ****
-    function removeLiquidityETHSupportingFeeOnTransferTokens(
+    // **** REMOVE LIQUIDITY (supporting deflation tokens) ****
+    function removeLiquidityETHWithDefaltionTokens(
         address token,
         uint liquidityTTE,
         uint liquidityTEE,        
@@ -241,7 +236,7 @@ contract FeSwapRouter is IFeSwapRouter{
         IWETH(WETH).withdraw(amountETH);
         TransferHelper.safeTransferETH(to, amountETH);
     }
-    function removeLiquidityETHWithPermitSupportingFeeOnTransferTokens(
+    function removeLiquidityETHWithPermitWithDefaltionTokens(
         address token,
         uint liquidityTTE,
         uint liquidityTEE,        
@@ -252,7 +247,7 @@ contract FeSwapRouter is IFeSwapRouter{
         address pair = FeSwapLibrary.pairFor(factory, token, WETH);
         uint value = approveMax ? uint(-1) : liquidityTTE;
         IFeSwapPair(pair).permit(msg.sender, address(this), value, deadline, v, r, s);
-        amountETH = removeLiquidityETHSupportingFeeOnTransferTokens(
+        amountETH = removeLiquidityETHWithDefaltionTokens(
             token, liquidityTTE, liquidityTEE, 0, 0, to, deadline
         );
     }

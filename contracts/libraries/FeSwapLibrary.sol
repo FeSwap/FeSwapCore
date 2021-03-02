@@ -16,7 +16,7 @@ library FeSwapLibrary {
                 hex'ff',
                 factory,
                 keccak256(abi.encodePacked(tokenA, tokenB)),
-                hex'407d452650f456571f567186ea081908c484fed9b69ce4393f115da4083ade08' // init code hash // save 9916 gas
+                hex'da9867c3cd064a962d0608268aa1938ff7074df251331ee2cfa918108d0a999b' // init code hash // save 9916 gas
             ))));
 //        pair = IFeSwapFactory(factory).getPair(tokenA,tokenB); 
     }

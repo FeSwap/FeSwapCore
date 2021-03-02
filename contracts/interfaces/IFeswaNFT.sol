@@ -3,5 +3,6 @@ pragma solidity =0.6.12;
 
 interface IFeswaNFT {
     // Views
-    function getPoolTokens(uint256) external view returns (address tokenA, address tokenB);
+    function ownerOf(uint256 tokenId) external view returns (address owner);
+    function getPoolTokens(uint256 tokenId) external view returns (address tokenA, address tokenB);
 }

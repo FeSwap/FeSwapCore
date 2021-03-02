@@ -29,8 +29,8 @@ describe('FeSwapRouter', () => {
     mnemonic: 'horn horn horn horn horn horn horn horn horn horn horn horn',
     gasLimit: 9999999
   })
-  const [wallet, feeTo, pairCreator]  = provider.getWallets()
-  const loadFixture = createFixtureLoader(provider, [wallet, feeTo, pairCreator])
+  const [wallet, feeTo, pairOwner]  = provider.getWallets()
+  const loadFixture = createFixtureLoader(provider, [wallet, feeTo, pairOwner])
 
   let factory: Contract
   let tokenA: Contract
@@ -44,10 +44,10 @@ describe('FeSwapRouter', () => {
 
   beforeEach(async ()=> {
     const fixture = await loadFixture(v2Fixture)
-    factory = fixture.factoryFS
+    factory = fixture.factoryFeswa
     tokenA = fixture.tokenA
     tokenB = fixture.tokenB
-    router = fixture.routerFS
+    router = fixture.routerFeswa
     WETHPartner = fixture.WETHPartner
     WETH = fixture.WETH
     Feswa = fixture.Feswa
@@ -56,7 +56,7 @@ describe('FeSwapRouter', () => {
   })
 
   it('Router initialized with factory, WETH', async () => {
-//    getFeSwapCodeHash()
+    getFeSwapCodeHash()
     expect(await router.factory()).to.eq(factory.address)
     expect(await router.feswaNFT()).to.eq(FeswaNFT.address)
     expect(await router.WETH()).to.eq(WETH.address)
@@ -178,14 +178,56 @@ describe('FeSwapRouter', () => {
   })
 })
 
-describe('FeSwapRouter: fee-on-transfer tokens', () => {
+
+describe('FeSwapRouter: ManageFeswaPair', () => {
   const provider = new MockProvider({
     hardfork: 'istanbul',
     mnemonic: 'horn horn horn horn horn horn horn horn horn horn horn horn',
     gasLimit: 9999999
   })
-  const [wallet, feeTo, pairCreator] = provider.getWallets()
-  const loadFixture = createFixtureLoader(provider, [wallet, feeTo, pairCreator])
+  const [wallet, feeTo, pairOwner, newOwner]  = provider.getWallets()
+  const loadFixture = createFixtureLoader(provider, [wallet, feeTo, pairOwner])
+
+  let router: Contract
+  let pairAAB: Contract
+  let pairABB: Contract 
+  let tokenIDMatch: string
+
+  beforeEach(async ()=> {
+    const fixture = await loadFixture(v2Fixture)
+    router = fixture.routerFeswa
+    pairAAB = fixture.pairAAB 
+    pairABB = fixture.pairABB     
+    tokenIDMatch = fixture.tokenIDMatch   
+  })
+
+  it('ManageFeswaPair: Invalide TokenID', async () => {
+    await expect(router.ManageFeswaPair('0xFFFFFFFFFFF', pairOwner.address))
+            .to.be.revertedWith('ERC721: owner query for nonexistent token')
+  })
+
+  it('ManageFeswaPair: Check Owner', async () => {
+    await expect(router.ManageFeswaPair(tokenIDMatch, pairOwner.address))
+            .to.be.revertedWith('FeSwap: NOT TOKEN OWNER')
+  })
+
+  it('ManageFeswaPair: Change Pair Owner', async () => {
+    expect(await pairAAB.pairOwner()).to.be.eq(pairOwner.address)
+    expect(await pairABB.pairOwner()).to.be.eq(pairOwner.address)
+    await router.connect(pairOwner).ManageFeswaPair(tokenIDMatch, newOwner.address)
+    expect(await pairAAB.pairOwner()).to.be.eq(newOwner.address)
+    expect(await pairABB.pairOwner()).to.be.eq(newOwner.address)
+  })
+})
+
+describe('FeSwapRouter: Deflation Token Test', () => {
+  const provider = new MockProvider({
+    hardfork: 'istanbul',
+    mnemonic: 'horn horn horn horn horn horn horn horn horn horn horn horn',
+    gasLimit: 9999999
+  })
+  const [wallet, feeTo, pairOwner] = provider.getWallets()
+  const loadFixture = createFixtureLoader(provider, [wallet, feeTo, pairOwner])
 
   let factory: Contract
   let DTT: Contract
@@ -198,17 +240,17 @@ describe('FeSwapRouter: fee-on-transfer tokens', () => {
     const fixture = await loadFixture(v2Fixture)
 
     WETH = fixture.WETH
-    router = fixture.routerFS
-    factory = fixture.factoryFS
+    router = fixture.routerFeswa
+    factory = fixture.factoryFeswa
 
     DTT = await deployContract(wallet, DeflatingERC20, [expandTo18Decimals(10000)])
 
     // make a DTT<>WETH pair
-    await fixture.factoryFS.createPair(DTT.address, WETH.address, wallet.address, overrides)
-    const pairAddressTTE = await fixture.factoryFS.getPair(DTT.address, WETH.address)
+    await factory.createUpdatePair(DTT.address, WETH.address, wallet.address, overrides)
+    const pairAddressTTE = await factory.getPair(DTT.address, WETH.address)
     WETHPairTTE = new Contract(pairAddressTTE, JSON.stringify(IUniswapV2Pair.abi), provider).connect(wallet)
 
-    const pairAddressTEE = await fixture.factoryFS.getPair(WETH.address, DTT.address)
+    const pairAddressTEE = await factory.getPair(WETH.address, DTT.address)
     WETHPairTEE = new Contract(pairAddressTEE, JSON.stringify(IUniswapV2Pair.abi), provider).connect(wallet)
   })
 
@@ -224,11 +266,11 @@ describe('FeSwapRouter: fee-on-transfer tokens', () => {
     })
   }
 
-  it('removeLiquidityETHSupportingFeeOnTransferTokens', async () => {
+  it('removeLiquidityETHWithDefaltionTokens: Single Pool Liquidity', async () => {
     const DTTAmount = expandTo18Decimals(100)
     const ETHAmount = expandTo18Decimals(4)
 
-    const ratio = 100  
+    const ratio = 100
     await addLiquidity(DTTAmount, ETHAmount, ratio)
 
     const DTTInPair = await DTT.balanceOf(WETHPairTTE.address)
@@ -238,20 +280,128 @@ describe('FeSwapRouter: fee-on-transfer tokens', () => {
     const NaiveDTTExpected = DTTInPair.mul(liquidity).div(totalSupply)
     const WETHExpected = WETHInPair.mul(liquidity).div(totalSupply)
 
+    console.log('DTTInPair', DTTInPair.toString())
+    console.log('WETHInPair', WETHInPair.toString())
+    console.log('liquidity', liquidity.toString())
+    console.log('totalSupply', totalSupply.toString())
+    console.log('NaiveDTTExpected', NaiveDTTExpected.toString())
+    console.log('WETHExpected', WETHExpected.toString())    
+ 
     await WETHPairTTE.approve(router.address, MaxUint256)
-    await router.removeLiquidityETHSupportingFeeOnTransferTokens(
+    await router.removeLiquidityETHWithDefaltionTokens(
       DTT.address,
       liquidity,
       0,
       NaiveDTTExpected,
       WETHExpected,
-      wallet.address,
+      pairOwner.address,
       MaxUint256,
       overrides
     )
+    
+    {
+    const DTTInPair = await DTT.balanceOf(WETHPairTTE.address)
+    const WETHInPair = await WETH.balanceOf(WETHPairTTE.address)
+    const liquidity = await WETHPairTTE.balanceOf(pairOwner.address)
+    const totalSupply = await WETHPairTTE.totalSupply()
+    const NaiveDTTExpected = DTTInPair.mul(liquidity).div(totalSupply)
+    const WETHExpected = WETHInPair.mul(liquidity).div(totalSupply)
+
+    console.log('DTTInPair', DTTInPair.toString())
+    console.log('WETHInPair', WETHInPair.toString())
+    console.log('liquidity', liquidity.toString())
+    console.log('totalSupply', totalSupply.toString())
+    console.log('NaiveDTTExpected', NaiveDTTExpected.toString())
+    console.log('WETHExpected', WETHExpected.toString()) 
+    }
+
   })
 
-  it('removeLiquidityETHWithPermitSupportingFeeOnTransferTokens', async () => {
+
+  it('removeLiquidityETHWithDefaltionTokens: Double Pool Liquidity', async () => {
+    const DTTAmount = expandTo18Decimals(100)
+    const ETHAmount = expandTo18Decimals(4)
+
+    const ratio = 0  
+    await addLiquidity(DTTAmount, ETHAmount, ratio)
+/*
+    const DTTInPairTTE = await DTT.balanceOf(WETHPairTTE.address)
+    const WETHInPairTTE = await WETH.balanceOf(WETHPairTTE.address)
+    const liquidityTTE = await WETHPairTTE.balanceOf(wallet.address)
+    const totalSupplyTTE = await WETHPairTTE.totalSupply()
+    const NaiveDTTExpectedTTE = DTTInPairTTE.mul(liquidityTTE).div(totalSupplyTTE)
+    const WETHExpectedTTE = WETHInPairTTE.mul(liquidityTTE).div(totalSupplyTTE)
+
+    console.log('DTTInPairTTE', DTTInPairTTE.toString())
+    console.log('WETHInPairTTE', WETHInPairTTE.toString())
+    console.log('liquidityTTE', liquidityTTE.toString())
+    console.log('totalSupplyTTE', totalSupplyTTE.toString())
+    console.log('NaiveDTTExpectedTTE', NaiveDTTExpectedTTE.toString())
+    console.log('WETHExpectedTTE', WETHExpectedTTE.toString())    
+*/
+    const DTTInPairTEE = await DTT.balanceOf(WETHPairTEE.address)
+    const WETHInPairTEE = await WETH.balanceOf(WETHPairTEE.address)
+    const liquidityTEE = await WETHPairTEE.balanceOf(wallet.address)
+    const totalSupplyTEE = await WETHPairTEE.totalSupply()
+    const NaiveDTTExpectedTEE = DTTInPairTEE.mul(liquidityTEE).div(totalSupplyTEE)
+    const WETHExpectedTEE = WETHInPairTEE.mul(liquidityTEE).div(totalSupplyTEE)
+
+    console.log('DTTInPairTEE', DTTInPairTEE.toString())
+    console.log('WETHInPairTEE', WETHInPairTEE.toString())
+    console.log('liquidityTEE', liquidityTEE.toString())
+    console.log('totalSupplyTEE', totalSupplyTEE.toString())
+    console.log('NaiveDTTExpectedTEE', NaiveDTTExpectedTEE.toString())
+    console.log('WETHExpectedTEE', WETHExpectedTEE.toString())    
+
+
+    await WETHPairTTE.approve(router.address, MaxUint256)
+    await router.removeLiquidityETHWithDefaltionTokens(
+      DTT.address,
+      0,  //liquidityTTE,
+      liquidityTEE,
+      0, //NaiveDTTExpectedTTE,  //.add(NaiveDTTExpectedTEE),
+      0, // WETHExpectedTTE,      //.add(WETHExpectedTEE),
+      pairOwner.address,
+      MaxUint256,
+      overrides
+    )
+    
+    {
+      /*
+      const DTTInPairTTE = await DTT.balanceOf(WETHPairTTE.address)
+      const WETHInPairTTE = await WETH.balanceOf(WETHPairTTE.address)
+      const liquidityTTE = await WETHPairTTE.balanceOf(wallet.address)
+      const totalSupplyTTE = await WETHPairTTE.totalSupply()
+      const NaiveDTTExpectedTTE = DTTInPairTTE.mul(liquidityTTE).div(totalSupplyTTE)
+      const WETHExpectedTTE = WETHInPairTTE.mul(liquidityTTE).div(totalSupplyTTE)
+  
+      console.log('DTTInPairTTE', DTTInPairTTE.toString())
+      console.log('WETHInPairTTE', WETHInPairTTE.toString())
+      console.log('liquidityTTE', liquidityTTE.toString())
+      console.log('totalSupplyTTE', totalSupplyTTE.toString())
+      console.log('NaiveDTTExpectedTTE', NaiveDTTExpectedTTE.toString())
+      console.log('WETHExpectedTTE', WETHExpectedTTE.toString())    
+  */
+      const DTTInPairTEE = await DTT.balanceOf(WETHPairTEE.address)
+      const WETHInPairTEE = await WETH.balanceOf(WETHPairTEE.address)
+      const liquidityTEE = await WETHPairTEE.balanceOf(wallet.address)
+      const totalSupplyTEE = await WETHPairTEE.totalSupply()
+      const NaiveDTTExpectedTEE = DTTInPairTEE.mul(liquidityTEE).div(totalSupplyTEE)
+      const WETHExpectedTEE = WETHInPairTEE.mul(liquidityTEE).div(totalSupplyTEE)
+  
+      console.log('DTTInPairTEE', DTTInPairTEE.toString())
+      console.log('WETHInPairTEE', WETHInPairTEE.toString())
+      console.log('liquidityTEE', liquidityTEE.toString())
+      console.log('totalSupplyTEE', totalSupplyTEE.toString())
+      console.log('NaiveDTTExpectedTEE', NaiveDTTExpectedTEE.toString())
+      console.log('WETHExpectedTEE', WETHExpectedTEE.toString())    
+   
+    }
+
+  })
+
+
+  it('removeLiquidityETHWithPermitWithDefaltionTokens', async () => {
     const DTTAmount = expandTo18Decimals(1)
       .mul(100)
       .div(99)
@@ -271,7 +421,7 @@ describe('FeSwapRouter: fee-on-transfer tokens', () => {
     const liquidity = await WETHPairTTE.balanceOf(wallet.address)
     await WETHPairTTE.approve(router.address, MaxUint256)
 
-    await router.removeLiquidityETHWithPermitSupportingFeeOnTransferTokens(
+    await router.removeLiquidityETHWithPermitWithDefaltionTokens(
       DTT.address,
       liquidity,
       0,
@@ -401,8 +551,8 @@ describe('FeSwapRouter: fee-on-transfer tokens: reloaded', () => {
     mnemonic: 'horn horn horn horn horn horn horn horn horn horn horn horn',
     gasLimit: 9999999
   })
-  const [wallet, feeTo, pairCreator] = provider.getWallets()
-  const loadFixture = createFixtureLoader(provider, [wallet, feeTo, pairCreator])
+  const [wallet, feeTo, pairOwner] = provider.getWallets()
+  const loadFixture = createFixtureLoader(provider, [wallet, feeTo, pairOwner])
 
   let DTT: Contract
   let DTT2: Contract
@@ -412,15 +562,15 @@ describe('FeSwapRouter: fee-on-transfer tokens: reloaded', () => {
   beforeEach(async function() {
     const fixture = await loadFixture(v2Fixture)
 
-    router = fixture.routerFS
+    router = fixture.routerFeswa
 
     DTT = await deployContract(wallet, DeflatingERC20, [expandTo18Decimals(10000)])
     DTT2 = await deployContract(wallet, DeflatingERC20, [expandTo18Decimals(10000)])
 
     // make a DTT<>WETH pair
-    await fixture.factoryFS.createPair(DTT.address, DTT2.address, wallet.address, overrides)
-    const pairAddressDTT = await fixture.factoryFS.getPair(DTT.address, DTT2.address)
-    const pairAddressDTT2 = await fixture.factoryFS.getPair(DTT2.address, DTT.address)    
+    await fixture.factoryFeswa.createUpdatePair(DTT.address, DTT2.address, wallet.address, overrides)
+    const pairAddressDTT = await fixture.factoryFeswa.getPair(DTT.address, DTT2.address)
+    const pairAddressDTT2 = await fixture.factoryFeswa.getPair(DTT2.address, DTT.address)    
 
     pairDTT = new Contract(pairAddressDTT, JSON.stringify(FeSwapPair.abi), provider).connect(wallet)
     pairDTT2 = new Contract(pairAddressDTT2, JSON.stringify(FeSwapPair.abi), provider).connect(wallet)
