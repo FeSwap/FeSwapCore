@@ -2,5 +2,5 @@
 pragma solidity =0.6.12;
 
 interface IFeSwapCallee {
-    function FeSwapCall(address sender, uint amount0, uint amount1, bytes calldata data) external;
+    function FeSwapCall(address sender, uint amountOut, bytes calldata data) external;
 }

@@ -16,7 +16,7 @@ library FeSwapLibrary {
                 hex'ff',
                 factory,
                 keccak256(abi.encodePacked(tokenA, tokenB)),
-                hex'da9867c3cd064a962d0608268aa1938ff7074df251331ee2cfa918108d0a999b' // init code hash // save 9916 gas
+                hex'1211a5cd36092c6c5abda51c554d2004ce917a4512b2c358ce890c5d0f9f125f' // init code hash // save 9916 gas
             ))));
 //        pair = IFeSwapFactory(factory).getPair(tokenA,tokenB); 
     }
@@ -58,7 +58,7 @@ library FeSwapLibrary {
         (uint reserveInMate, uint reserveOutMate, address PairMate) = FeSwapLibrary.getReserves(factory, tokenB, tokenA); 
         uint productIn = uint(reserveIn).mul(reserveInMate);
         uint productOut = uint(reserveOut).mul(reserveOutMate);
-        if(productIn.mul(1000) >= productOut.mul(1010)){
+        if(productIn.mul(1000) > productOut.mul(1010)){                 
             uint ArbitatrageIn = productIn.sub(productOut);
             uint totalTokenA = (uint(reserveIn).add(reserveOutMate)).mul(2);               
             uint totalTokenB = (uint(reserveOut).add(reserveInMate)).mul(2);

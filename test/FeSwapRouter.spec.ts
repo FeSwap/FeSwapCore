@@ -506,7 +506,7 @@ describe('FeSwapRouter: Deflation Token Test', () => {
       .to.emit(WETHPairTEE, 'Sync')
       .withArgs(ETHAmount.add(swapAmount), (DTTAmount.mul(99).div(100)).sub(expectedOutputAmount))
       .to.emit(WETHPairTEE, 'Swap')
-      .withArgs(router.address, swapAmount, 0, 0, expectedOutputAmount, wallet.address)
+      .withArgs(router.address, swapAmount, 0, expectedOutputAmount, wallet.address)
   })
   
 
@@ -539,7 +539,7 @@ describe('FeSwapRouter: Deflation Token Test', () => {
       .to.emit(WETHPairTTE, 'Sync')
       .withArgs((DTTAmount.add(swapAmount)).mul(99).div(100), ETHAmount.sub(expectedOutputAmount))
       .to.emit(WETHPairTTE, 'Swap')
-      .withArgs(router.address, (swapAmount.mul(99)).div(100), 0, 0, expectedOutputAmount, router.address)
+      .withArgs(router.address, (swapAmount.mul(99)).div(100), 0, expectedOutputAmount, router.address)
       .to.emit(WETH, 'Withdrawal')
       .withArgs(router.address, expectedOutputAmount)
   })
@@ -625,6 +625,6 @@ describe('FeSwapRouter: fee-on-transfer tokens: reloaded', () => {
       .to.emit(pairDTT, 'Sync')
       .withArgs((DTTAmount.add(swapAmount)).mul(99).div(100), (DTT2Amount.mul(99).div(100)).sub(expectedOutputAmount))
       .to.emit(pairDTT, 'Swap')
-      .withArgs(router.address, swapAmount.mul(99).div(100), 0, 0, expectedOutputAmount, wallet.address)
+      .withArgs(router.address, swapAmount.mul(99).div(100), 0, expectedOutputAmount, wallet.address)
   })
 })

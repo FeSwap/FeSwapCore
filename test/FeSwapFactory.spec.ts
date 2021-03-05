@@ -143,13 +143,13 @@ describe('FeSwapFactory', () => {
     await factory.setRouterFeSwap( wallet.address)
     let tx = await factory.createUpdatePair(tokenA.address, tokenB.address, wallet.address)
     let receipt = await tx.wait()
-    expect(receipt.gasUsed).to.eq(5226291)        // 5203824, 4913779,   UniSwap: 2512920
+    expect(receipt.gasUsed).to.eq(5223877)        // 5219858, 4913779,   UniSwap: 2512920
 
     // update owneer
     tx = await factory.createUpdatePair(tokenA.address, tokenB.address, other.address)
     receipt = await tx.wait()
     expect(receipt.gasUsed).to.eq(48059)        // 48059
-  })
+  }).retries(3)
 
   it('setFeeTo', async () => {
     await expect(factory.connect(other).setFeeTo(other.address)).to.be.revertedWith('FeSwap: FORBIDDEN')

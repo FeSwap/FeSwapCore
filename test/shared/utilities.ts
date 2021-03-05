@@ -135,3 +135,41 @@ export function encodePrice(reserve0: BigNumber, reserve1: BigNumber) {
   return [reserve1.mul(bigNumberify(2).pow(112)).div(reserve0), reserve0.mul(bigNumberify(2).pow(112)).div(reserve1)]
 }
 
+
+export function  sqrt(y: BigNumber): BigNumber {
+  let x: BigNumber
+  let z: BigNumber
+  
+  if (y.gt(3)) {
+    z = y;
+    x = y.div(2).add(1);
+    while (x.lt(z)) {
+      z = x;
+      x = y.div(x).add(x).div(2);
+    }
+  } else if (y.isZero()) {
+    z = bigNumberify(0);
+  } else {
+    z = bigNumberify(1);
+  }
+  return z
+}
+  
+/* 
+  library Babylonian {
+    function sqrt(uint y) internal pure returns (uint z) {
+        if (y > 3) {
+            z = y;
+            uint x = y / 2 + 1;
+            while (x < z) {
+                z = x;
+                x = (y / x + x) / 2;
+            }
+        } else if (y != 0) {
+            z = 1;
+        }
+        // else z = 0
+    }
+}
+*/
+

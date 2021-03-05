@@ -50,11 +50,6 @@ describe('FeSwapAddLiquidity', () => {
     })
 
     describe("FeSwapAddLiquidity Basic", () => {
-      it('factory, WETH', async () => {
-        expect(await router.factory()).to.eq(factory.address)
-        expect(await router.WETH()).to.eq(WETH.address)
-      })
-
       it('addLiquidity: Ration Error', async () => {
         const tokenAAmount = expandTo18Decimals(1)
         const tokenBAmount = expandTo18Decimals(4)
@@ -330,7 +325,7 @@ describe('FeSwapAddLiquidity', () => {
           )
 
         const receipt = await tx.wait()
-        expect(receipt.gasUsed).to.eq(233503)    // 233241, 228994  Uniswap 213957
+        expect(receipt.gasUsed).to.eq(233608)    // 233503, 228994  Uniswap 213957
       }).retries(3)
 
       it('Add Liquidity GAS usage： Double Pool ', async () => {
@@ -352,7 +347,7 @@ describe('FeSwapAddLiquidity', () => {
           )
 
         const receipt = await tx.wait()
-        expect(receipt.gasUsed).to.eq(434183)    // 433922, 425406
+        expect(receipt.gasUsed).to.eq(434393)    // 433922, 425406
       }).retries(3)
 
     })
@@ -587,7 +582,7 @@ describe('FeSwapAddLiquidity', () => {
           )
 
         const receipt = await tx.wait()
-        expect(receipt.gasUsed).to.eq(239992)    // 235746, Uniswap 220495
+        expect(receipt.gasUsed).to.eq(240097)    // 235746, Uniswap 220495
       }).retries(3)
 
       it('Add-Liquidity-ETH GAS usage： Double Pool ', async () => {
@@ -606,7 +601,7 @@ describe('FeSwapAddLiquidity', () => {
           )
 
         const receipt = await tx.wait()
-        expect(receipt.gasUsed).to.eq(452567)  //452311,  443817
+        expect(receipt.gasUsed).to.eq(452777)  //452311,  443817
       }).retries(3)
 
     })  

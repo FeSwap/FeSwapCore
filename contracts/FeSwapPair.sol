@@ -60,7 +60,6 @@ contract FeSwapPair is IFeSwapPair, FeSwapERC20 {
         address indexed sender,
         uint amount0In,
         uint amount1In,
-        uint amount0Out,
         uint amount1Out,
         address indexed to
     );
@@ -109,7 +108,7 @@ contract FeSwapPair is IFeSwapPair, FeSwapERC20 {
             if (_kLast != 0) {
                 uint rootK = Math.sqrt(uint(_reserveIn).mul(_reserveOut));
                 uint rootKLast = Math.sqrt(_kLast);
-                if (rootK > rootKLast) {
+                if (rootK > rootKLast.add(10)) {     // ignore swap dust increase, select 10 randomly 
                     uint numerator = totalSupply.mul(rootK.sub(rootKLast)).mul(6);
                     uint denominator = rootK.mul(11).add(rootKLast);
                     uint liquidityCreator = numerator / (denominator.mul(10));
@@ -155,8 +154,7 @@ contract FeSwapPair is IFeSwapPair, FeSwapERC20 {
     // this low-level function should be called from a contract which performs important safety checks
     function burn(address to) external lock override returns (uint amountIn, uint amountOut) {
         (uint112 _reserveIn, uint112 _reserveOut,) = getReserves();     // gas savings
-        address _tokenIn = tokenIn;                                     // gas savings
-        address _tokenOut = tokenOut;                                   // gas savings
+        (address _tokenIn, address _tokenOut) = (tokenIn, tokenOut);    // gas savings
         uint balanceIn = IERC20(_tokenIn).balanceOf(address(this));
         uint balanceOut = IERC20(_tokenOut).balanceOf(address(this));
         uint liquidity = balanceOf[address(this)];                      // liquidity to remove
@@ -174,7 +172,7 @@ contract FeSwapPair is IFeSwapPair, FeSwapERC20 {
         balanceOut = IERC20(_tokenOut).balanceOf(address(this));
 
         _update(balanceIn, balanceOut, _reserveIn, _reserveOut);
-        if (feeOn) kLast = uint(reserveIn).mul(reserveOut); // reserve0 and reserve1 are up-to-date
+        if (feeOn) kLast = uint(reserveIn).mul(reserveOut);     // reserve0 and reserve1 are up-to-date
         emit Burn(msg.sender, amountIn, amountOut, to);
     }
 
@@ -186,25 +184,25 @@ contract FeSwapPair is IFeSwapPair, FeSwapERC20 {
 
         uint balanceIn;
         uint balanceOut;
-        {   // scope for _token{0,1}, avoids stack too deep errors
+        {   // scope for {_tokenIn, _tokenOut}, avoids stack too deep errors
             (address _tokenIn, address _tokenOut) = (tokenIn, tokenOut);            // gas savings
             require(to != _tokenIn && to != _tokenOut, 'FeSwap: INVALID_TO');
             _safeTransfer(_tokenOut, to, amountOut); 
-            if (data.length > 0) IFeSwapCallee(to).FeSwapCall(msg.sender, 0, amountOut, data);
+            if (data.length > 0) IFeSwapCallee(to).FeSwapCall(msg.sender, amountOut, data);
             balanceIn = IERC20(_tokenIn).balanceOf(address(this));
             balanceOut = IERC20(_tokenOut).balanceOf(address(this));
         }
 
         uint amountInTokenIn = balanceIn > _reserveIn ? balanceIn - _reserveIn : 0;
-        uint amountInTokenOut = balanceOut > _reserveOut - amountOut ? balanceOut - (_reserveOut - amountOut) : 0;  // to support Flash Swap
+        uint amountInTokenOut = balanceOut > (_reserveOut - amountOut) 
+                                           ? balanceOut - (_reserveOut - amountOut) : 0;  // to support Flash Swap
         require(amountInTokenIn > 0 || amountInTokenOut > 0, 'FeSwap: INSUFFICIENT_INPUT_AMOUNT');
-        {   // scope for reserve{0,1}Adjusted, avoids stack too deep errors
-            uint balanceOutAdjusted = balanceOut.mul(1000).sub(amountInTokenOut.mul(3));    // Fee for Flash Swap: 0.3%
-            require(balanceIn.mul(balanceOutAdjusted) >= uint(_reserveIn).mul(_reserveOut).mul(1000), 'FeSwap: K');
-        }
+
+        uint balanceOutAdjusted = balanceOut.mul(1000).sub(amountInTokenOut.mul(3));      // Fee for Flash Swap: 0.3% from tokenOut
+        require(balanceIn.mul(balanceOutAdjusted) >= uint(_reserveIn).mul(_reserveOut).mul(1000), 'FeSwap: K');
 
         _update(balanceIn, balanceOut, _reserveIn, _reserveOut);
-        emit Swap(msg.sender, amountInTokenIn, amountInTokenOut, 0, amountOut, to);
+        emit Swap(msg.sender, amountInTokenIn, amountInTokenOut, amountOut, to);
     }
 
     // force balances to match reserves

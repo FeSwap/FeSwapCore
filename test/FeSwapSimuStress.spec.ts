@@ -77,8 +77,8 @@ describe('FeSwapSimuStress: ', () => {
         tokenB = fixture.tokenB
         WETH = fixture.WETH
         WETHPartner = fixture.WETHPartner
-        factory = fixture.factoryFS
-        router = fixture.routerFS
+        factory = fixture.factoryFeswa
+        router = fixture.routerFeswa
         pairAAB = fixture.pairAAB
         pairABB = fixture.pairABB      
         WETHPairTTE = fixture.WETHPairTTE
@@ -163,7 +163,7 @@ describe('FeSwapSimuStress: ', () => {
       .to.emit(pairAAB, 'Sync')
       .withArgs(tokenAAmount.add(swapAmount), tokenBAmount.sub(expectedOutputAmount))
       .to.emit(pairAAB, 'Swap')
-      .withArgs(router.address, swapAmount, 0, 0, expectedOutputAmount, wallet.address)
+      .withArgs(router.address, swapAmount, 0, expectedOutputAmount, wallet.address)
     
     expect(await tokenA.balanceOf(pairAAB.address)).to.eq('1010000000000000000000')
     expect(await tokenB.balanceOf(pairAAB.address)).to.eq( '990099009900990099010')
@@ -203,7 +203,7 @@ describe('FeSwapSimuStress: ', () => {
       .to.emit(pairABB, 'Sync')
       .withArgs(BalanceBAB.sub(arbitrageLB).add(swapAmount), BalanceBAA.add(arbitrageLA).sub(expectedOutputAmountA))
       .to.emit(pairABB, 'Swap')
-      .withArgs(router.address, swapAmount, 0, 0, expectedOutputAmountA, wallet.address)
+      .withArgs(router.address, swapAmount, 0, expectedOutputAmountA, wallet.address)
 
       const AAmount = expandTo18Decimals(10)
       const BAmount = expandTo18Decimals(10)

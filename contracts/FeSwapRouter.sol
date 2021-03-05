@@ -294,11 +294,7 @@ contract FeSwapRouter is IFeSwapRouter{
     }
 
     function swapExactETHForTokens(uint amountOutMin, address[] calldata path, address to, uint deadline)
-        external
-        virtual
-        override
-        payable
-        ensure(deadline)
+        external virtual override payable ensure(deadline)
         returns (uint[] memory amounts)
     {
         require(path[0] == WETH, 'FeSwapRouter: INVALID_PATH');
@@ -311,10 +307,7 @@ contract FeSwapRouter is IFeSwapRouter{
     }
 
     function swapTokensForExactETH(uint amountOut, uint amountInMax, address[] calldata path, address to, uint deadline)
-        external
-        virtual
-        override
-        ensure(deadline)
+        external virtual override ensure(deadline)
         returns (uint[] memory amounts)
     {
         require(path[path.length - 1] == WETH, 'FeSwapRouter: INVALID_PATH');
@@ -328,10 +321,7 @@ contract FeSwapRouter is IFeSwapRouter{
     }
 
     function swapExactTokensForETH(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline)
-        external
-        virtual
-        override
-        ensure(deadline)
+        external virtual override ensure(deadline)
         returns (uint[] memory amounts)
     {
         require(path[path.length - 1] == WETH, 'FeSwapRouter: INVALID_PATH');
@@ -345,11 +335,7 @@ contract FeSwapRouter is IFeSwapRouter{
     }
 
     function swapETHForExactTokens(uint amountOut, address[] calldata path, address to, uint deadline)
-        external
-        virtual
-        override
-        payable
-        ensure(deadline)
+        external virtual override payable ensure(deadline)
         returns (uint[] memory amounts)
     {
         require(path[0] == WETH, 'FeSwapRouter: INVALID_PATH');
