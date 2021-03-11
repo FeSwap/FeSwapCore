@@ -30,7 +30,7 @@
         "typescript": "^3.7.3",
         "ethereumjs-util": "^6.2.0",
         "ethereum-waffle": "2.5.1"
-    },
+     },
     "scripts": {
         "lint": "yarn prettier ./test/*.ts --check",
         "lint:fix": "yarn prettier ./test/*.ts --write",

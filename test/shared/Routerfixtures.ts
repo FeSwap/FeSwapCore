@@ -1,13 +1,12 @@
 import { Wallet, Contract } from 'ethers'
 import { Web3Provider } from 'ethers/providers'
 import { deployContract } from 'ethereum-waffle'
-import { BigNumber, bigNumberify, keccak256, solidityPack } from 'ethers/utils'
-import { MaxUint256 } from 'ethers/constants'
+import { keccak256, solidityPack } from 'ethers/utils'
+import { AddressZero, WeiPerEther, MaxUint256 } from 'ethers/constants'
 
 import { expandTo18Decimals, mineBlock } from './utilities'
 
 import ERC20 from '../../build/ERC20.json'
-import FeSwapSimu from '../../build/FeSwapSimu.json'
 import FeSwapFactory from '../../build/FeSwapFactory.json'
 import FeSwapPair from '../../build/FeSwapPair.json'
 

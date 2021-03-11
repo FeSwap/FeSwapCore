@@ -52,7 +52,7 @@ describe('FeSwapFactory', () => {
       .to.be.revertedWith('FeSwap: IDENTICAL_ADDRESSES')                    // FeSwap: IDENTICAL_ADDRESSES
 
     await expect(factory.connect(other1).createUpdatePair(tokenA.address, tokenB.address, other1.address))
-      .to.be.revertedWith('FeSwap: ZERO_ADDRESS')                           // FeSwap: ZERO_ADDRESS
+      .to.be.revertedWith('FeSwap: ZERO_ADDRESS')                           // FeSwap: ZERO_ADDRESS, routerFeSwap is 0
 
     await factory.setRouterFeSwap(other.address)  
     await expect(factory.connect(other1).createUpdatePair(tokenA.address, tokenB.address, other1.address))
@@ -66,7 +66,7 @@ describe('FeSwapFactory', () => {
 
     await factory.createUpdatePair(tokenA.address, tokenB.address, wallet.address)
     
-    // simulate creating from router
+    // simulate creating from router ( other is simulated as routerFeSwap)
     await factory.connect(other).createUpdatePair(tokenA.address, tokenC.address, other.address)     
   })  
 
@@ -122,6 +122,15 @@ describe('FeSwapFactory', () => {
     await expect(factory.connect(other1).createUpdatePair(tokenA.address, tokenC.address, other.address))
       .to.emit(factory, 'PairCreated')
       .withArgs(tokenA.address, tokenC.address, create2AddressAAC, create2AddressACC, bigNumberify(4))
+
+    expect(await factory.getPair(tokenA.address, tokenB.address)).to.eq(create2AddressAAB)
+    expect(await factory.getPair(tokenB.address, tokenA.address)).to.eq(create2AddressABB)
+    expect(await factory.getPair(tokenA.address, tokenC.address)).to.eq(create2AddressAAC)
+    expect(await factory.getPair(tokenC.address, tokenA.address)).to.eq(create2AddressACC)
+    expect(await factory.allPairs(0)).to.eq(create2AddressAAB)
+    expect(await factory.allPairs(1)).to.eq(create2AddressABB)  
+    expect(await factory.allPairs(2)).to.eq(create2AddressAAC)
+    expect(await factory.allPairs(3)).to.eq(create2AddressACC)    
   })
 
   it('createUpdatePair: Update owner of liquidity pools', async () => {

@@ -236,7 +236,7 @@ describe('FeSwapRemoveLiquidity', () => {
           )
 
           const receipt = await tx.wait()
-          expect(receipt.gasUsed).to.eq(291131)    //290987, 246129 258878  Uniswap: 253427
+          expect(receipt.gasUsed).to.eq(291066)    //291131, 246129 258878  Uniswap: 253427
       }).retries(3) 
 
       it(`removeLiquidity ratio AAB: 100-0 `, async () => {
@@ -307,7 +307,7 @@ describe('FeSwapRemoveLiquidity', () => {
             overrides
           )
           const receipt = await tx.wait()
-          expect(receipt.gasUsed).to.eq(161902)    // 161830, 139258,  246129,  Uniswap: ???
+          expect(receipt.gasUsed).to.eq(119833)    // 161902, 139258,  246129,  Uniswap: ???
       }).retries(3) 
 
       it(`removeLiquidity ratio AAB: 0-100 `, async () => {
@@ -601,7 +601,7 @@ describe('FeSwapRemoveLiquidity', () => {
           )
 
           const receipt = await tx.wait()
-          expect(receipt.gasUsed).to.eq(232543)        // 316407, 271701, 284451 : Uniswap: 194881
+          expect(receipt.gasUsed).to.eq(316529)        // 232543, 271701, 284451 : Uniswap: 194881
       }).retries(3) 
     
       it(`removeLiquidityETH TTE ratio: 100-0 `, async () => {
@@ -677,7 +677,7 @@ describe('FeSwapRemoveLiquidity', () => {
             overrides
           )
           const receipt = await tx.wait()
-          expect(receipt.gasUsed).to.eq(144677)        // 186609,   164124,  284451 : Uniswap: 194881
+          expect(receipt.gasUsed).to.eq(186659)        // 186609,   144677,  284451 : Uniswap: 194881
       }).retries(3) 
 
       it(`removeLiquidityTEE ratio: 0-100 `, async () => {

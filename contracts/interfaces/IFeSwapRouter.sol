@@ -8,11 +8,11 @@ interface IFeSwapRouter {
     function feswaNFT() external pure returns (address);
     function WETH() external pure returns (address);
 
-   function ManageFeswaPair(
+    function ManageFeswaPair(
         uint256 tokenID,
         address pairOwner  
     ) external returns (address pairAAB, address pairABB);
-   
+
     function addLiquidity(
         address tokenA,
         address tokenB,
@@ -69,7 +69,7 @@ interface IFeSwapRouter {
         uint deadline,
         bool approveMax, uint8 v, bytes32 r, bytes32 s
     ) external returns (uint amountToken, uint amountETH);
-    function removeLiquidityETHWithDefaltionTokens(
+    function removeLiquidityETHFeeOnTransfer(
         address token,
         uint liquidityTTE,
         uint liquidityTEE,        
@@ -78,7 +78,7 @@ interface IFeSwapRouter {
         address to,
         uint deadline
     ) external returns (uint amountETH);
-    function removeLiquidityETHWithPermitWithDefaltionTokens(
+    function removeLiquidityETHWithPermitFeeOnTransfer(
         address token,
         uint liquidityTTE,
         uint liquidityTEE,        
@@ -116,20 +116,20 @@ interface IFeSwapRouter {
         payable
         returns (uint[] memory amounts);     
 
-    function swapExactTokensForTokensSupportingFeeOnTransferTokens(
+    function swapExactTokensForTokensFeeOnTransfer(
         uint amountIn,
         uint amountOutMin,
         address[] calldata path,
         address to,
         uint deadline
     ) external;
-    function swapExactETHForTokensSupportingFeeOnTransferTokens(
+    function swapExactETHForTokensFeeOnTransfer(
         uint amountOutMin,
         address[] calldata path,
         address to,
         uint deadline
     ) external payable;
-    function swapExactTokensForETHSupportingFeeOnTransferTokens(
+    function swapExactTokensForETHFeeOnTransfer(
         uint amountIn,
         uint amountOutMin,
         address[] calldata path,

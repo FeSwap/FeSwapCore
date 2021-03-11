@@ -128,7 +128,7 @@ describe('FeSwapRouter', () => {
 
     const path = [tokenA.address, tokenB.address]
     expect(await router.estimateAmountsOut(expandTo18Decimals(2), path))
-                    .to.deep.eq([expandTo18Decimals(2), expandTo18Decimals(1000).div(502)])  // = 2*50e18/502
+                    .to.deep.eq([expandTo18Decimals(2), expandTo18Decimals(1000).div(502)])  // = 2*500e18/502
   })
 
   it('getAmountsOutTripple', async () => {
@@ -266,7 +266,7 @@ describe('FeSwapRouter: Deflation Token Test', () => {
     })
   }
 
-  it('removeLiquidityETHWithDefaltionTokens: Single Pool Liquidity', async () => {
+  it('removeLiquidityETHFeeOnTransfer: Single Pool Liquidity', async () => {
     const DTTAmount = expandTo18Decimals(100)
     const ETHAmount = expandTo18Decimals(4)
 
@@ -280,15 +280,8 @@ describe('FeSwapRouter: Deflation Token Test', () => {
     const NaiveDTTExpected = DTTInPair.mul(liquidity).div(totalSupply)
     const WETHExpected = WETHInPair.mul(liquidity).div(totalSupply)
 
-    console.log('DTTInPair', DTTInPair.toString())
-    console.log('WETHInPair', WETHInPair.toString())
-    console.log('liquidity', liquidity.toString())
-    console.log('totalSupply', totalSupply.toString())
-    console.log('NaiveDTTExpected', NaiveDTTExpected.toString())
-    console.log('WETHExpected', WETHExpected.toString())    
- 
     await WETHPairTTE.approve(router.address, MaxUint256)
-    await router.removeLiquidityETHWithDefaltionTokens(
+    await router.removeLiquidityETHFeeOnTransfer(
       DTT.address,
       liquidity,
       0,
@@ -298,47 +291,15 @@ describe('FeSwapRouter: Deflation Token Test', () => {
       MaxUint256,
       overrides
     )
-    
-    {
-    const DTTInPair = await DTT.balanceOf(WETHPairTTE.address)
-    const WETHInPair = await WETH.balanceOf(WETHPairTTE.address)
-    const liquidity = await WETHPairTTE.balanceOf(pairOwner.address)
-    const totalSupply = await WETHPairTTE.totalSupply()
-    const NaiveDTTExpected = DTTInPair.mul(liquidity).div(totalSupply)
-    const WETHExpected = WETHInPair.mul(liquidity).div(totalSupply)
-
-    console.log('DTTInPair', DTTInPair.toString())
-    console.log('WETHInPair', WETHInPair.toString())
-    console.log('liquidity', liquidity.toString())
-    console.log('totalSupply', totalSupply.toString())
-    console.log('NaiveDTTExpected', NaiveDTTExpected.toString())
-    console.log('WETHExpected', WETHExpected.toString()) 
-    }
-
   })
 
-
-  it('removeLiquidityETHWithDefaltionTokens: Double Pool Liquidity', async () => {
+  it('removeLiquidityETHFeeOnTransfer: Double Pool Liquidity', async () => {
     const DTTAmount = expandTo18Decimals(100)
     const ETHAmount = expandTo18Decimals(4)
 
     const ratio = 0  
     await addLiquidity(DTTAmount, ETHAmount, ratio)
-/*
-    const DTTInPairTTE = await DTT.balanceOf(WETHPairTTE.address)
-    const WETHInPairTTE = await WETH.balanceOf(WETHPairTTE.address)
-    const liquidityTTE = await WETHPairTTE.balanceOf(wallet.address)
-    const totalSupplyTTE = await WETHPairTTE.totalSupply()
-    const NaiveDTTExpectedTTE = DTTInPairTTE.mul(liquidityTTE).div(totalSupplyTTE)
-    const WETHExpectedTTE = WETHInPairTTE.mul(liquidityTTE).div(totalSupplyTTE)
-
-    console.log('DTTInPairTTE', DTTInPairTTE.toString())
-    console.log('WETHInPairTTE', WETHInPairTTE.toString())
-    console.log('liquidityTTE', liquidityTTE.toString())
-    console.log('totalSupplyTTE', totalSupplyTTE.toString())
-    console.log('NaiveDTTExpectedTTE', NaiveDTTExpectedTTE.toString())
-    console.log('WETHExpectedTTE', WETHExpectedTTE.toString())    
-*/
+  
     const DTTInPairTEE = await DTT.balanceOf(WETHPairTEE.address)
     const WETHInPairTEE = await WETH.balanceOf(WETHPairTEE.address)
     const liquidityTEE = await WETHPairTEE.balanceOf(wallet.address)
@@ -346,62 +307,20 @@ describe('FeSwapRouter: Deflation Token Test', () => {
     const NaiveDTTExpectedTEE = DTTInPairTEE.mul(liquidityTEE).div(totalSupplyTEE)
     const WETHExpectedTEE = WETHInPairTEE.mul(liquidityTEE).div(totalSupplyTEE)
 
-    console.log('DTTInPairTEE', DTTInPairTEE.toString())
-    console.log('WETHInPairTEE', WETHInPairTEE.toString())
-    console.log('liquidityTEE', liquidityTEE.toString())
-    console.log('totalSupplyTEE', totalSupplyTEE.toString())
-    console.log('NaiveDTTExpectedTEE', NaiveDTTExpectedTEE.toString())
-    console.log('WETHExpectedTEE', WETHExpectedTEE.toString())    
-
-
-    await WETHPairTTE.approve(router.address, MaxUint256)
-    await router.removeLiquidityETHWithDefaltionTokens(
+    await WETHPairTEE.approve(router.address, MaxUint256)
+    await router.removeLiquidityETHFeeOnTransfer(
       DTT.address,
-      0,  //liquidityTTE,
+      0, 
       liquidityTEE,
-      0, //NaiveDTTExpectedTTE,  //.add(NaiveDTTExpectedTEE),
-      0, // WETHExpectedTTE,      //.add(WETHExpectedTEE),
+      NaiveDTTExpectedTEE,
+      WETHExpectedTEE,
       pairOwner.address,
       MaxUint256,
       overrides
     )
-    
-    {
-      /*
-      const DTTInPairTTE = await DTT.balanceOf(WETHPairTTE.address)
-      const WETHInPairTTE = await WETH.balanceOf(WETHPairTTE.address)
-      const liquidityTTE = await WETHPairTTE.balanceOf(wallet.address)
-      const totalSupplyTTE = await WETHPairTTE.totalSupply()
-      const NaiveDTTExpectedTTE = DTTInPairTTE.mul(liquidityTTE).div(totalSupplyTTE)
-      const WETHExpectedTTE = WETHInPairTTE.mul(liquidityTTE).div(totalSupplyTTE)
-  
-      console.log('DTTInPairTTE', DTTInPairTTE.toString())
-      console.log('WETHInPairTTE', WETHInPairTTE.toString())
-      console.log('liquidityTTE', liquidityTTE.toString())
-      console.log('totalSupplyTTE', totalSupplyTTE.toString())
-      console.log('NaiveDTTExpectedTTE', NaiveDTTExpectedTTE.toString())
-      console.log('WETHExpectedTTE', WETHExpectedTTE.toString())    
-  */
-      const DTTInPairTEE = await DTT.balanceOf(WETHPairTEE.address)
-      const WETHInPairTEE = await WETH.balanceOf(WETHPairTEE.address)
-      const liquidityTEE = await WETHPairTEE.balanceOf(wallet.address)
-      const totalSupplyTEE = await WETHPairTEE.totalSupply()
-      const NaiveDTTExpectedTEE = DTTInPairTEE.mul(liquidityTEE).div(totalSupplyTEE)
-      const WETHExpectedTEE = WETHInPairTEE.mul(liquidityTEE).div(totalSupplyTEE)
-  
-      console.log('DTTInPairTEE', DTTInPairTEE.toString())
-      console.log('WETHInPairTEE', WETHInPairTEE.toString())
-      console.log('liquidityTEE', liquidityTEE.toString())
-      console.log('totalSupplyTEE', totalSupplyTEE.toString())
-      console.log('NaiveDTTExpectedTEE', NaiveDTTExpectedTEE.toString())
-      console.log('WETHExpectedTEE', WETHExpectedTEE.toString())    
-   
-    }
-
   })
 
-
-  it('removeLiquidityETHWithPermitWithDefaltionTokens', async () => {
+  it('removeLiquidityETHWithPermitFeeOnTransfer', async () => {
     const DTTAmount = expandTo18Decimals(1)
       .mul(100)
       .div(99)
@@ -421,7 +340,7 @@ describe('FeSwapRouter: Deflation Token Test', () => {
     const liquidity = await WETHPairTTE.balanceOf(wallet.address)
     await WETHPairTTE.approve(router.address, MaxUint256)
 
-    await router.removeLiquidityETHWithPermitWithDefaltionTokens(
+    await router.removeLiquidityETHWithPermitFeeOnTransfer(
       DTT.address,
       liquidity,
       0,
@@ -435,7 +354,7 @@ describe('FeSwapRouter: Deflation Token Test', () => {
     )
   })
 
-    it('swapExactTokensForTokensSupportingFeeOnTransferTokens: DTT -> WETH', async () => {
+    it('swapExactTokensForTokensFeeOnTransfer: DTT -> WETH', async () => {
       const DTTAmount = expandTo18Decimals(5)
         .mul(100)
         .div(99)
@@ -444,7 +363,7 @@ describe('FeSwapRouter: Deflation Token Test', () => {
       await addLiquidity(DTTAmount, ETHAmount,50)
       
       await DTT.approve(router.address, MaxUint256)
-      await router.swapExactTokensForTokensSupportingFeeOnTransferTokens(
+      await router.swapExactTokensForTokensFeeOnTransfer(
         amountIn,
         0,
         [DTT.address, WETH.address],
@@ -456,7 +375,7 @@ describe('FeSwapRouter: Deflation Token Test', () => {
     })
 
     // WETH -> DTT
-    it('swapExactTokensForTokensSupportingFeeOnTransferTokens: WETH -> DTT', async () => {
+    it('swapExactTokensForTokensFeeOnTransfer: WETH -> DTT', async () => {
       const DTTAmount = expandTo18Decimals(5)
       .mul(100)
       .div(99)
@@ -467,7 +386,7 @@ describe('FeSwapRouter: Deflation Token Test', () => {
       await WETH.deposit({ value: amountIn }) // mint WETH
       await WETH.approve(router.address, MaxUint256)
 
-      await router.swapExactTokensForTokensSupportingFeeOnTransferTokens(
+      await router.swapExactTokensForTokensFeeOnTransfer(
         amountIn,
         0,
         [WETH.address, DTT.address],
@@ -478,7 +397,7 @@ describe('FeSwapRouter: Deflation Token Test', () => {
     })
  
   // ETH -> DTT
-  it('swapExactETHForTokensSupportingFeeOnTransferTokens', async () => {
+  it('swapExactETHForTokensFeeOnTransfer', async () => {
     const DTTAmount = expandTo18Decimals(10)
     const ETHAmount = expandTo18Decimals(5)
     const swapAmount = expandTo18Decimals(1)
@@ -487,7 +406,7 @@ describe('FeSwapRouter: Deflation Token Test', () => {
     await addLiquidity(DTTAmount, ETHAmount, 0)
      
     await expect( 
-      router.swapExactETHForTokensSupportingFeeOnTransferTokens(
+      router.swapExactETHForTokensFeeOnTransfer(
         0, [WETH.address, DTT.address],  wallet.address, MaxUint256,
         {
           ...overrides,
@@ -509,9 +428,8 @@ describe('FeSwapRouter: Deflation Token Test', () => {
       .withArgs(router.address, swapAmount, 0, expectedOutputAmount, wallet.address)
   })
   
-
   // DTT -> ETH
-  it('swapExactTokensForETHSupportingFeeOnTransferTokens', async () => {
+  it('swapExactTokensForETHFeeOnTransfer', async () => {
     const DTTAmount = expandTo18Decimals(50)
     const ETHAmount = expandTo18Decimals(10)
     const swapAmount = expandTo18Decimals(1)
@@ -521,7 +439,7 @@ describe('FeSwapRouter: Deflation Token Test', () => {
     await DTT.approve(router.address, MaxUint256)
 
     await expect(
-      router.swapExactTokensForETHSupportingFeeOnTransferTokens(
+      router.swapExactTokensForETHFeeOnTransfer(
         swapAmount,
         0,
         [DTT.address, WETH.address],
@@ -543,6 +461,7 @@ describe('FeSwapRouter: Deflation Token Test', () => {
       .to.emit(WETH, 'Withdrawal')
       .withArgs(router.address, expectedOutputAmount)
   })
+
 })
 
 describe('FeSwapRouter: fee-on-transfer tokens: reloaded', () => {
@@ -596,7 +515,7 @@ describe('FeSwapRouter: fee-on-transfer tokens: reloaded', () => {
     )
   }
 
-  it('swapExactTokensForTokensSupportingFeeOnTransferTokens: DTT -> DTT2', async () => {
+  it('swapExactTokensForTokensFeeOnTransfer: DTT -> DTT2', async () => {
     const DTTAmount = expandTo18Decimals(5)
     const DTT2Amount = expandTo18Decimals(10)
     const swapAmount = expandTo18Decimals(1)
@@ -605,7 +524,7 @@ describe('FeSwapRouter: fee-on-transfer tokens: reloaded', () => {
     await addLiquidity(DTTAmount, DTT2Amount)
 
     await expect(
-      router.swapExactTokensForTokensSupportingFeeOnTransferTokens(
+      router.swapExactTokensForTokensFeeOnTransfer(
         swapAmount,
         0,
         [DTT.address, DTT2.address],
@@ -628,3 +547,4 @@ describe('FeSwapRouter: fee-on-transfer tokens: reloaded', () => {
       .withArgs(router.address, swapAmount.mul(99).div(100), 0, expectedOutputAmount, wallet.address)
   })
 })
+

@@ -45,66 +45,7 @@ describe('FeSwapPair', () => {
     tokenIDMatch = fixture.tokenIDMatch    
    })
 
-  async function pairMintAAB(tokenAAmount: BigNumber, tokenBAmount: BigNumber, expectedLiquidityAAB:BigNumber ) {
-    await tokenA.transfer(pairAAB.address, tokenAAmount)
-    await tokenB.transfer(pairAAB.address, tokenBAmount)
-    await expect(pairAAB.mint(wallet.address, overrides))
-      .to.emit(pairAAB, 'Transfer') 
-      .withArgs(AddressZero, AddressZero, MINIMUM_LIQUIDITY)
-      .to.emit(pairAAB, 'Transfer')
-      .withArgs(AddressZero, wallet.address, expectedLiquidityAAB.sub(MINIMUM_LIQUIDITY))
-      .to.emit(pairAAB, 'Sync')
-      .withArgs(tokenAAmount, tokenBAmount)
-      .to.emit(pairAAB, 'Mint')
-      .withArgs(wallet.address, tokenAAmount, tokenBAmount)
-
-      expect(await pairAAB.totalSupply()).to.eq(expectedLiquidityAAB)
-      expect(await pairAAB.balanceOf(wallet.address)).to.eq(expectedLiquidityAAB.sub(MINIMUM_LIQUIDITY))
-      expect(await tokenA.balanceOf(pairAAB.address)).to.eq(tokenAAmount)
-      expect(await tokenB.balanceOf(pairAAB.address)).to.eq(tokenBAmount)
-      const reservesAAB = await pairAAB.getReserves()
-      expect(reservesAAB[0]).to.eq(tokenAAmount)
-      expect(reservesAAB[1]).to.eq(tokenBAmount)
-  }
-
-  async function pairMintABB(tokenAAmount: BigNumber, tokenBAmount: BigNumber, expectedLiquidityABB:BigNumber ) {
-    await tokenA.transfer(pairABB.address, tokenAAmount)
-    await tokenB.transfer(pairABB.address, tokenBAmount)
-    await expect(pairABB.mint(wallet.address, overrides))
-      .to.emit(pairABB, 'Transfer') 
-      .withArgs(AddressZero, AddressZero, MINIMUM_LIQUIDITY)
-      .to.emit(pairABB, 'Transfer')
-      .withArgs(AddressZero, wallet.address, expectedLiquidityABB.sub(MINIMUM_LIQUIDITY))
-      .to.emit(pairABB, 'Sync')
-      .withArgs(tokenBAmount, tokenAAmount)
-      .to.emit(pairABB, 'Mint')
-      .withArgs(wallet.address, tokenBAmount, tokenAAmount)
-
-      expect(await pairABB.totalSupply()).to.eq(expectedLiquidityABB)
-      expect(await pairABB.balanceOf(wallet.address)).to.eq(expectedLiquidityABB.sub(MINIMUM_LIQUIDITY))
-      expect(await tokenA.balanceOf(pairABB.address)).to.eq(tokenAAmount)
-      expect(await tokenB.balanceOf(pairABB.address)).to.eq(tokenBAmount)
-      const reservesABB = await pairABB.getReserves()
-      expect(reservesABB[0]).to.eq(tokenBAmount)
-      expect(reservesABB[1]).to.eq(tokenAAmount)     
-  }
-
   it('Mint: AAB', async () => {
-  /*  
-    const tokenAAAmount = expandTo18Decimals(9)
-    const tokenBAAmount = expandTo18Decimals(4)
-    const expectedLiquidityAAB = expandTo18Decimals(6)
- 
-    // Test pool(AA, B)
-    await pairMintAAB(tokenAAAmount, tokenBAAmount, expectedLiquidityAAB)
-   
-    const tokenABAmount = expandTo18Decimals(25);
-    const tokenBBAmount = expandTo18Decimals(36);
-    const expectedLiquidityABB = expandTo18Decimals(30);
-
-    // Test pool(A, BB)
-    await pairMintABB(tokenABAmount, tokenBBAmount, expectedLiquidityABB )
-  */
     {
       // Test pool(AA, B)
       const tokenAAmount = expandTo18Decimals(9)
@@ -727,7 +668,7 @@ describe('FeSwapPair', () => {
       expect(feeCreateAAB).to.eq(0)                         
                                     
       const receipt = await tx.wait()
-      expect(receipt.gasUsed).to.eq(114704)      //  165464 157206  //241214
+      expect(receipt.gasUsed).to.eq(114748)      //  165464 157206  //241214
     }).retries(3)
 
     it('Swap Arbitrage Gas：no  feeTo, but pairOwner fee on', async () => {
@@ -767,7 +708,7 @@ describe('FeSwapPair', () => {
       expect(feeCreateAAB).to.eq(0)                         
                                     
       const receipt = await tx.wait()
-      expect(receipt.gasUsed).to.eq(163910)      //  165464 157206  //241214
+      expect(receipt.gasUsed).to.eq(163954)      //  163910 157206  //241214
     }).retries(3)
 
     it('Swap Arbitrage Gas：feeTo on, pairOwner fee off', async () => {
@@ -807,7 +748,7 @@ describe('FeSwapPair', () => {
       expect(feeCreateAAB).to.not.eq(0)                         
                                     
       const receipt = await tx.wait()
-      expect(receipt.gasUsed).to.eq(165536)      //  165464 157206  //241214
+      expect(receipt.gasUsed).to.eq(165580)      //  165536 157206  //241214
     }).retries(3)
 
     it('Swap Arbitrage Gas：feeTo on, pairOwner fee on', async () => {
@@ -847,7 +788,7 @@ describe('FeSwapPair', () => {
       expect(feeCreateAAB).to.not.eq(0)             // "618801031771281"            
                                     
       const receipt = await tx.wait()
-      expect(receipt.gasUsed).to.eq(189298)      //  165464 157206  //241214
+      expect(receipt.gasUsed).to.eq(189342)      //  189298 157206  //241214
     }).retries(3)
 
     it('Swap Arbitrage Gas comparsion', async () => {
@@ -869,7 +810,7 @@ describe('FeSwapPair', () => {
         const tx = await router.swapExactTokensForTokens( swapAmount, 0,  [tokenB.address, tokenA.address],
                                                 wallet.address, MaxUint256,  overrides )
         const receipt = await tx.wait()
-        expect(receipt.gasUsed).to.eq(90892)     //132893 90889
+        expect(receipt.gasUsed).to.eq(90892)     //132896 90889
       }
       {
         const swapAmount = expandTo18Decimals(10)

@@ -8,7 +8,7 @@ contract FeSwapERC20 is IFeSwapERC20 {
     using SafeMath for uint;
 
     string public constant override name = 'FeSwap';
-    string public constant override symbol = 'FES';
+    string public constant override symbol = 'FESP';
     uint8 public constant override decimals = 18;
     uint  public override totalSupply;
     mapping(address => uint) public override balanceOf;

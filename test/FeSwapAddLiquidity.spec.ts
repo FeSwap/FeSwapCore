@@ -325,7 +325,7 @@ describe('FeSwapAddLiquidity', () => {
           )
 
         const receipt = await tx.wait()
-        expect(receipt.gasUsed).to.eq(233608)    // 233503, 228994  Uniswap 213957
+        expect(receipt.gasUsed).to.eq(233652)    // 233503, 228994  Uniswap 213957
       }).retries(3)
 
       it('Add Liquidity GAS usage： Double Pool ', async () => {
@@ -347,7 +347,7 @@ describe('FeSwapAddLiquidity', () => {
           )
 
         const receipt = await tx.wait()
-        expect(receipt.gasUsed).to.eq(434393)    // 433922, 425406
+        expect(receipt.gasUsed).to.eq(434437)    // 433922, 425406
       }).retries(3)
 
     })
@@ -522,7 +522,7 @@ describe('FeSwapAddLiquidity', () => {
         expect(await WETHPairTTE.balanceOf(wallet.address)).to.eq(BigNumberPercent(expectedLiquidity,ratio).sub(MINIMUM_LIQUIDITY))
         expect(await WETHPairTEE.balanceOf(wallet.address)).to.eq(BigNumberPercent(expectedLiquidity,100-ratio).sub(MINIMUM_LIQUIDITY))
 
-        const ratioA = 30
+        const ratioA = 65
         await expect(
           router.addLiquidityETH(
             WETHPartner.address,
