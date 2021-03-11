@@ -1,7 +1,5 @@
 import chai, { expect } from 'chai'
-import { Contract } from 'ethers'
-import { Zero, MaxUint256 } from 'ethers/constants'
-import { BigNumber, bigNumberify } from 'ethers/utils'
+import { Contract, BigNumber, constants } from 'ethers'
 import { solidity, MockProvider, createFixtureLoader } from 'ethereum-waffle'
 
 import {  BigNumberPercent, expandTo18Decimals, mineBlock } from './shared/utilities'
@@ -15,12 +13,14 @@ const overrides = {
 
 describe('FeSwapTokenSwap', () => {
     const provider = new MockProvider({
-      hardfork: 'istanbul',
-      mnemonic: 'horn horn horn horn horn horn horn horn horn horn horn horn',
-      gasLimit: 9999999
+      ganacheOptions: {
+        hardfork: 'istanbul',
+        mnemonic: 'horn horn horn horn horn horn horn horn horn horn horn horn',
+        gasLimit: 9999999
+      },
     })
     const [wallet, feeTo, pairOwner] = provider.getWallets()
-    const loadFixture = createFixtureLoader(provider, [wallet, feeTo, pairOwner])
+    const loadFixture = createFixtureLoader([wallet, feeTo, pairOwner], provider)
 
     let tokenA: Contract
     let tokenB: Contract
@@ -47,13 +47,13 @@ describe('FeSwapTokenSwap', () => {
     })
 
     afterEach(async function() {
-      expect(await provider.getBalance(router.address)).to.eq(Zero)
+      expect(await provider.getBalance(router.address)).to.eq(constants.Zero)
     })
 
     describe( "FeSwap Swap Test", () => {
       async function addLiquidity(tokenAAmount: BigNumber, tokenBAmount: BigNumber, ratio: Number) {
-        await tokenA.approve(router.address, MaxUint256)
-        await tokenB.approve(router.address, MaxUint256)
+        await tokenA.approve(router.address, constants.MaxUint256)
+        await tokenB.approve(router.address, constants.MaxUint256)
         await router.addLiquidity(
             tokenA.address,
             tokenB.address,
@@ -61,7 +61,7 @@ describe('FeSwapTokenSwap', () => {
             tokenBAmount,
             ratio,
             wallet.address,
-            MaxUint256,
+            constants.MaxUint256,
             overrides
           )
       }
@@ -70,7 +70,7 @@ describe('FeSwapTokenSwap', () => {
         const tokenAAmount = expandTo18Decimals(5)
         const tokenBAmount = expandTo18Decimals(10)
         const swapAmount = expandTo18Decimals(1)
-        const expectedOutputAmount = bigNumberify('1666666666666666666')
+        const expectedOutputAmount = BigNumber.from('1666666666666666666')
 
         beforeEach(async () => {
           await addLiquidity(tokenAAmount, tokenBAmount, 100)
@@ -89,7 +89,7 @@ describe('FeSwapTokenSwap', () => {
               0,
               [tokenA.address, tokenB.address],
               wallet.address,
-              MaxUint256,
+              constants.MaxUint256,
               overrides
             )
           )
@@ -104,11 +104,11 @@ describe('FeSwapTokenSwap', () => {
         })
 
         it('Abnormal Checking & Amounts Checking', async () => {
-          await tokenA.approve(routerEventEmitter.address, MaxUint256)
+          await tokenA.approve(routerEventEmitter.address, constants.MaxUint256)
 
           await expect( router.swapExactTokensForTokens(  swapAmount, expectedOutputAmount.add(1), 
                                                           [tokenA.address, tokenB.address],
-                                                          wallet.address, MaxUint256, overrides ))
+                                                          wallet.address, constants.MaxUint256, overrides ))
                   .to.be.revertedWith('FeSwapRouter: INSUFFICIENT_OUTPUT_AMOUNT')
 
           await expect(
@@ -118,7 +118,7 @@ describe('FeSwapTokenSwap', () => {
               0,
               [tokenA.address, tokenB.address],
               wallet.address,
-              MaxUint256,
+              constants.MaxUint256,
               overrides
             )
           )
@@ -131,14 +131,14 @@ describe('FeSwapTokenSwap', () => {
           await mineBlock(provider, (await provider.getBlock('latest')).timestamp + 1)
           await pairAAB.sync(overrides)
 
-          await tokenA.approve(router.address, MaxUint256)
+          await tokenA.approve(router.address, constants.MaxUint256)
           await mineBlock(provider, (await provider.getBlock('latest')).timestamp + 1)
           const tx = await router.swapExactTokensForTokens(
             swapAmount,
             0,
             [tokenA.address, tokenB.address],
             wallet.address,
-            MaxUint256,
+            constants.MaxUint256,
             overrides
           )
           const receipt = await tx.wait()
@@ -152,21 +152,21 @@ describe('FeSwapTokenSwap', () => {
         const tokenBAmount = expandTo18Decimals(10)
         const outputAmount = expandTo18Decimals(1)
         const expectedSwapAmount = outputAmount.mul(tokenAAmount.div(2)).add(expandTo18Decimals(4)).div(expandTo18Decimals(4))
-        expect(expectedSwapAmount).to.eq(bigNumberify('625000000000000001'))      // (Half pool)
+        expect(expectedSwapAmount).to.eq(BigNumber.from('625000000000000001'))      // (Half pool)
 
         beforeEach(async () => {
           await addLiquidity(tokenAAmount, tokenBAmount, 50)
         })
 
         it('happy path', async () => {
-          await tokenA.approve(router.address, MaxUint256)
+          await tokenA.approve(router.address, constants.MaxUint256)
           await expect(
             router.swapTokensForExactTokens(
               outputAmount,
-              MaxUint256,
+              constants.MaxUint256,
               [tokenA.address, tokenB.address],
               wallet.address,
-              MaxUint256,
+              constants.MaxUint256,
               overrides
             )
           )
@@ -181,21 +181,21 @@ describe('FeSwapTokenSwap', () => {
         })
 
         it('Abnormal Checking & Amounts Checking', async () => {
-          await tokenA.approve(routerEventEmitter.address, MaxUint256)
+          await tokenA.approve(routerEventEmitter.address, constants.MaxUint256)
 
           await expect( router.swapTokensForExactTokens(  outputAmount, expectedSwapAmount.sub(1), 
                                                           [tokenA.address, tokenB.address],
-                                                          wallet.address, MaxUint256, overrides ))
+                                                          wallet.address, constants.MaxUint256, overrides ))
                   .to.be.revertedWith('FeSwapRouter: EXCESSIVE_INPUT_AMOUNT')
 
           await expect(
             routerEventEmitter.swapTokensForExactTokens(
               router.address,
               outputAmount,
-              MaxUint256,
+              constants.MaxUint256,
               [tokenA.address, tokenB.address],
               wallet.address,
-              MaxUint256,
+              constants.MaxUint256,
               overrides
             )
           )
@@ -204,13 +204,13 @@ describe('FeSwapTokenSwap', () => {
         })
 
         it('gas', async () => {
-          await tokenA.approve(router.address, MaxUint256)
+          await tokenA.approve(router.address, constants.MaxUint256)
           const tx = await router.swapTokensForExactTokens(
               outputAmount,
-              MaxUint256,
+              constants.MaxUint256,
               [tokenA.address, tokenB.address],
               wallet.address,
-              MaxUint256,
+              constants.MaxUint256,
               overrides
             )
           const receipt = await tx.wait()
@@ -223,7 +223,7 @@ describe('FeSwapTokenSwap', () => {
         const WETHPartnerAmount = expandTo18Decimals(10)
         const ETHAmount = expandTo18Decimals(5)
         const swapAmount = expandTo18Decimals(1)      // ETH amount
-        const expectedOutputAmount = bigNumberify('1666666666666666666')  //'Uniswap: 1662497915624478906')
+        const expectedOutputAmount = BigNumber.from('1666666666666666666')  //'Uniswap: 1662497915624478906')
 
         beforeEach(async () => {
           await WETHPartner.transfer(WETHPairTEE.address, WETHPartnerAmount)
@@ -234,7 +234,7 @@ describe('FeSwapTokenSwap', () => {
 
         it('happy path', async () => {
           await expect(
-            router.swapExactETHForTokens(0, [WETH.address,WETHPartner.address], wallet.address, MaxUint256, {
+            router.swapExactETHForTokens(0, [WETH.address,WETHPartner.address], wallet.address, constants.MaxUint256, {
               ...overrides,
               value: swapAmount
             })
@@ -252,11 +252,11 @@ describe('FeSwapTokenSwap', () => {
         })
 
         it('Abnormal Checking & Amounts Checking', async () => {
-          await expect( router.swapExactETHForTokens(0, [tokenA.address,WETHPartner.address], wallet.address, MaxUint256, 
+          await expect( router.swapExactETHForTokens(0, [tokenA.address,WETHPartner.address], wallet.address, constants.MaxUint256, 
                                                       { ...overrides, value: swapAmount }) )
                   .to.be.revertedWith('FeSwapRouter: INVALID_PATH')
          
-          await expect( router.swapExactETHForTokens(expectedOutputAmount.add(1), [WETH.address,WETHPartner.address], wallet.address, MaxUint256, 
+          await expect( router.swapExactETHForTokens(expectedOutputAmount.add(1), [WETH.address,WETHPartner.address], wallet.address, constants.MaxUint256, 
                                                       { ...overrides, value: swapAmount }) )
                   .to.be.revertedWith('FeSwapRouter: INSUFFICIENT_OUTPUT_AMOUNT')
 
@@ -266,7 +266,7 @@ describe('FeSwapTokenSwap', () => {
               0,
               [WETH.address, WETHPartner.address],
               wallet.address,
-              MaxUint256,
+              constants.MaxUint256,
               {
                 ...overrides,
                 value: swapAmount
@@ -282,7 +282,7 @@ describe('FeSwapTokenSwap', () => {
             0,
             [WETH.address, WETHPartner.address],
             wallet.address,
-            MaxUint256,
+            constants.MaxUint256,
             {
               ...overrides,
               value: swapAmount
@@ -296,7 +296,7 @@ describe('FeSwapTokenSwap', () => {
       describe('swapTokensForExactETH', () => {
         const WETHPartnerAmount = expandTo18Decimals(5)
         const ETHAmount = expandTo18Decimals(10)
-        const expectedSwapAmount = bigNumberify('555555555555555556')
+        const expectedSwapAmount = BigNumber.from('555555555555555556')
         const outputAmount = expandTo18Decimals(1)
 
         beforeEach(async () => {
@@ -307,14 +307,14 @@ describe('FeSwapTokenSwap', () => {
         })
 
         it('happy path', async () => {
-          await WETHPartner.approve(router.address, MaxUint256)
+          await WETHPartner.approve(router.address, constants.MaxUint256)
           await expect(
             router.swapTokensForExactETH(
               outputAmount,
-              MaxUint256,
+              constants.MaxUint256,
               [WETHPartner.address, WETH.address],
               wallet.address,
-              MaxUint256,
+              constants.MaxUint256,
               overrides
             )
           )
@@ -331,33 +331,33 @@ describe('FeSwapTokenSwap', () => {
         })
 
         it('Abnormal Checking & Amounts Checking', async () => {
-          await WETHPartner.approve(routerEventEmitter.address, MaxUint256)
-          await WETHPartner.approve(router.address, MaxUint256)
-          await expect( router.swapTokensForExactETH( outputAmount, MaxUint256,
+          await WETHPartner.approve(routerEventEmitter.address, constants.MaxUint256)
+          await WETHPartner.approve(router.address, constants.MaxUint256)
+          await expect( router.swapTokensForExactETH( outputAmount, constants.MaxUint256,
                                                       [WETHPartner.address, tokenA.address], wallet.address,
-                                                      MaxUint256, overrides ) )
+                                                      constants.MaxUint256, overrides ) )
                   .to.be.revertedWith('FeSwapRouter: INVALID_PATH')
 
           await expect( router.swapTokensForExactETH( outputAmount, expectedSwapAmount.sub(1),
                                                       [WETHPartner.address, WETH.address], wallet.address,
-                                                      MaxUint256, overrides ) )
+                                                      constants.MaxUint256, overrides ) )
                   .to.be.revertedWith('FeSwapRouter: EXCESSIVE_INPUT_AMOUNT')
 
-          await expect( routerEventEmitter.swapTokensForExactETH( router.address, outputAmount, MaxUint256,
+          await expect( routerEventEmitter.swapTokensForExactETH( router.address, outputAmount, constants.MaxUint256,
                                                       [WETHPartner.address, WETH.address], wallet.address,
-                                                      MaxUint256, overrides ) )
+                                                      constants.MaxUint256, overrides ) )
               .to.emit(routerEventEmitter, 'Amounts')
               .withArgs([expectedSwapAmount, outputAmount])
         })
 
         it('gas', async () => {
-          await WETHPartner.approve(router.address, MaxUint256)
+          await WETHPartner.approve(router.address, constants.MaxUint256)
           const tx = await router.swapTokensForExactETH(
               outputAmount,
-              MaxUint256,
+              constants.MaxUint256,
               [WETHPartner.address, WETH.address],
               wallet.address,
-              MaxUint256,
+              constants.MaxUint256,
               overrides
             )
             const receipt = await tx.wait()
@@ -369,7 +369,7 @@ describe('FeSwapTokenSwap', () => {
         const WETHPartnerAmount = expandTo18Decimals(50)
         const ETHAmount = expandTo18Decimals(10)
         const swapAmount = expandTo18Decimals(1)
-        const expectedOutputAmount = bigNumberify('196078431372549019')       // 1*10/(50+1)
+        const expectedOutputAmount = BigNumber.from('196078431372549019')       // 1*10/(50+1)
 
         beforeEach(async () => {
           await WETHPartner.transfer(WETHPairTTE.address, WETHPartnerAmount)
@@ -379,14 +379,14 @@ describe('FeSwapTokenSwap', () => {
         })
 
         it('happy path', async () => {
-          await WETHPartner.approve(router.address, MaxUint256)
+          await WETHPartner.approve(router.address, constants.MaxUint256)
           await expect(
             router.swapExactTokensForETH(
               swapAmount,
               0,
               [WETHPartner.address, WETH.address],
               wallet.address,
-              MaxUint256,
+              constants.MaxUint256,
               overrides
             )
           )
@@ -403,34 +403,34 @@ describe('FeSwapTokenSwap', () => {
         })
 
         it('Abnormal Checking & Amounts Checking', async () => {
-          await WETHPartner.approve(routerEventEmitter.address, MaxUint256)
-          await WETHPartner.approve(router.address, MaxUint256)
+          await WETHPartner.approve(routerEventEmitter.address, constants.MaxUint256)
+          await WETHPartner.approve(router.address, constants.MaxUint256)
           await expect( router.swapExactTokensForETH( swapAmount, 0,
                                                       [WETHPartner.address, tokenA.address],
-                                                      wallet.address, MaxUint256, overrides ) )
+                                                      wallet.address, constants.MaxUint256, overrides ) )
                   .to.be.revertedWith('FeSwapRouter: INVALID_PATH')
 
           await expect( router.swapExactTokensForETH( swapAmount, expectedOutputAmount.add(1),
                                                       [WETHPartner.address, WETH.address], wallet.address,
-                                                      MaxUint256, overrides ) )
+                                                      constants.MaxUint256, overrides ) )
                   .to.be.revertedWith('FeSwapRouter: INSUFFICIENT_OUTPUT_AMOUNT')
 
           await expect( routerEventEmitter.swapExactTokensForETH( router.address, swapAmount, 0,
                                                                   [WETHPartner.address, WETH.address],
-                                                                  wallet.address, MaxUint256, overrides ))
+                                                                  wallet.address, constants.MaxUint256, overrides ))
                   .to.emit(routerEventEmitter, 'Amounts')
                   .withArgs([swapAmount, expectedOutputAmount])
         })
 
 
         it('gas', async () => {
-          await WETHPartner.approve(router.address, MaxUint256)
+          await WETHPartner.approve(router.address, constants.MaxUint256)
           const tx = await router.swapExactTokensForETH(
             swapAmount,
             0,
             [WETHPartner.address, WETH.address],
             wallet.address,
-            MaxUint256,
+            constants.MaxUint256,
             overrides
           )
           const receipt = await tx.wait()
@@ -441,7 +441,7 @@ describe('FeSwapTokenSwap', () => {
       describe('swapETHForExactTokens', () => {
         const WETHPartnerAmount = expandTo18Decimals(100)
         const ETHAmount = expandTo18Decimals(5)
-        const expectedSwapAmount = bigNumberify('154639175257731959')
+        const expectedSwapAmount = BigNumber.from('154639175257731959')
         const outputAmount = expandTo18Decimals(3)
 
         beforeEach(async () => {
@@ -457,7 +457,7 @@ describe('FeSwapTokenSwap', () => {
               outputAmount,
               [WETH.address, WETHPartner.address],
               wallet.address,
-              MaxUint256,
+              constants.MaxUint256,
               {
                 ...overrides,
                 value: expectedSwapAmount
@@ -477,19 +477,19 @@ describe('FeSwapTokenSwap', () => {
         it('Abnormal Checking & Amounts Checking', async () => {
           await expect( router.swapETHForExactTokens( outputAmount, 
                                                       [tokenA.address, WETHPartner.address], 
-                                                      wallet.address, MaxUint256, 
+                                                      wallet.address, constants.MaxUint256, 
                                                       { ...overrides, value: expectedSwapAmount }) )
                   .to.be.revertedWith('FeSwapRouter: INVALID_PATH')
 
           await expect( router.swapETHForExactTokens( outputAmount, 
                                                       [WETH.address,WETHPartner.address], 
-                                                      wallet.address, MaxUint256, 
+                                                      wallet.address, constants.MaxUint256, 
                                                       { ...overrides, value: expectedSwapAmount.sub(1) }) )
                   .to.be.revertedWith('FeSwapRouter: EXCESSIVE_INPUT_AMOUNT')
 
           await expect( routerEventEmitter.swapETHForExactTokens( router.address, outputAmount, 
                                                                   [WETH.address, WETHPartner.address],
-                                                                  wallet.address,  MaxUint256,
+                                                                  wallet.address,  constants.MaxUint256,
                                                                   {...overrides, value: expectedSwapAmount} ) )
             .to.emit(routerEventEmitter, 'Amounts')
             .withArgs([expectedSwapAmount, outputAmount])
@@ -500,7 +500,7 @@ describe('FeSwapTokenSwap', () => {
               outputAmount,
               [WETH.address, WETHPartner.address],
               wallet.address,
-              MaxUint256,
+              constants.MaxUint256,
               {
                 ...overrides,
                 value: expectedSwapAmount

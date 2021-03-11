@@ -1,11 +1,9 @@
 import chai, { expect } from 'chai'
-import { Contract } from 'ethers'
+import { Contract, utils, constants, BigNumber } from 'ethers'
 import { solidity, MockProvider, createFixtureLoader,deployContract } from 'ethereum-waffle'
-import { BigNumber, bigNumberify } from 'ethers/utils'
-
 import { expandTo18Decimals, mineBlock, encodePrice } from './shared/utilities'
 import { pairFixture } from './shared/fixtures'
-import { AddressZero, MaxUint256 } from 'ethers/constants'
+
 import WETH9 from '../build/WETH9.json'
 import FeSwapRouter from '../build/FeSwapRouter.json'
 import RouterEventEmitter from '../build/RouterEventEmitter.json'
@@ -14,7 +12,7 @@ import FeSwapSimu from '../build/FeSwapSimu.json'
 
 import { v2Fixture } from './shared/Routerfixtures'
 
-const MINIMUM_LIQUIDITY = bigNumberify(10).pow(3)
+const MINIMUM_LIQUIDITY = BigNumber.from(10).pow(3)
 
 chai.use(solidity)
 
@@ -51,12 +49,14 @@ interface UserState {
 
 describe('FeSwapSimuStress: ', () => {
     const provider = new MockProvider({
-        hardfork: 'istanbul',
-        mnemonic: 'horn horn horn horn horn horn horn horn horn horn horn horn',
-        gasLimit: 9999999
-    })
+        ganacheOptions: {
+          hardfork: 'istanbul',
+          mnemonic: 'horn horn horn horn horn horn horn horn horn horn horn horn',
+          gasLimit: 9999999
+        },
+      })
     const [wallet, feeTo, pairOwner] = provider.getWallets()
-    const loadFixture = createFixtureLoader(provider, [wallet, feeTo, pairOwner])
+    const loadFixture = createFixtureLoader([wallet, feeTo, pairOwner], provider)
 
     let tokenA: Contract
     let tokenB: Contract
@@ -131,10 +131,10 @@ describe('FeSwapSimuStress: ', () => {
 
     it(`Swap Arbitrage: test Init`, async () => {
         await init()
-        await tokenA.approve(router.address, MaxUint256)
-        await tokenB.approve(router.address, MaxUint256)   
-        await pairAAB.approve(router.address, MaxUint256)
-        await pairABB.approve(router.address, MaxUint256)  
+        await tokenA.approve(router.address, constants.MaxUint256)
+        await tokenB.approve(router.address, constants.MaxUint256)   
+        await pairAAB.approve(router.address, constants.MaxUint256)
+        await pairABB.approve(router.address, constants.MaxUint256)  
     })
 
   it('Swap Arbitrage', async () => {
@@ -144,7 +144,7 @@ describe('FeSwapSimuStress: ', () => {
     await addLiquidityABB(tokenAAmount, tokenBAmount)
 
     const swapAmount = expandTo18Decimals(10)
-    const expectedOutputAmount = bigNumberify('9900990099009900990') 
+    const expectedOutputAmount = BigNumber.from('9900990099009900990') 
 
     await expect(
       router.swapExactTokensForTokens(
@@ -152,7 +152,7 @@ describe('FeSwapSimuStress: ', () => {
         0,
         [tokenA.address, tokenB.address],
         wallet.address,
-        MaxUint256,
+        constants.MaxUint256,
         overrides
       )
     )
@@ -173,10 +173,10 @@ describe('FeSwapSimuStress: ', () => {
     const BalanceBAA = await tokenA.balanceOf(pairABB.address)
     const BalanceBAB = await tokenB.balanceOf(pairABB.address)                     
 
-    const arbitrageLB = bigNumberify('4950495049504950495')
-    const arbitrageLA = bigNumberify('4999999999999999999')    
+    const arbitrageLB = BigNumber.from('4950495049504950495')
+    const arbitrageLA = BigNumber.from('4999999999999999999')    
     
-    const expectedOutputAmountA = bigNumberify('9999507437690867894')   //9999507437690867894
+    const expectedOutputAmountA = BigNumber.from('9999507437690867894')   //9999507437690867894
 
     await expect(
       router.swapExactTokensForTokens(
@@ -184,7 +184,7 @@ describe('FeSwapSimuStress: ', () => {
       0,
       [tokenB.address, tokenA.address],
       wallet.address,
-      MaxUint256,
+      constants.MaxUint256,
       overrides
       )
     )  
@@ -208,10 +208,10 @@ describe('FeSwapSimuStress: ', () => {
       const AAmount = expandTo18Decimals(10)
       const BAmount = expandTo18Decimals(10)
       await router.addLiquidity(  tokenA.address, tokenB.address, AAmount, expandTo18Decimals(20),
-                                  100, wallet.address, MaxUint256, overrides  )
+                                  100, wallet.address, constants.MaxUint256, overrides  )
                                    
       await router.addLiquidity(  tokenA.address, tokenB.address, expandTo18Decimals(20), BAmount,
-                                  0, wallet.address, MaxUint256, overrides  )
+                                  0, wallet.address, constants.MaxUint256, overrides  )
 
       let AmountTokeAofWallet = await tokenA.balanceOf(wallet.address)
       let AmountTokeBofWallet = await tokenB.balanceOf(wallet.address)                                   
@@ -254,10 +254,10 @@ describe('FeSwapSimuStress: ', () => {
       expect(KValueLastBA).to.eq('1020023762474014930152445391114223486703365')   
 
       await router.removeLiquidity( tokenA.address, tokenB.address, LiquityWalletAB, 0,
-                                  0, 0, wallet.address, MaxUint256, overrides  )
+                                  0, 0, wallet.address, constants.MaxUint256, overrides  )
 
       await router.removeLiquidity( tokenA.address, tokenB.address, 0, LiquityWalletBA,
-                                    0, 0, wallet.address, MaxUint256, overrides  )   
+                                    0, 0, wallet.address, constants.MaxUint256, overrides  )   
                                     
       AmountTokeAofWallet = await tokenA.balanceOf(wallet.address)
       AmountTokeBofWallet = await tokenB.balanceOf(wallet.address)                                   
@@ -307,10 +307,10 @@ describe('FeSwapSimuStress: ', () => {
     it(`Swap Arbitrage Stress: test Prepare`, async () => {
         await factory.setRouterFeSwap(feeTo.address)
         FeSwapSimuContract  = await deployContract(wallet, FeSwapSimu, [10000,10000], overrides)
-        await tokenA.approve(router.address, MaxUint256)
-        await tokenB.approve(router.address, MaxUint256)  
-        await pairAAB.approve(router.address, MaxUint256)
-        await pairABB.approve(router.address, MaxUint256)
+        await tokenA.approve(router.address, constants.MaxUint256)
+        await tokenB.approve(router.address, constants.MaxUint256)  
+        await pairAAB.approve(router.address, constants.MaxUint256)
+        await pairABB.approve(router.address, constants.MaxUint256)
     })
 
     it(`Swap Arbitrage Stress: Add liquidity`, async () => {
@@ -346,9 +346,9 @@ describe('FeSwapSimuStress: ', () => {
                 const AAmount = expandTo18Decimals(10)
                 const BAmount = expandTo18Decimals(10)
                 await router.addLiquidity(  tokenA.address, tokenB.address, AAmount, expandTo18Decimals(1000000),
-                                            100, wallet.address, MaxUint256, overrides )
+                                            100, wallet.address, constants.MaxUint256, overrides )
                 await router.addLiquidity(  tokenA.address, tokenB.address, expandTo18Decimals(1000000), BAmount,
-                                            0, wallet.address, MaxUint256, overrides  )
+                                            0, wallet.address, constants.MaxUint256, overrides  )
             }
 
             await FeSwapSimuContract.SwapAB (1, 10 ) 
@@ -356,9 +356,9 @@ describe('FeSwapSimuStress: ', () => {
 
             const swapAmount = expandTo18Decimals(10)
             await router.swapExactTokensForTokens(  swapAmount, 0, [tokenA.address, tokenB.address], 
-                                                    wallet.address, MaxUint256, overrides )
+                                                    wallet.address, constants.MaxUint256, overrides )
             await router.swapExactTokensForTokens(  swapAmount, 0, [tokenB.address, tokenA.address], 
-                                                    wallet.address, MaxUint256, overrides ) 
+                                                    wallet.address, constants.MaxUint256, overrides ) 
             
             if( (i % 10) == 5)
                 await CheckSimuConsistent()
@@ -374,10 +374,10 @@ describe('FeSwapSimuStress: ', () => {
         let LiquityWalletAB = await pairAAB.balanceOf(wallet.address)
         let LiquityWalletBA = await pairABB.balanceOf(wallet.address) 
         await router.removeLiquidity(   tokenA.address, tokenB.address, LiquityWalletAB, 0,
-                                        0, 0, wallet.address, MaxUint256, overrides  )
+                                        0, 0, wallet.address, constants.MaxUint256, overrides  )
 
         await router.removeLiquidity( tokenA.address, tokenB.address, 0, LiquityWalletBA,
-                                        0, 0, wallet.address, MaxUint256, overrides  )    
+                                        0, 0, wallet.address, constants.MaxUint256, overrides  )    
 
         await FeSwapSimuContract.removeLiquidityAB(1,LiquityWalletAB)
         await FeSwapSimuContract.removeLiquidityBA(1,LiquityWalletBA)

@@ -1,11 +1,9 @@
 import chai, { expect } from 'chai'
-import { Contract } from 'ethers'
+import { Contract, utils, constants, BigNumber } from 'ethers'
 import { solidity, MockProvider, createFixtureLoader,deployContract } from 'ethereum-waffle'
-import { BigNumber, bigNumberify } from 'ethers/utils'
-
 import { expandTo18Decimals, mineBlock, encodePrice } from './shared/utilities'
 import { pairFixture } from './shared/fixtures'
-import { AddressZero, MaxUint256 } from 'ethers/constants'
+
 import WETH9 from '../build/WETH9.json'
 import FeSwapRouter from '../build/FeSwapRouter.json'
 import RouterEventEmitter from '../build/RouterEventEmitter.json'
@@ -14,7 +12,7 @@ import FeSwapSimu from '../build/FeSwapSimu.json'
 
 import { v2Fixture } from './shared/Routerfixtures'
 
-const MINIMUM_LIQUIDITY = bigNumberify(10).pow(3)
+const MINIMUM_LIQUIDITY = BigNumber.from(10).pow(3)
 
 chai.use(solidity)
 
@@ -60,12 +58,15 @@ interface UserState {
 
 describe('FeSwapSimuCompare: ', () => {
     const provider = new MockProvider({
-        hardfork: 'istanbul',
-        mnemonic: 'horn horn horn horn horn horn horn horn horn horn horn horn',
-        gasLimit: 9999999
+        ganacheOptions: {
+          hardfork: 'istanbul',
+          mnemonic: 'horn horn horn horn horn horn horn horn horn horn horn horn',
+          gasLimit: 9999999
+        },
     })
+
     const [wallet, feeTo, pairOwner] = provider.getWallets()
-    const loadFixture = createFixtureLoader(provider, [wallet, feeTo, pairOwner])
+    const loadFixture = createFixtureLoader([wallet, feeTo, pairOwner], provider)
 
     let tokenA: Contract
     let tokenB: Contract

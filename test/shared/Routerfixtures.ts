@@ -1,8 +1,5 @@
-import { Wallet, Contract } from 'ethers'
-import { Web3Provider } from 'ethers/providers'
+import { Wallet, Contract, providers, utils } from 'ethers'
 import { deployContract } from 'ethereum-waffle'
-import { keccak256, solidityPack } from 'ethers/utils'
-import { AddressZero, WeiPerEther, MaxUint256 } from 'ethers/constants'
 
 import { expandTo18Decimals, mineBlock } from './utilities'
 
@@ -41,7 +38,10 @@ const initPoolPrice = expandTo18Decimals(1).div(5)
 const BidStartTime: number = 1615338000   // 2021/02/22 03/10 9:00
 const OPEN_BID_DURATION: number =  (3600 * 24 * 14)
 
-export async function v2Fixture(provider: Web3Provider, [wallet, feeTo, pairOwner]: Wallet[]): Promise<V2Fixture> {
+export async function v2Fixture(
+                                  [wallet, feeTo, pairOwner]: Wallet[],
+                                  provider: providers.Web3Provider): Promise<V2Fixture> 
+{
   // deploy tokens
   const tokenA = await deployContract(wallet, ERC20, [expandTo18Decimals(10000),"Token A"])
   const tokenB = await deployContract(wallet, ERC20, [expandTo18Decimals(10000),"Token B"])
@@ -71,8 +71,8 @@ export async function v2Fixture(provider: Web3Provider, [wallet, feeTo, pairOwne
 //  await factoryFeswa.createUpdatePair(tokenA.address, tokenB.address, pairOwner.address, overrides)
 
   await mineBlock(provider, BidStartTime + 1)
-  const  tokenIDMatch = keccak256( 
-                            solidityPack( ['address', 'address', 'address'],
+  const  tokenIDMatch = utils.keccak256( 
+                            utils.solidityPack( ['address', 'address', 'address'],
                             (tokenA.address.toLowerCase() <= tokenB.address.toLowerCase())
                             ? [FeswaNFT.address, tokenA.address, tokenB.address] 
                             : [FeswaNFT.address, tokenB.address, tokenA.address] ) )

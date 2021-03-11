@@ -1,7 +1,5 @@
 import chai, { expect } from 'chai'
-import { Contract } from 'ethers'
-import { AddressZero, WeiPerEther, MaxUint256 } from 'ethers/constants'
-import { bigNumberify } from 'ethers/utils'
+import { Contract, constants, BigNumber } from 'ethers'
 import { solidity, MockProvider, createFixtureLoader, deployContract } from 'ethereum-waffle'
 import ERC20 from '../build/ERC20.json'
 
@@ -18,12 +16,15 @@ const overrides = {
 
 describe('FeSwapFactory', () => {
   const provider = new MockProvider({
-    hardfork: 'istanbul',
-    mnemonic: 'horn horn horn horn horn horn horn horn horn horn horn horn',
-    gasLimit: 9999999
+    ganacheOptions: {
+      hardfork: 'istanbul',
+      mnemonic: 'horn horn horn horn horn horn horn horn horn horn horn horn',
+      gasLimit: 9999999
+    },
   })
+  
   const [wallet, other, other1] = provider.getWallets()
-  const loadFixture = createFixtureLoader(provider, [wallet, other])
+  const loadFixture = createFixtureLoader([wallet, other], provider)
 
   let factory: Contract
   let tokenA: Contract  
@@ -41,9 +42,9 @@ describe('FeSwapFactory', () => {
   })
 
   it('feeTo, factoryAdmin, routerFeSwap, allPairsLength', async () => {
-    expect(await factory.feeTo()).to.eq(AddressZero)
+    expect(await factory.feeTo()).to.eq(constants.AddressZero)
     expect(await factory.factoryAdmin()).to.eq(wallet.address)
-    expect(await factory.routerFeSwap()).to.eq(AddressZero)
+    expect(await factory.routerFeSwap()).to.eq(constants.AddressZero)
     expect(await factory.allPairsLength()).to.eq(0)
   })
 
@@ -58,10 +59,10 @@ describe('FeSwapFactory', () => {
     await expect(factory.connect(other1).createUpdatePair(tokenA.address, tokenB.address, other1.address))
       .to.be.revertedWith('FeSwap: FORBIDDEN')                              // FeSwap: FORBIDDEN  
       
-    await expect(factory.createUpdatePair(tokenA.address, AddressZero, wallet.address))
+    await expect(factory.createUpdatePair(tokenA.address, constants.AddressZero, wallet.address))
       .to.be.revertedWith('FeSwap: ZERO_ADDRESS')                           // FeSwap: FeSwap: ZERO_ADDRESS
 
-    await expect(factory.createUpdatePair(AddressZero, tokenB.address, wallet.address))
+    await expect(factory.createUpdatePair(constants.AddressZero, tokenB.address, wallet.address))
       .to.be.revertedWith('FeSwap: ZERO_ADDRESS')                           // FeSwap: FeSwap: ZERO_ADDRESS      
 
     await factory.createUpdatePair(tokenA.address, tokenB.address, wallet.address)
@@ -78,7 +79,7 @@ describe('FeSwapFactory', () => {
 
     await expect(factory.createUpdatePair(tokenA.address, tokenB.address, other.address))
       .to.emit(factory, 'PairCreated')
-      .withArgs(tokenA.address, tokenB.address, create2AddressAAB, create2AddressABB, bigNumberify(2))
+      .withArgs(tokenA.address, tokenB.address, create2AddressAAB, create2AddressABB, BigNumber.from(2))
 
     expect(await factory.getPair(tokenA.address, tokenB.address)).to.eq(create2AddressAAB)
     expect(await factory.getPair(tokenB.address, tokenA.address)).to.eq(create2AddressABB)
@@ -102,8 +103,8 @@ describe('FeSwapFactory', () => {
     const tokenAContract = new Contract(tokenA.address, JSON.stringify(ERC20.abi), provider)
     const tokenBContract = new Contract(tokenB.address, JSON.stringify(ERC20.abi), provider)  
 
-    expect(await tokenAContract.allowance(create2AddressAAB, other1.address)).to.eq(MaxUint256)
-    expect(await tokenBContract.allowance(create2AddressABB, other1.address)).to.eq(MaxUint256) 
+    expect(await tokenAContract.allowance(create2AddressAAB, other1.address)).to.eq(constants.MaxUint256)
+    expect(await tokenBContract.allowance(create2AddressABB, other1.address)).to.eq(constants.MaxUint256) 
   })
 
   it('createUpdatePair: Create two liquidity pools', async () => {
@@ -117,11 +118,11 @@ describe('FeSwapFactory', () => {
 
     await expect(factory.createUpdatePair(tokenA.address, tokenB.address, wallet.address))
       .to.emit(factory, 'PairCreated')
-      .withArgs(tokenA.address, tokenB.address, create2AddressAAB, create2AddressABB, bigNumberify(2))
+      .withArgs(tokenA.address, tokenB.address, create2AddressAAB, create2AddressABB, BigNumber.from(2))
 
     await expect(factory.connect(other1).createUpdatePair(tokenA.address, tokenC.address, other.address))
       .to.emit(factory, 'PairCreated')
-      .withArgs(tokenA.address, tokenC.address, create2AddressAAC, create2AddressACC, bigNumberify(4))
+      .withArgs(tokenA.address, tokenC.address, create2AddressAAC, create2AddressACC, BigNumber.from(4))
 
     expect(await factory.getPair(tokenA.address, tokenB.address)).to.eq(create2AddressAAB)
     expect(await factory.getPair(tokenB.address, tokenA.address)).to.eq(create2AddressABB)
@@ -141,7 +142,7 @@ describe('FeSwapFactory', () => {
 
     await expect(factory.connect(other1).createUpdatePair(tokenA.address, tokenB.address, other.address))
       .to.emit(factory, 'PairCreated')
-      .withArgs(tokenA.address, tokenB.address, create2AddressAAB, create2AddressABB, bigNumberify(2))
+      .withArgs(tokenA.address, tokenB.address, create2AddressAAB, create2AddressABB, BigNumber.from(2))
 
     await expect(factory.connect(other1).createUpdatePair(tokenA.address, tokenB.address, other1.address))
       .to.emit(factory, 'PairOwnerChanged')

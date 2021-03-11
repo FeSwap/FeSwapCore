@@ -1,7 +1,5 @@
 import chai, { expect } from 'chai'
-import { Contract } from 'ethers'
-import { MaxUint256, One } from 'ethers/constants'
-import { bigNumberify, hexlify, keccak256, defaultAbiCoder, toUtf8Bytes } from 'ethers/utils'
+import { Contract, constants, utils, BigNumber } from 'ethers'
 import { solidity, MockProvider, deployContract } from 'ethereum-waffle'
 import { ecsign } from 'ethereumjs-util'
 
@@ -16,10 +14,13 @@ const TEST_AMOUNT = expandTo18Decimals(100)
 
 describe('FeSwapERC20', () => {
   const provider = new MockProvider({
-    hardfork: 'istanbul',
-    mnemonic: 'horn horn horn horn horn horn horn horn horn horn horn horn',
-    gasLimit: 9999999
+    ganacheOptions: {
+      hardfork: 'istanbul',
+      mnemonic: 'horn horn horn horn horn horn horn horn horn horn horn horn',
+      gasLimit: 9999999
+    },
   })
+
   const [wallet, other, otherA ] = provider.getWallets()
 
   let token: Contract
@@ -34,17 +35,17 @@ describe('FeSwapERC20', () => {
     expect(await token.decimals()).to.eq(18)
     expect(await token.totalSupply()).to.eq(TOTAL_SUPPLY)
     expect(await token.balanceOf(wallet.address)).to.eq(TOTAL_SUPPLY)
-    expect(await token.nonces(wallet.address)).to.eq(bigNumberify(0))
+    expect(await token.nonces(wallet.address)).to.eq(BigNumber.from(0))
     expect(await token.DOMAIN_SEPARATOR()).to.eq(
-      keccak256(
-        defaultAbiCoder.encode(
+      utils.keccak256(
+        utils.defaultAbiCoder.encode(
           ['bytes32', 'bytes32', 'bytes32', 'uint256', 'address'],
           [
-            keccak256(
-              toUtf8Bytes('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)')
+            utils.keccak256(
+              utils.toUtf8Bytes('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)')
             ),
-            keccak256(toUtf8Bytes(name)),
-            keccak256(toUtf8Bytes('1')),
+            utils.keccak256(utils.toUtf8Bytes(name)),
+            utils.keccak256(utils.toUtf8Bytes('1')),
             1,
             token.address
           ]
@@ -52,7 +53,7 @@ describe('FeSwapERC20', () => {
       )
     )
     expect(await token.PERMIT_TYPEHASH()).to.eq(
-      keccak256(toUtf8Bytes('Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)'))
+      utils.keccak256(utils.toUtf8Bytes('Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)'))
     )
   })
 
@@ -77,7 +78,7 @@ describe('FeSwapERC20', () => {
     await expect(token.connect(other).transfer(wallet.address, 1))
       .to.be.revertedWith('ds-math-sub-underflow') // ds-math-sub-underflow
     await token.transfer(other.address, TEST_AMOUNT)
-    await expect(token.connect(other).transfer(wallet.address, TEST_AMOUNT.add(One)))
+    await expect(token.connect(other).transfer(wallet.address, TEST_AMOUNT.add(constants.One)))
       .to.be.revertedWith('ds-math-sub-underflow') // ds-math-sub-underflow
   })
 
@@ -92,11 +93,11 @@ describe('FeSwapERC20', () => {
   })
 
   it('transferFrom:max', async () => {
-    await token.approve(other.address, MaxUint256)
+    await token.approve(other.address, constants.MaxUint256)
     await expect(token.connect(other).transferFrom(wallet.address, other.address, TEST_AMOUNT))
       .to.emit(token, 'Transfer')
       .withArgs(wallet.address, other.address, TEST_AMOUNT)
-    expect(await token.allowance(wallet.address, other.address)).to.eq(MaxUint256)
+    expect(await token.allowance(wallet.address, other.address)).to.eq(constants.MaxUint256)
     expect(await token.balanceOf(wallet.address)).to.eq(TOTAL_SUPPLY.sub(TEST_AMOUNT))
     expect(await token.balanceOf(other.address)).to.eq(TEST_AMOUNT)
   })
@@ -104,7 +105,7 @@ describe('FeSwapERC20', () => {
   it('permit', async () => {
     await token.transfer(otherA.address, TEST_AMOUNT)
     const nonce = await token.nonces(wallet.address)
-    const deadline = MaxUint256
+    const deadline = constants.MaxUint256
     const digest = await getApprovalDigest(
       token,
       { owner: wallet.address, spender: other.address, value: TEST_AMOUNT },
@@ -114,13 +115,13 @@ describe('FeSwapERC20', () => {
 
     const { v, r, s } = ecsign(Buffer.from(digest.slice(2), 'hex'), Buffer.from(wallet.privateKey.slice(2), 'hex'))
 
-    await expect(token.connect(otherA).permit(wallet.address, other.address, TEST_AMOUNT, deadline, v, hexlify(r), hexlify(s)))
+    await expect(token.connect(otherA).permit(wallet.address, other.address, TEST_AMOUNT, deadline, v, utils.hexlify(r), utils.hexlify(s)))
       .to.emit(token, 'Approval')
       .withArgs(wallet.address, other.address, TEST_AMOUNT)
     expect(await token.allowance(wallet.address, other.address)).to.eq(TEST_AMOUNT)
-    expect(await token.nonces(wallet.address)).to.eq(bigNumberify(1))
+    expect(await token.nonces(wallet.address)).to.eq(BigNumber.from(1))
 
-    await expect(token.permit(wallet.address, other.address, TEST_AMOUNT, deadline, v, hexlify(r), hexlify(s)))
+    await expect(token.permit(wallet.address, other.address, TEST_AMOUNT, deadline, v, utils.hexlify(r), utils.hexlify(s)))
     .to.be.revertedWith('FeSwap: INVALID_SIGNATURE')  // Replay attack
   })
 })

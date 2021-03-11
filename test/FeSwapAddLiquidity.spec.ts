@@ -1,6 +1,5 @@
 import chai, { expect } from 'chai'
-import { Contract } from 'ethers'
-import { AddressZero, Zero, Two, MaxUint256 } from 'ethers/constants'
+import { Contract, constants } from 'ethers'
 import { solidity, MockProvider, createFixtureLoader } from 'ethereum-waffle'
 
 import { BigNumberPercent, expandTo18Decimals, MINIMUM_LIQUIDITY } from './shared/utilities'
@@ -13,13 +12,15 @@ const overrides = {
 }
 
 describe('FeSwapAddLiquidity', () => {
-    const provider = new MockProvider({
+  const provider = new MockProvider({
+    ganacheOptions: {
       hardfork: 'istanbul',
       mnemonic: 'horn horn horn horn horn horn horn horn horn horn horn horn',
       gasLimit: 9999999
-    })
+    },
+  })
     const [wallet, feeTo, pairOwner] = provider.getWallets()
-    const loadFixture = createFixtureLoader(provider, [wallet, feeTo, pairOwner])
+    const loadFixture = createFixtureLoader([wallet, feeTo, pairOwner], provider)
 
     let tokenA: Contract
     let tokenB: Contract
@@ -46,7 +47,7 @@ describe('FeSwapAddLiquidity', () => {
     })
 
     afterEach(async function() {
-      expect(await provider.getBalance(router.address)).to.eq(Zero)
+      expect(await provider.getBalance(router.address)).to.eq(constants.Zero)
     })
 
     describe("FeSwapAddLiquidity Basic", () => {
@@ -54,8 +55,8 @@ describe('FeSwapAddLiquidity', () => {
         const tokenAAmount = expandTo18Decimals(1)
         const tokenBAmount = expandTo18Decimals(4)
 
-        await tokenA.approve(router.address, MaxUint256)
-        await tokenB.approve(router.address, MaxUint256)
+        await tokenA.approve(router.address, constants.MaxUint256)
+        await tokenB.approve(router.address, constants.MaxUint256)
         await expect(
           router.addLiquidity(
             tokenA.address,
@@ -64,7 +65,7 @@ describe('FeSwapAddLiquidity', () => {
             tokenBAmount,
             101,
             wallet.address,
-            MaxUint256,
+            constants.MaxUint256,
             overrides
           )
         ).to.be.revertedWith(
@@ -76,14 +77,14 @@ describe('FeSwapAddLiquidity', () => {
         const WETHPartnerAmount = expandTo18Decimals(100)
         const ETHAmount = expandTo18Decimals(4)
 
-        await WETHPartner.approve(router.address, MaxUint256)
+        await WETHPartner.approve(router.address, constants.MaxUint256)
         await expect(
           router.addLiquidityETH(
             WETHPartner.address,
             WETHPartnerAmount,
             101,
             wallet.address,
-            MaxUint256,
+            constants.MaxUint256,
             { ...overrides, value: ETHAmount }
           )
         ).to.be.revertedWith(
@@ -98,17 +99,17 @@ describe('FeSwapAddLiquidity', () => {
         const tokenBAmount = expandTo18Decimals(4)
 
         const expectedLiquidity = expandTo18Decimals(2)   
-        await tokenA.approve(router.address, MaxUint256)
-        await tokenB.approve(router.address, MaxUint256)
+        await tokenA.approve(router.address, constants.MaxUint256)
+        await tokenB.approve(router.address, constants.MaxUint256)
         await expect(
           router.addLiquidity(
             tokenA.address,
             tokenB.address,
-            tokenAAmount.mul(Two),
-            tokenBAmount.mul(Two),
+            tokenAAmount.mul(constants.Two),
+            tokenBAmount.mul(constants.Two),
             50,
             wallet.address,
-            MaxUint256,
+            constants.MaxUint256,
             overrides
           )
         )
@@ -117,9 +118,9 @@ describe('FeSwapAddLiquidity', () => {
           .to.emit(tokenB, 'Transfer')
           .withArgs(wallet.address, pairAAB.address, tokenBAmount)
           .to.emit(pairAAB, 'Transfer')
-          .withArgs(AddressZero, AddressZero, MINIMUM_LIQUIDITY)
+          .withArgs(constants.AddressZero, constants.AddressZero, MINIMUM_LIQUIDITY)
           .to.emit(pairAAB, 'Transfer')
-          .withArgs(AddressZero, wallet.address, expectedLiquidity.sub(MINIMUM_LIQUIDITY))
+          .withArgs(constants.AddressZero, wallet.address, expectedLiquidity.sub(MINIMUM_LIQUIDITY))
           .to.emit(pairAAB, 'Sync')
           .withArgs(tokenAAmount, tokenBAmount)
           .to.emit(pairAAB, 'Mint')
@@ -129,9 +130,9 @@ describe('FeSwapAddLiquidity', () => {
           .to.emit(tokenB, 'Transfer')
           .withArgs(wallet.address, pairABB.address, tokenBAmount)
           .to.emit(pairABB, 'Transfer')
-          .withArgs(AddressZero, AddressZero, MINIMUM_LIQUIDITY)
+          .withArgs(constants.AddressZero, constants.AddressZero, MINIMUM_LIQUIDITY)
           .to.emit(pairABB, 'Transfer')
-          .withArgs(AddressZero, wallet.address, expectedLiquidity.sub(MINIMUM_LIQUIDITY))          
+          .withArgs(constants.AddressZero, wallet.address, expectedLiquidity.sub(MINIMUM_LIQUIDITY))          
           .to.emit(pairABB, 'Sync')
           .withArgs(tokenBAmount, tokenAAmount)
           .to.emit(pairABB, 'Mint')
@@ -146,8 +147,8 @@ describe('FeSwapAddLiquidity', () => {
         const tokenBAmount = expandTo18Decimals(4)
 
         const expectedLiquidity = expandTo18Decimals(2)   
-        await tokenA.approve(router.address, MaxUint256)
-        await tokenB.approve(router.address, MaxUint256)
+        await tokenA.approve(router.address, constants.MaxUint256)
+        await tokenB.approve(router.address, constants.MaxUint256)
         await expect(
           router.addLiquidity(
             tokenA.address,
@@ -156,7 +157,7 @@ describe('FeSwapAddLiquidity', () => {
             tokenBAmount,
             100,
             wallet.address,
-            MaxUint256,
+            constants.MaxUint256,
             overrides
           )
         )
@@ -165,16 +166,16 @@ describe('FeSwapAddLiquidity', () => {
           .to.emit(tokenB, 'Transfer')
           .withArgs(wallet.address, pairAAB.address, tokenBAmount)
           .to.emit(pairAAB, 'Transfer')
-          .withArgs(AddressZero, AddressZero, MINIMUM_LIQUIDITY)
+          .withArgs(constants.AddressZero, constants.AddressZero, MINIMUM_LIQUIDITY)
           .to.emit(pairAAB, 'Transfer')
-          .withArgs(AddressZero, wallet.address, expectedLiquidity.sub(MINIMUM_LIQUIDITY))
+          .withArgs(constants.AddressZero, wallet.address, expectedLiquidity.sub(MINIMUM_LIQUIDITY))
           .to.emit(pairAAB, 'Sync')
           .withArgs(tokenAAmount, tokenBAmount)
           .to.emit(pairAAB, 'Mint')
           .withArgs(router.address, tokenAAmount, tokenBAmount)
 
         expect(await pairAAB.balanceOf(wallet.address)).to.eq(expectedLiquidity.sub(MINIMUM_LIQUIDITY))
-        expect(await pairABB.balanceOf(wallet.address)).to.eq(Zero)   
+        expect(await pairABB.balanceOf(wallet.address)).to.eq(constants.Zero)   
       })
 
       it('addLiquidity: 0-100', async () => {
@@ -182,8 +183,8 @@ describe('FeSwapAddLiquidity', () => {
         const tokenBAmount = expandTo18Decimals(4)
 
         const expectedLiquidity = expandTo18Decimals(2)   
-        await tokenA.approve(router.address, MaxUint256)
-        await tokenB.approve(router.address, MaxUint256)
+        await tokenA.approve(router.address, constants.MaxUint256)
+        await tokenB.approve(router.address, constants.MaxUint256)
         await expect(
           router.addLiquidity(
             tokenA.address,
@@ -192,7 +193,7 @@ describe('FeSwapAddLiquidity', () => {
             tokenBAmount,
             0,
             wallet.address,
-            MaxUint256,
+            constants.MaxUint256,
             overrides
           )
         )
@@ -201,15 +202,15 @@ describe('FeSwapAddLiquidity', () => {
         .to.emit(tokenB, 'Transfer')
         .withArgs(wallet.address, pairABB.address, tokenBAmount)
         .to.emit(pairABB, 'Transfer')
-        .withArgs(AddressZero, AddressZero, MINIMUM_LIQUIDITY)
+        .withArgs(constants.AddressZero, constants.AddressZero, MINIMUM_LIQUIDITY)
         .to.emit(pairABB, 'Transfer')
-        .withArgs(AddressZero, wallet.address, expectedLiquidity.sub(MINIMUM_LIQUIDITY))          
+        .withArgs(constants.AddressZero, wallet.address, expectedLiquidity.sub(MINIMUM_LIQUIDITY))          
         .to.emit(pairABB, 'Sync')
         .withArgs(tokenBAmount, tokenAAmount)
         .to.emit(pairABB, 'Mint')
         .withArgs(router.address, tokenBAmount, tokenAAmount)         
 
-        expect(await pairAAB.balanceOf(wallet.address)).to.eq(Zero)
+        expect(await pairAAB.balanceOf(wallet.address)).to.eq(constants.Zero)
         expect(await pairABB.balanceOf(wallet.address)).to.eq(expectedLiquidity.sub(MINIMUM_LIQUIDITY))       
       })
 
@@ -219,8 +220,8 @@ describe('FeSwapAddLiquidity', () => {
 
         const ratio = 60
         const expectedLiquidity = expandTo18Decimals(2)   
-        await tokenA.approve(router.address, MaxUint256)
-        await tokenB.approve(router.address, MaxUint256)
+        await tokenA.approve(router.address, constants.MaxUint256)
+        await tokenB.approve(router.address, constants.MaxUint256)
 
         await expect(
           router.addLiquidity(
@@ -230,7 +231,7 @@ describe('FeSwapAddLiquidity', () => {
             tokenBAmount,
             ratio,
             wallet.address,
-            MaxUint256,
+            constants.MaxUint256,
             overrides
           )
         )
@@ -239,9 +240,9 @@ describe('FeSwapAddLiquidity', () => {
         .to.emit(tokenB, 'Transfer')
         .withArgs(wallet.address, pairAAB.address, BigNumberPercent(tokenBAmount,ratio))
         .to.emit(pairAAB, 'Transfer')
-        .withArgs(AddressZero, AddressZero, MINIMUM_LIQUIDITY)
+        .withArgs(constants.AddressZero, constants.AddressZero, MINIMUM_LIQUIDITY)
         .to.emit(pairAAB, 'Transfer')
-        .withArgs(AddressZero, wallet.address, BigNumberPercent(expectedLiquidity,ratio).sub(MINIMUM_LIQUIDITY))
+        .withArgs(constants.AddressZero, wallet.address, BigNumberPercent(expectedLiquidity,ratio).sub(MINIMUM_LIQUIDITY))
         .to.emit(pairAAB, 'Sync')
         .withArgs(BigNumberPercent(tokenAAmount,ratio), BigNumberPercent(tokenBAmount,ratio))
         .to.emit(pairAAB, 'Mint')
@@ -251,9 +252,9 @@ describe('FeSwapAddLiquidity', () => {
         .to.emit(tokenB, 'Transfer')
         .withArgs(wallet.address, pairABB.address, BigNumberPercent(tokenBAmount, 100-ratio))
         .to.emit(pairABB, 'Transfer')
-        .withArgs(AddressZero, AddressZero, MINIMUM_LIQUIDITY)
+        .withArgs(constants.AddressZero, constants.AddressZero, MINIMUM_LIQUIDITY)
         .to.emit(pairABB, 'Transfer')
-        .withArgs(AddressZero, wallet.address, BigNumberPercent(expectedLiquidity, 100-ratio).sub(MINIMUM_LIQUIDITY))          
+        .withArgs(constants.AddressZero, wallet.address, BigNumberPercent(expectedLiquidity, 100-ratio).sub(MINIMUM_LIQUIDITY))          
         .to.emit(pairABB, 'Sync')
         .withArgs(BigNumberPercent(tokenBAmount, 100-ratio), BigNumberPercent(tokenAAmount, 100-ratio))
         .to.emit(pairABB, 'Mint')
@@ -272,7 +273,7 @@ describe('FeSwapAddLiquidity', () => {
             tokenBAmount,
             ratioA,
             wallet.address,
-            MaxUint256,
+            constants.MaxUint256,
             overrides
           )
         )
@@ -281,7 +282,7 @@ describe('FeSwapAddLiquidity', () => {
         .to.emit(tokenB, 'Transfer')
         .withArgs(wallet.address, pairAAB.address, BigNumberPercent(tokenBAmount,ratioA))
         .to.emit(pairAAB, 'Transfer')
-        .withArgs(AddressZero, wallet.address, BigNumberPercent(expectedLiquidity,ratioA))
+        .withArgs(constants.AddressZero, wallet.address, BigNumberPercent(expectedLiquidity,ratioA))
         .to.emit(pairAAB, 'Sync')
         .withArgs(BigNumberPercent(tokenAAmount,ratio).add(BigNumberPercent(tokenAAmount,ratioA)), 
                   BigNumberPercent(tokenBAmount,ratio).add(BigNumberPercent(tokenBAmount,ratioA)))
@@ -292,7 +293,7 @@ describe('FeSwapAddLiquidity', () => {
         .to.emit(tokenB, 'Transfer')
         .withArgs(wallet.address, pairABB.address, BigNumberPercent(tokenBAmount, 100-ratioA))
         .to.emit(pairABB, 'Transfer')
-        .withArgs(AddressZero, wallet.address, BigNumberPercent(expectedLiquidity, 100-ratioA))          
+        .withArgs(constants.AddressZero, wallet.address, BigNumberPercent(expectedLiquidity, 100-ratioA))          
         .to.emit(pairABB, 'Sync')
         .withArgs(BigNumberPercent(tokenBAmount, 100-ratioA).add(BigNumberPercent(tokenBAmount, 100-ratio)), 
                   BigNumberPercent(tokenAAmount, 100-ratioA).add(BigNumberPercent(tokenAAmount, 100-ratio)))
@@ -311,8 +312,8 @@ describe('FeSwapAddLiquidity', () => {
         const tokenBAmount = expandTo18Decimals(4)
 
         const ratio = 100
-        await tokenA.approve(router.address, MaxUint256)
-        await tokenB.approve(router.address, MaxUint256)
+        await tokenA.approve(router.address, constants.MaxUint256)
+        await tokenB.approve(router.address, constants.MaxUint256)
         const tx = await router.addLiquidity(
             tokenA.address,
             tokenB.address,
@@ -320,7 +321,7 @@ describe('FeSwapAddLiquidity', () => {
             tokenBAmount,
             ratio,
             wallet.address,
-            MaxUint256,
+            constants.MaxUint256,
             overrides
           )
 
@@ -333,8 +334,8 @@ describe('FeSwapAddLiquidity', () => {
         const tokenBAmount = expandTo18Decimals(4)
 
         const ratio = 70
-        await tokenA.approve(router.address, MaxUint256)
-        await tokenB.approve(router.address, MaxUint256)
+        await tokenA.approve(router.address, constants.MaxUint256)
+        await tokenB.approve(router.address, constants.MaxUint256)
         const tx = await router.addLiquidity(
             tokenA.address,
             tokenB.address,
@@ -342,7 +343,7 @@ describe('FeSwapAddLiquidity', () => {
             tokenBAmount,
             ratio,
             wallet.address,
-            MaxUint256,
+            constants.MaxUint256,
             overrides
           )
 
@@ -358,15 +359,15 @@ describe('FeSwapAddLiquidity', () => {
         const ETHAmount = expandTo18Decimals(4)
 
         const expectedLiquidity = expandTo18Decimals(20)
-        await WETHPartner.approve(router.address, MaxUint256)
+        await WETHPartner.approve(router.address, constants.MaxUint256)
         await expect(
           router.addLiquidityETH(
             WETHPartner.address,
-            WETHPartnerAmount.mul(Two),
+            WETHPartnerAmount.mul(constants.Two),
             50,
             wallet.address,
-            MaxUint256,
-            { ...overrides, value: ETHAmount.mul(Two) }
+            constants.MaxUint256,
+            { ...overrides, value: ETHAmount.mul(constants.Two) }
           )
         )
           .to.emit(WETHPartner, 'Transfer')
@@ -376,9 +377,9 @@ describe('FeSwapAddLiquidity', () => {
           .to.emit(WETH, 'Transfer')
           .withArgs(router.address, WETHPairTTE.address, ETHAmount)
           .to.emit(WETHPairTTE, 'Transfer')
-          .withArgs(AddressZero, AddressZero, MINIMUM_LIQUIDITY)
+          .withArgs(constants.AddressZero, constants.AddressZero, MINIMUM_LIQUIDITY)
           .to.emit(WETHPairTTE, 'Transfer')
-          .withArgs(AddressZero, wallet.address, expectedLiquidity.sub(MINIMUM_LIQUIDITY))
+          .withArgs(constants.AddressZero, wallet.address, expectedLiquidity.sub(MINIMUM_LIQUIDITY))
           .to.emit(WETHPairTTE, 'Sync')
           .withArgs(WETHPartnerAmount, ETHAmount)
           .to.emit(WETHPairTTE, 'Mint')
@@ -390,9 +391,9 @@ describe('FeSwapAddLiquidity', () => {
           .to.emit(WETH, 'Transfer')
           .withArgs(router.address, WETHPairTEE.address, ETHAmount)
           .to.emit(WETHPairTEE, 'Transfer')
-          .withArgs(AddressZero, AddressZero, MINIMUM_LIQUIDITY)
+          .withArgs(constants.AddressZero, constants.AddressZero, MINIMUM_LIQUIDITY)
           .to.emit(WETHPairTEE, 'Transfer')
-          .withArgs(AddressZero, wallet.address, expectedLiquidity.sub(MINIMUM_LIQUIDITY))
+          .withArgs(constants.AddressZero, wallet.address, expectedLiquidity.sub(MINIMUM_LIQUIDITY))
           .to.emit(WETHPairTEE, 'Sync')
           .withArgs(ETHAmount, WETHPartnerAmount)
           .to.emit(WETHPairTEE, 'Mint')
@@ -407,14 +408,14 @@ describe('FeSwapAddLiquidity', () => {
         const ETHAmount = expandTo18Decimals(4)
 
         const expectedLiquidity = expandTo18Decimals(20)
-        await WETHPartner.approve(router.address, MaxUint256)
+        await WETHPartner.approve(router.address, constants.MaxUint256)
         await expect(
           router.addLiquidityETH(
             WETHPartner.address,
             WETHPartnerAmount,
             100,
             wallet.address,
-            MaxUint256,
+            constants.MaxUint256,
             { ...overrides, value: ETHAmount }
           )
         )
@@ -425,16 +426,16 @@ describe('FeSwapAddLiquidity', () => {
           .to.emit(WETH, 'Transfer')
           .withArgs(router.address, WETHPairTTE.address, ETHAmount)
           .to.emit(WETHPairTTE, 'Transfer')
-          .withArgs(AddressZero, AddressZero, MINIMUM_LIQUIDITY)
+          .withArgs(constants.AddressZero, constants.AddressZero, MINIMUM_LIQUIDITY)
           .to.emit(WETHPairTTE, 'Transfer')
-          .withArgs(AddressZero, wallet.address, expectedLiquidity.sub(MINIMUM_LIQUIDITY))
+          .withArgs(constants.AddressZero, wallet.address, expectedLiquidity.sub(MINIMUM_LIQUIDITY))
           .to.emit(WETHPairTTE, 'Sync')
           .withArgs(WETHPartnerAmount,ETHAmount)
           .to.emit(WETHPairTTE, 'Mint')
           .withArgs(router.address,WETHPartnerAmount,ETHAmount)
  
         expect(await WETHPairTTE.balanceOf(wallet.address)).to.eq(expectedLiquidity.sub(MINIMUM_LIQUIDITY))
-        expect(await WETHPairTEE.balanceOf(wallet.address)).to.eq(Zero)
+        expect(await WETHPairTEE.balanceOf(wallet.address)).to.eq(constants.Zero)
       })      
 
       it('addLiquidityETH: 0-100', async () => {
@@ -442,14 +443,14 @@ describe('FeSwapAddLiquidity', () => {
         const ETHAmount = expandTo18Decimals(4)
 
         const expectedLiquidity = expandTo18Decimals(20)
-        await WETHPartner.approve(router.address, MaxUint256)
+        await WETHPartner.approve(router.address, constants.MaxUint256)
         await expect(
           router.addLiquidityETH(
             WETHPartner.address,
             WETHPartnerAmount,
             0,
             wallet.address,
-            MaxUint256,
+            constants.MaxUint256,
             { ...overrides, value: ETHAmount }
           )
         )
@@ -460,15 +461,15 @@ describe('FeSwapAddLiquidity', () => {
           .to.emit(WETH, 'Transfer')
           .withArgs(router.address, WETHPairTEE.address, ETHAmount)          
           .to.emit(WETHPairTEE, 'Transfer')
-          .withArgs(AddressZero, AddressZero, MINIMUM_LIQUIDITY)
+          .withArgs(constants.AddressZero, constants.AddressZero, MINIMUM_LIQUIDITY)
           .to.emit(WETHPairTEE, 'Transfer')
-          .withArgs(AddressZero, wallet.address, expectedLiquidity.sub(MINIMUM_LIQUIDITY))
+          .withArgs(constants.AddressZero, wallet.address, expectedLiquidity.sub(MINIMUM_LIQUIDITY))
           .to.emit(WETHPairTEE, 'Sync')
           .withArgs(ETHAmount, WETHPartnerAmount)
           .to.emit(WETHPairTEE, 'Mint')
           .withArgs(router.address,ETHAmount, WETHPartnerAmount)
 
-        expect(await WETHPairTTE.balanceOf(wallet.address)).to.eq(Zero)
+        expect(await WETHPairTTE.balanceOf(wallet.address)).to.eq(constants.Zero)
         expect(await WETHPairTEE.balanceOf(wallet.address)).to.eq(expectedLiquidity.sub(MINIMUM_LIQUIDITY))
       })
 
@@ -478,7 +479,7 @@ describe('FeSwapAddLiquidity', () => {
 
         const ratio = 30
         const expectedLiquidity = expandTo18Decimals(20)
-        await WETHPartner.approve(router.address, MaxUint256)
+        await WETHPartner.approve(router.address, constants.MaxUint256)
 
         await expect(
           router.addLiquidityETH(
@@ -486,7 +487,7 @@ describe('FeSwapAddLiquidity', () => {
             WETHPartnerAmount,
             ratio,
             wallet.address,
-            MaxUint256,
+            constants.MaxUint256,
             { ...overrides, value: ETHAmount }
           )
         )
@@ -497,9 +498,9 @@ describe('FeSwapAddLiquidity', () => {
           .to.emit(WETH, 'Transfer')
           .withArgs(router.address, WETHPairTTE.address, BigNumberPercent(ETHAmount,ratio))             
           .to.emit(WETHPairTTE, 'Transfer')
-          .withArgs(AddressZero, AddressZero, MINIMUM_LIQUIDITY)
+          .withArgs(constants.AddressZero, constants.AddressZero, MINIMUM_LIQUIDITY)
           .to.emit(WETHPairTTE, 'Transfer')
-          .withArgs(AddressZero, wallet.address, BigNumberPercent(expectedLiquidity,ratio).sub(MINIMUM_LIQUIDITY))
+          .withArgs(constants.AddressZero, wallet.address, BigNumberPercent(expectedLiquidity,ratio).sub(MINIMUM_LIQUIDITY))
           .to.emit(WETHPairTTE, 'Sync')
           .withArgs(BigNumberPercent(WETHPartnerAmount,ratio),BigNumberPercent(ETHAmount,ratio))
           .to.emit(WETHPairTTE, 'Mint')
@@ -511,9 +512,9 @@ describe('FeSwapAddLiquidity', () => {
           .to.emit(WETH, 'Transfer')
           .withArgs(router.address, WETHPairTEE.address, BigNumberPercent(ETHAmount,100-ratio))   
           .to.emit(WETHPairTEE, 'Transfer')
-          .withArgs(AddressZero, AddressZero, MINIMUM_LIQUIDITY)
+          .withArgs(constants.AddressZero, constants.AddressZero, MINIMUM_LIQUIDITY)
           .to.emit(WETHPairTEE, 'Transfer')
-          .withArgs(AddressZero, wallet.address, BigNumberPercent(expectedLiquidity,100-ratio).sub(MINIMUM_LIQUIDITY))
+          .withArgs(constants.AddressZero, wallet.address, BigNumberPercent(expectedLiquidity,100-ratio).sub(MINIMUM_LIQUIDITY))
           .to.emit(WETHPairTEE, 'Sync')
           .withArgs(BigNumberPercent(ETHAmount,100-ratio), BigNumberPercent(WETHPartnerAmount,100-ratio))
           .to.emit(WETHPairTEE, 'Mint')
@@ -529,7 +530,7 @@ describe('FeSwapAddLiquidity', () => {
             WETHPartnerAmount,
             ratioA,
             wallet.address,
-            MaxUint256,
+            constants.MaxUint256,
             { ...overrides, value: ETHAmount }
           )
         )
@@ -540,7 +541,7 @@ describe('FeSwapAddLiquidity', () => {
           .to.emit(WETH, 'Transfer')
           .withArgs(router.address, WETHPairTTE.address, BigNumberPercent(ETHAmount,ratioA))             
           .to.emit(WETHPairTTE, 'Transfer')
-          .withArgs(AddressZero, wallet.address, BigNumberPercent(expectedLiquidity, ratioA))
+          .withArgs(constants.AddressZero, wallet.address, BigNumberPercent(expectedLiquidity, ratioA))
           .to.emit(WETHPairTTE, 'Sync')
           .withArgs(BigNumberPercent(WETHPartnerAmount,ratioA).add(BigNumberPercent(WETHPartnerAmount,ratio)),
                     BigNumberPercent(ETHAmount,ratioA).add(BigNumberPercent(ETHAmount,ratio)))
@@ -553,7 +554,7 @@ describe('FeSwapAddLiquidity', () => {
           .to.emit(WETH, 'Transfer')
           .withArgs(router.address, WETHPairTEE.address, BigNumberPercent(ETHAmount,100-ratioA))   
           .to.emit(WETHPairTEE, 'Transfer')
-          .withArgs(AddressZero, wallet.address, BigNumberPercent(expectedLiquidity,100-ratioA))
+          .withArgs(constants.AddressZero, wallet.address, BigNumberPercent(expectedLiquidity,100-ratioA))
           .to.emit(WETHPairTEE, 'Sync')
           .withArgs(BigNumberPercent(ETHAmount,100-ratioA).add(BigNumberPercent(ETHAmount,100-ratio)), 
                     BigNumberPercent(WETHPartnerAmount,100-ratioA).add(BigNumberPercent(WETHPartnerAmount,100-ratio)))
@@ -571,13 +572,13 @@ describe('FeSwapAddLiquidity', () => {
         const ETHAmount = expandTo18Decimals(4)
 
         const ratio = 0
-        await WETHPartner.approve(router.address, MaxUint256)
+        await WETHPartner.approve(router.address, constants.MaxUint256)
         const tx = await router.addLiquidityETH(
             WETHPartner.address,
             WETHPartnerAmount,
             ratio,
             wallet.address,
-            MaxUint256,
+            constants.MaxUint256,
             { ...overrides, value: ETHAmount }
           )
 
@@ -590,13 +591,13 @@ describe('FeSwapAddLiquidity', () => {
         const ETHAmount = expandTo18Decimals(4)
 
         const ratio = 40
-        await WETHPartner.approve(router.address, MaxUint256)
+        await WETHPartner.approve(router.address, constants.MaxUint256)
         const tx = await router.addLiquidityETH(
             WETHPartner.address,
             WETHPartnerAmount,
             ratio,
             wallet.address,
-            MaxUint256,
+            constants.MaxUint256,
             { ...overrides, value: ETHAmount }
           )
 
