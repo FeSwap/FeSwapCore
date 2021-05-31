@@ -17,4 +17,5 @@ interface IFeSwapFactory {
     function setFeeTo(address) external;
     function setFactoryAdmin(address) external;
     function setRouterFeSwap(address) external;
+    function managePair(address, address, address, address) external;
 }

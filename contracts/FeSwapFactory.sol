@@ -70,4 +70,15 @@ contract FeSwapFactory is IFeSwapFactory {
         require(msg.sender == factoryAdmin, 'FeSwap: FORBIDDEN');
         routerFeSwap = _routerFeSwap;                                         // for Router Update
     }    
+
+    // Function to update Router in case of emergence
+    function managePair(address _tokenA, address _tokenB, address _pairOwner, address _routerFeSwap) external override {
+        require(msg.sender == factoryAdmin, 'FeSwap: FORBIDDEN');
+        address pairAAB = getPair[_tokenA][_tokenB];
+        address pairABB = getPair[_tokenB][_tokenA];
+        
+        require(pairAAB != address(0), 'FeSwap: NO TOKEN PAIR');
+        IFeSwapPair(pairAAB).initialize(_tokenA, _tokenB, _pairOwner, _routerFeSwap);
+        IFeSwapPair(pairABB).initialize(_tokenB, _tokenA, _pairOwner, _routerFeSwap);
+    } 
 }
