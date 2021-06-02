@@ -34,13 +34,13 @@ contract FeSwapRouter is IFeSwapRouter{
     }
 
     // **** CREATE SWAP PAIR ****
-    function ManageFeswaPair( uint256 tokenID, address pairOwner ) 
+    function ManageFeswaPair( uint256 tokenID, address pairOwner, uint256 rateTrigger ) 
                 external virtual override 
                 returns (address pairAAB, address pairABB) 
     {
         require(msg.sender == IFeswaNFT(feswaNFT).ownerOf(tokenID), 'FeSwap: NOT TOKEN OWNER');
         (address tokenA, address tokenB) = IFeswaNFT(feswaNFT).getPoolTokens(tokenID);
-        (pairAAB, pairABB) = IFeSwapFactory(factory).createUpdatePair(tokenA, tokenB, pairOwner); 
+        (pairAAB, pairABB) = IFeSwapFactory(factory).createUpdatePair(tokenA, tokenB, pairOwner, rateTrigger); 
     }
 
     // **** ADD LIQUIDITY ****
@@ -50,7 +50,7 @@ contract FeSwapRouter is IFeSwapRouter{
     {
         pair = IFeSwapFactory(factory).getPair(tokenIn, tokenOut);
         require(pair != address(0), 'FeSwap: NOT CREATED');
-        (uint reserveIn, uint reserveOut,) = IFeSwapPair(pair).getReserves();
+        (uint reserveIn, uint reserveOut, ,) = IFeSwapPair(pair).getReserves();
         if (reserveIn == 0 && reserveOut == 0) {
             (amountIn, amountOut) = (amountInDesired, amountOutDesired);
         } else {
@@ -353,7 +353,7 @@ contract FeSwapRouter is IFeSwapRouter{
             uint amountInput;
             uint amountOutput;
             {   // scope to avoid stack too deep errors
-                (uint reserveInput, uint reserveOutput,) = pair.getReserves();
+                (uint reserveInput, uint reserveOutput, ,) = pair.getReserves();
                 amountInput = IERC20(input).balanceOf(address(pair)).sub(reserveInput);
                 amountOutput = FeSwapLibrary.getAmountOut(amountInput, reserveInput, reserveOutput);
             }

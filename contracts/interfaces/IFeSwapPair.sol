@@ -14,17 +14,20 @@ interface IFeSwapPair is IFeSwapERC20 {
     function pairOwner() external view returns (address);
     function tokenIn() external view returns (address);
     function tokenOut() external view returns (address);
-    function getReserves() external view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast);
+    function getReserves() external view returns ( uint112 _reserveIn, uint112 _reserveOut, 
+                                                          uint32 _blockTimestampLast, uint _rateTriggerArbitrage);
     function price0CumulativeLast() external view returns (uint);
     function price1CumulativeLast() external view returns (uint);
     function kLast() external view returns (uint);
-
+    function rateTriggerArbitrage() external view returns (uint);
+    
     function mint(address to) external returns (uint liquidity);
     function burn(address to) external returns (uint amount0, uint amount1);
     function swap(uint amountOut, address to, bytes calldata data) external;
     function skim(address to) external;
     function sync() external returns(uint112 _reserveIn, uint112 _reserveOut);
 
-    function initialize(address, address, address,address) external;
+    function initialize(address, address, address, address, uint) external;
     function setOwner(address _pairOwner) external;
+    function adjusArbitragetRate(uint newRate) external;
 }

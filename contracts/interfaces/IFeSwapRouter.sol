@@ -10,7 +10,8 @@ interface IFeSwapRouter {
 
     function ManageFeswaPair(
         uint256 tokenID,
-        address pairOwner  
+        address pairOwner,
+        uint256 rateTrigger
     ) external returns (address pairAAB, address pairABB);
 
     function addLiquidity(

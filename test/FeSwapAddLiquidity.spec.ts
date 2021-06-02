@@ -2,7 +2,7 @@ import chai, { expect } from 'chai'
 import { Contract, constants } from 'ethers'
 import { solidity, MockProvider, createFixtureLoader } from 'ethereum-waffle'
 
-import { BigNumberPercent, expandTo18Decimals, MINIMUM_LIQUIDITY } from './shared/utilities'
+import { BigNumberPercent, expandTo18Decimals, MINIMUM_LIQUIDITY, getFeSwapCodeHash } from './shared/utilities'
 import { v2Fixture } from './shared/Routerfixtures'
 
 chai.use(solidity)
@@ -50,6 +50,10 @@ describe('FeSwapAddLiquidity', () => {
       expect(await provider.getBalance(router.address)).to.eq(constants.Zero)
     })
 
+    it('FeSwapAddLiquidity Get Feswap pair Code Hash', async () => {
+      getFeSwapCodeHash()
+    })
+  
     describe("FeSwapAddLiquidity Basic", () => {
       it('addLiquidity: Ration Error', async () => {
         const tokenAAmount = expandTo18Decimals(1)

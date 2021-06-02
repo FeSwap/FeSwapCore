@@ -16,14 +16,15 @@ library FeSwapLibrary {
                 hex'ff',
                 factory,
                 keccak256(abi.encodePacked(tokenA, tokenB)),
-                hex'd9b5dd7ec9ca84aee72f7ad7f943e01d194a08dd6f5bf53c125b72688dc35729' // init code hash // save 9916 gas
+                hex'5fde8672d44428e58c359144cbabea04229b7e582f5d2cfad1634fd4960f1197' // init code hash // save 9916 gas
             ))));
     }
 
     // fetches and sorts the reserves for a pair
-    function getReserves(address factory, address tokenA, address tokenB) internal view returns (uint reserveA, uint reserveB, address pair) {
+    function getReserves(address factory, address tokenA, address tokenB) 
+                        internal view returns (uint reserveA, uint reserveB, address pair, uint rateTriggerArbitrage) {
         pair = pairFor(factory, tokenA, tokenB);
-        (reserveA, reserveB,) = IFeSwapPair(pair).getReserves();
+        (reserveA, reserveB, , rateTriggerArbitrage) = IFeSwapPair(pair).getReserves();
     }
 
     // given some amount of an asset and pair reserves, returns an equivalent amount of the other asset
@@ -53,8 +54,8 @@ library FeSwapLibrary {
     }
 
     function arbitragePairPools(address factory, address tokenA, address tokenB) internal returns (uint reserveIn, uint reserveOut, address pair) {
-        (reserveIn, reserveOut, pair) = getReserves(factory, tokenA, tokenB);
-        (uint reserveInMate, uint reserveOutMate, address PairMate) = FeSwapLibrary.getReserves(factory, tokenB, tokenA); 
+        (reserveIn, reserveOut, pair, ) = getReserves(factory, tokenA, tokenB);
+        (uint reserveInMate, uint reserveOutMate, address PairMate, ) = FeSwapLibrary.getReserves(factory, tokenB, tokenA); 
         uint productIn = uint(reserveIn).mul(reserveInMate);
         uint productOut = uint(reserveOut).mul(reserveOutMate);
         if(productIn.mul(1000) > productOut.mul(1010)){                 
@@ -65,7 +66,7 @@ library FeSwapLibrary {
             TransferHelper.safeTransferFrom(tokenB, PairMate, pair, ArbitatrageIn / totalTokenA); 
             IFeSwapPair(pair).sync();
             IFeSwapPair(PairMate).sync();
-            (reserveIn, reserveOut,) = getReserves(factory, tokenA, tokenB);
+            (reserveIn, reserveOut, ,) = getReserves(factory, tokenA, tokenB);
         }
     }   
 
@@ -87,7 +88,7 @@ library FeSwapLibrary {
         amounts = new uint[](path.length);
         amounts[0] = amountIn;
         for (uint i = 0; i < path.length - 1; i++) {
-            (uint reserveIn, uint reserveOut, ) = getReserves(factory, path[i], path[i + 1]);
+            (uint reserveIn, uint reserveOut, , ) = getReserves(factory, path[i], path[i + 1]);
             amounts[i + 1] = getAmountOut(amounts[i], reserveIn, reserveOut);
         }
     }
@@ -110,7 +111,7 @@ library FeSwapLibrary {
         amounts = new uint[](path.length);
         amounts[amounts.length - 1] = amountOut;
         for (uint i = path.length - 1; i > 0; i--) {
-            (uint reserveIn, uint reserveOut,) = getReserves(factory, path[i - 1], path[i]);
+            (uint reserveIn, uint reserveOut, ,) = getReserves(factory, path[i - 1], path[i]);
             amounts[i - 1] = getAmountIn(amounts[i], reserveIn, reserveOut);
         }
     }

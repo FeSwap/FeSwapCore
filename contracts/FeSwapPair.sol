@@ -30,6 +30,8 @@ contract FeSwapPair is IFeSwapPair, FeSwapERC20 {
     uint public override price1CumulativeLast;
     uint public override kLast;             // reserveIn * reserveOut, as of immediately after the most recent liquidity event
 
+    uint public override rateTriggerArbitrage;
+
     uint private unlocked = 0x5A;
     modifier lock() {
         require(unlocked == 0x5A, 'FeSwap: LOCKED');
@@ -38,10 +40,13 @@ contract FeSwapPair is IFeSwapPair, FeSwapERC20 {
         unlocked = 0x5A;
     }
 
-    function getReserves() public view override returns (uint112 _reserveIn, uint112 _reserveOut, uint32 _blockTimestampLast) {
+    function getReserves() public view override returns ( uint112 _reserveIn, uint112 _reserveOut, 
+                                                          uint32 _blockTimestampLast, uint _rateTriggerArbitrage) {
         _reserveIn = reserveIn;
         _reserveOut = reserveOut;
         _blockTimestampLast = blockTimestampLast;
+        _rateTriggerArbitrage = rateTriggerArbitrage;
+
     }
 
     function _safeTransfer(address token, address to, uint value) private {
@@ -70,11 +75,12 @@ contract FeSwapPair is IFeSwapPair, FeSwapERC20 {
     }
 
     // called once by the factory at time of deployment
-    function initialize(address _tokenIn, address _tokenOut, address _pairOwner, address router) external override {
+    function initialize(address _tokenIn, address _tokenOut, address _pairOwner, address router, uint rateTrigger) external override {
         require(msg.sender == factory, 'FeSwap: FORBIDDEN');
-        tokenIn = _tokenIn;
-        tokenOut = _tokenOut;
-        pairOwner = _pairOwner;
+        tokenIn     = _tokenIn;
+        tokenOut    = _tokenOut;
+        pairOwner   = _pairOwner;
+        if(rateTrigger != 0)  rateTriggerArbitrage = rateTrigger;
         IERC20(tokenIn).approve(router, uint(-1));      // Approve Rourter to transfer out tokenIn for auto-arbitrage 
     }
 
@@ -82,6 +88,11 @@ contract FeSwapPair is IFeSwapPair, FeSwapERC20 {
         require(msg.sender == factory, 'FeSwap: FORBIDDEN');
         pairOwner = _pairOwner;
     }
+
+    function adjusArbitragetRate(uint newRate) external override {
+        require(msg.sender == factory, 'FeSwap: FORBIDDEN');
+        rateTriggerArbitrage = newRate;
+    }  
 
     // update reserves and, on the first call per block, price accumulators
     function _update(uint balanceIn, uint balanceOut, uint112 _reserveIn, uint112 _reserveOut) private {
@@ -101,16 +112,16 @@ contract FeSwapPair is IFeSwapPair, FeSwapERC20 {
 
     // if fee is on, mint liquidity equivalent to 1/6th of the growth in sqrt(k)
     function _mintFee(uint112 _reserveIn, uint112 _reserveOut) private returns (bool feeOn) {
-        address feeTo = IFeSwapFactory(factory).feeTo();
+        (address feeTo, uint rateProfitShare) = IFeSwapFactory(factory).getFeeInfo();
         feeOn = (feeTo != address(0)) || (pairOwner != address(0));
         uint _kLast = kLast;            // gas savings
         if (feeOn) {
             if (_kLast != 0) {
                 uint rootK = Math.sqrt(uint(_reserveIn).mul(_reserveOut));
                 uint rootKLast = Math.sqrt(_kLast);
-                if (rootK > rootKLast.add(10)) {     // ignore swap dust increase, select 10 randomly 
+                if (rootK > rootKLast.add(20)) {     // ignore swap dust increase, select 20 randomly 
                     uint numerator = totalSupply.mul(rootK.sub(rootKLast)).mul(6);
-                    uint denominator = rootK.mul(11).add(rootKLast);
+                    uint denominator = rootK.mul(rateProfitShare).add(rootKLast);
                     uint liquidityCreator = numerator / (denominator.mul(10));
                     if((liquidityCreator > 0) && (pairOwner != address(0))) {
                         _mint(pairOwner, liquidityCreator);
@@ -128,7 +139,7 @@ contract FeSwapPair is IFeSwapPair, FeSwapERC20 {
 
     // this low-level function should be called from a contract which performs important safety checks
     function mint(address to) external override lock returns (uint liquidity) {
-        (uint112 _reserveIn, uint112 _reserveOut,) = getReserves(); // gas savings
+        (uint112 _reserveIn, uint112 _reserveOut, ,) = getReserves(); // gas savings
         uint balanceIn = IERC20(tokenIn).balanceOf(address(this));
         uint balanceOut = IERC20(tokenOut).balanceOf(address(this));
         uint amountTokenIn = balanceIn.sub(_reserveIn);
@@ -153,7 +164,7 @@ contract FeSwapPair is IFeSwapPair, FeSwapERC20 {
 
     // this low-level function should be called from a contract which performs important safety checks
     function burn(address to) external lock override returns (uint amountIn, uint amountOut) {
-        (uint112 _reserveIn, uint112 _reserveOut,) = getReserves();     // gas savings
+        (uint112 _reserveIn, uint112 _reserveOut, ,) = getReserves();     // gas savings
         (address _tokenIn, address _tokenOut) = (tokenIn, tokenOut);    // gas savings
         uint balanceIn = IERC20(_tokenIn).balanceOf(address(this));
         uint balanceOut = IERC20(_tokenOut).balanceOf(address(this));

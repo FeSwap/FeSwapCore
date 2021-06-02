@@ -98,7 +98,7 @@ export async function v2Fixture(
 
   const WETHPairAddressETHOut = await factoryFeswa.getPair(WETHPartner.address, WETH.address)
   const WETHPairTTE = new Contract(WETHPairAddressETHOut, JSON.stringify(FeSwapPair.abi), provider).connect(wallet)
- 
+
   return {
     tokenA,
     tokenB,
