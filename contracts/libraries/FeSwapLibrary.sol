@@ -55,10 +55,10 @@ library FeSwapLibrary {
 
     function arbitragePairPools(address factory, address tokenA, address tokenB) internal returns (uint reserveIn, uint reserveOut, address pair) {
         (reserveIn, reserveOut, pair, ) = getReserves(factory, tokenA, tokenB);
-        (uint reserveInMate, uint reserveOutMate, address PairMate, ) = FeSwapLibrary.getReserves(factory, tokenB, tokenA); 
+        (uint reserveInMate, uint reserveOutMate, address PairMate, uint rateTriggerArbitrage) = FeSwapLibrary.getReserves(factory, tokenB, tokenA); 
         uint productIn = uint(reserveIn).mul(reserveInMate);
         uint productOut = uint(reserveOut).mul(reserveOutMate);
-        if(productIn.mul(1000) > productOut.mul(1010)){                 
+        if(productIn.mul(10000) > productOut.mul(rateTriggerArbitrage)){                 
             uint ArbitatrageIn = productIn.sub(productOut);
             uint totalTokenA = (uint(reserveIn).add(reserveOutMate)).mul(2);               
             uint totalTokenB = (uint(reserveOut).add(reserveInMate)).mul(2);
