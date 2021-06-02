@@ -10,6 +10,7 @@ import FeSwapPair from '../build/FeSwapPair.json'
 
 chai.use(solidity)
 
+const rateTriggerArbitrage: number = 10
 const overrides = {
   gasLimit: 9999999
 }
@@ -49,26 +50,26 @@ describe('FeSwapFactory', () => {
   })
 
   it('createUpdatePair: Basic checking', async () => {
-    await expect(factory.connect(other1).createUpdatePair(tokenA.address, tokenA.address, other1.address))
+    await expect(factory.connect(other1).createUpdatePair(tokenA.address, tokenA.address, other1.address, rateTriggerArbitrage))
       .to.be.revertedWith('FeSwap: IDENTICAL_ADDRESSES')                    // FeSwap: IDENTICAL_ADDRESSES
 
-    await expect(factory.connect(other1).createUpdatePair(tokenA.address, tokenB.address, other1.address))
+    await expect(factory.connect(other1).createUpdatePair(tokenA.address, tokenB.address, other1.address, rateTriggerArbitrage))
       .to.be.revertedWith('FeSwap: ZERO_ADDRESS')                           // FeSwap: ZERO_ADDRESS, routerFeSwap is 0
 
     await factory.setRouterFeSwap(other.address)  
-    await expect(factory.connect(other1).createUpdatePair(tokenA.address, tokenB.address, other1.address))
+    await expect(factory.connect(other1).createUpdatePair(tokenA.address, tokenB.address, other1.address, rateTriggerArbitrage))
       .to.be.revertedWith('FeSwap: FORBIDDEN')                              // FeSwap: FORBIDDEN  
       
-    await expect(factory.createUpdatePair(tokenA.address, constants.AddressZero, wallet.address))
+    await expect(factory.createUpdatePair(tokenA.address, constants.AddressZero, wallet.address, rateTriggerArbitrage))
       .to.be.revertedWith('FeSwap: ZERO_ADDRESS')                           // FeSwap: FeSwap: ZERO_ADDRESS
 
-    await expect(factory.createUpdatePair(constants.AddressZero, tokenB.address, wallet.address))
+    await expect(factory.createUpdatePair(constants.AddressZero, tokenB.address, wallet.address, rateTriggerArbitrage))
       .to.be.revertedWith('FeSwap: ZERO_ADDRESS')                           // FeSwap: FeSwap: ZERO_ADDRESS      
 
-    await factory.createUpdatePair(tokenA.address, tokenB.address, wallet.address)
+    await factory.createUpdatePair(tokenA.address, tokenB.address, wallet.address, rateTriggerArbitrage)
     
     // simulate creating from router ( other is simulated as routerFeSwap)
-    await factory.connect(other).createUpdatePair(tokenA.address, tokenC.address, other.address)     
+    await factory.connect(other).createUpdatePair(tokenA.address, tokenC.address, other.address, rateTriggerArbitrage)     
   })  
 
   it('createUpdatePair: Normal function checking', async () => {
@@ -77,7 +78,7 @@ describe('FeSwapFactory', () => {
 
     await factory.setRouterFeSwap(other1.address)                          // simulate router, just for test
 
-    await expect(factory.createUpdatePair(tokenA.address, tokenB.address, other.address))
+    await expect(factory.createUpdatePair(tokenA.address, tokenB.address, other.address, rateTriggerArbitrage))
       .to.emit(factory, 'PairCreated')
       .withArgs(tokenA.address, tokenB.address, create2AddressAAB, create2AddressABB, BigNumber.from(2))
 
@@ -116,11 +117,11 @@ describe('FeSwapFactory', () => {
 
     await factory.setRouterFeSwap(other1.address)                          // simulate router, just for test
 
-    await expect(factory.createUpdatePair(tokenA.address, tokenB.address, wallet.address))
+    await expect(factory.createUpdatePair(tokenA.address, tokenB.address, wallet.address, rateTriggerArbitrage))
       .to.emit(factory, 'PairCreated')
       .withArgs(tokenA.address, tokenB.address, create2AddressAAB, create2AddressABB, BigNumber.from(2))
 
-    await expect(factory.connect(other1).createUpdatePair(tokenA.address, tokenC.address, other.address))
+    await expect(factory.connect(other1).createUpdatePair(tokenA.address, tokenC.address, other.address, rateTriggerArbitrage))
       .to.emit(factory, 'PairCreated')
       .withArgs(tokenA.address, tokenC.address, create2AddressAAC, create2AddressACC, BigNumber.from(4))
 
@@ -140,25 +141,25 @@ describe('FeSwapFactory', () => {
 
     await factory.setRouterFeSwap(other1.address)                          // simulate router, just for test
 
-    await expect(factory.connect(other1).createUpdatePair(tokenA.address, tokenB.address, other.address))
+    await expect(factory.connect(other1).createUpdatePair(tokenA.address, tokenB.address, other.address, rateTriggerArbitrage))
       .to.emit(factory, 'PairCreated')
       .withArgs(tokenA.address, tokenB.address, create2AddressAAB, create2AddressABB, BigNumber.from(2))
 
-    await expect(factory.connect(other1).createUpdatePair(tokenA.address, tokenB.address, other1.address))
+    await expect(factory.connect(other1).createUpdatePair(tokenA.address, tokenB.address, other1.address, rateTriggerArbitrage))
       .to.emit(factory, 'PairOwnerChanged')
       .withArgs(create2AddressAAB, create2AddressABB, other.address, other1.address )
   })
 
   it('createUpdatePair:gas', async () => {
     await factory.setRouterFeSwap( wallet.address)
-    let tx = await factory.createUpdatePair(tokenA.address, tokenB.address, wallet.address)
+    let tx = await factory.createUpdatePair(tokenA.address, tokenB.address, wallet.address, rateTriggerArbitrage)
     let receipt = await tx.wait()
-    expect(receipt.gasUsed).to.eq(5223877)        // 5219858, 4913779,   UniSwap: 2512920
+    expect(receipt.gasUsed).to.eq(5375412)        // 5223877, 4913779,   UniSwap: 2512920
 
     // update owneer
-    tx = await factory.createUpdatePair(tokenA.address, tokenB.address, other.address)
+    tx = await factory.createUpdatePair(tokenA.address, tokenB.address, other.address, rateTriggerArbitrage)
     receipt = await tx.wait()
-    expect(receipt.gasUsed).to.eq(48059)        // 48059
+    expect(receipt.gasUsed).to.eq(57021)        // 48059
   }).retries(3)
 
   it('setFeeTo', async () => {

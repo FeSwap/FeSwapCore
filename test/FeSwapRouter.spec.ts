@@ -20,6 +20,7 @@ const overrides = {
 const initPoolPrice = expandTo18Decimals(1).div(5)
 const BidStartTime: number = 1615338000   // 2021/02/22 03/10 9:00
 const OPEN_BID_DURATION: number =  (3600 * 24 * 14)
+const rateTriggerArbitrage: number = 10
 
 describe('FeSwapRouter', () => {
   const provider = new MockProvider({
@@ -214,19 +215,19 @@ describe('FeSwapRouter: ManageFeswaPair', () => {
   })
 
   it('ManageFeswaPair: Invalide TokenID', async () => {
-    await expect(router.ManageFeswaPair('0xFFFFFFFFFFF', pairOwner.address))
+    await expect(router.ManageFeswaPair('0xFFFFFFFFFFF', pairOwner.address, rateTriggerArbitrage))
             .to.be.revertedWith('ERC721: owner query for nonexistent token')
   })
 
   it('ManageFeswaPair: Check Owner', async () => {
-    await expect(router.ManageFeswaPair(tokenIDMatch, pairOwner.address))
+    await expect(router.ManageFeswaPair(tokenIDMatch, pairOwner.address, rateTriggerArbitrage))
             .to.be.revertedWith('FeSwap: NOT TOKEN OWNER')
   })
 
   it('ManageFeswaPair: Change Pair Owner', async () => {
     expect(await pairAAB.pairOwner()).to.be.eq(pairOwner.address)
     expect(await pairABB.pairOwner()).to.be.eq(pairOwner.address)
-    await router.connect(pairOwner).ManageFeswaPair(tokenIDMatch, newOwner.address)
+    await router.connect(pairOwner).ManageFeswaPair(tokenIDMatch, newOwner.address, rateTriggerArbitrage)
     expect(await pairAAB.pairOwner()).to.be.eq(newOwner.address)
     expect(await pairABB.pairOwner()).to.be.eq(newOwner.address)
   })
@@ -260,7 +261,7 @@ describe('FeSwapRouter: Deflation Token Test', () => {
     DTT = await deployContract(wallet, DeflatingERC20, [expandTo18Decimals(10000)])
 
     // make a DTT<>WETH pair
-    await factory.createUpdatePair(DTT.address, WETH.address, wallet.address, overrides)
+    await factory.createUpdatePair(DTT.address, WETH.address, wallet.address, rateTriggerArbitrage, overrides)
     const pairAddressTTE = await factory.getPair(DTT.address, WETH.address)
     WETHPairTTE = new Contract(pairAddressTTE, JSON.stringify(IUniswapV2Pair.abi), provider).connect(wallet)
 
@@ -503,7 +504,7 @@ describe('FeSwapRouter: fee-on-transfer tokens: reloaded', () => {
     DTT2 = await deployContract(wallet, DeflatingERC20, [expandTo18Decimals(10000)])
 
     // make a DTT<>WETH pair
-    await fixture.factoryFeswa.createUpdatePair(DTT.address, DTT2.address, wallet.address, overrides)
+    await fixture.factoryFeswa.createUpdatePair(DTT.address, DTT2.address, wallet.address, rateTriggerArbitrage, overrides)
     const pairAddressDTT = await fixture.factoryFeswa.getPair(DTT.address, DTT2.address)
     const pairAddressDTT2 = await fixture.factoryFeswa.getPair(DTT2.address, DTT.address)    
 

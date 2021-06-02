@@ -11,6 +11,7 @@ interface FactoryFixture {
   factory: Contract
 }
 
+const rateTriggerArbitrage: number = 10
 const overrides = {
   gasLimit: 9999999
 }
@@ -36,7 +37,7 @@ export async function pairFixture( [wallet]: Wallet[], provider: providers.Web3P
   const tokenB = await deployContract(wallet, ERC20, [expandTo18Decimals(10000),"Token B"], overrides)
   const tokenC = await deployContract(wallet, ERC20, [expandTo18Decimals(10000),"Token C"], overrides)
 
-  await factory.createUpdatePair(tokenA.address, tokenB.address, wallet.address, overrides)
+  await factory.createUpdatePair(tokenA.address, tokenB.address, wallet.address, rateTriggerArbitrage, overrides)
 
   const pairAddressAAB = await factory.getPair(tokenA.address, tokenB.address)
   const pairAAB = new Contract(pairAddressAAB, JSON.stringify(FeSwapPair.abi), provider).connect(wallet)

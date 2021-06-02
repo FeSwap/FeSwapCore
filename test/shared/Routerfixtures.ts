@@ -37,6 +37,7 @@ interface V2Fixture {
 const initPoolPrice = expandTo18Decimals(1).div(5)
 const BidStartTime: number = 1615338000   // 2021/02/22 03/10 9:00
 const OPEN_BID_DURATION: number =  (3600 * 24 * 14)
+const rateTriggerArbitrage: number = 10
 
 export async function v2Fixture(
                                   [wallet, feeTo, pairOwner]: Wallet[],
@@ -68,7 +69,7 @@ export async function v2Fixture(
   // initialize FeSwap
   await factoryFeswa.setFeeTo(feeTo.address)
   await factoryFeswa.setRouterFeSwap(routerFeswa.address)
-//  await factoryFeswa.createUpdatePair(tokenA.address, tokenB.address, pairOwner.address, overrides)
+//  await factoryFeswa.createUpdatePair(tokenA.address, tokenB.address, pairOwner.address, rateTriggerArbitrage, overrides)
 
   await mineBlock(provider, BidStartTime + 1)
   const  tokenIDMatch = utils.keccak256( 
@@ -84,15 +85,15 @@ export async function v2Fixture(
   lastBlock = await provider.getBlock('latest')
   await mineBlock(provider, lastBlock.timestamp + OPEN_BID_DURATION + 1 ) 
   await FeswaNFT.connect(pairOwner).FeswaPairSettle(tokenIDMatch)
-  await routerFeswa.connect(pairOwner).ManageFeswaPair(tokenIDMatch, pairOwner.address)
+  await routerFeswa.connect(pairOwner).ManageFeswaPair(tokenIDMatch, pairOwner.address, rateTriggerArbitrage)
 
-  await factoryFeswa.createUpdatePair(tokenB.address, WETHPartner.address, pairOwner.address, overrides)  
-  const pairAddressAAB = await factoryFeswa.getPair(tokenA.address, tokenB.address)
+   await factoryFeswa.createUpdatePair(tokenB.address, WETHPartner.address, pairOwner.address, rateTriggerArbitrage, overrides)  
+   const pairAddressAAB = await factoryFeswa.getPair(tokenA.address, tokenB.address)
   const pairAddressABB = await factoryFeswa.getPair(tokenB.address, tokenA.address)
   const pairAAB = new Contract(pairAddressAAB, JSON.stringify(FeSwapPair.abi), provider).connect(wallet)
   const pairABB = new Contract(pairAddressABB, JSON.stringify(FeSwapPair.abi), provider).connect(wallet)
 
-  await factoryFeswa.createUpdatePair(WETH.address, WETHPartner.address, pairOwner.address, overrides)
+  await factoryFeswa.createUpdatePair(WETH.address, WETHPartner.address, pairOwner.address, rateTriggerArbitrage, overrides)
   const WETHPairAddressETHIn = await factoryFeswa.getPair(WETH.address, WETHPartner.address)
   const WETHPairTEE = new Contract(WETHPairAddressETHIn, JSON.stringify(FeSwapPair.abi), provider).connect(wallet)
 

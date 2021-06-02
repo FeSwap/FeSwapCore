@@ -330,7 +330,7 @@ describe('FeSwapAddLiquidity', () => {
           )
 
         const receipt = await tx.wait()
-        expect(receipt.gasUsed).to.eq(233652)    // 233503, 228994  Uniswap 213957
+        expect(receipt.gasUsed).to.eq(236197)    // 233652, 228994  Uniswap 213957
       }).retries(3)
 
       it('Add Liquidity GAS usage： Double Pool ', async () => {
@@ -352,7 +352,7 @@ describe('FeSwapAddLiquidity', () => {
           )
 
         const receipt = await tx.wait()
-        expect(receipt.gasUsed).to.eq(434437)    // 433922, 425406
+        expect(receipt.gasUsed).to.eq(439527)    // 434437, 425406
       }).retries(3)
 
     })
@@ -587,7 +587,7 @@ describe('FeSwapAddLiquidity', () => {
           )
 
         const receipt = await tx.wait()
-        expect(receipt.gasUsed).to.eq(240097)    // 235746, Uniswap 220495
+        expect(receipt.gasUsed).to.eq(242642)    // 240097, Uniswap 220495
       }).retries(3)
 
       it('Add-Liquidity-ETH GAS usage： Double Pool ', async () => {
@@ -606,7 +606,7 @@ describe('FeSwapAddLiquidity', () => {
           )
 
         const receipt = await tx.wait()
-        expect(receipt.gasUsed).to.eq(452777)  //452311,  443817
+        expect(receipt.gasUsed).to.eq(457867)  //452777,  443817
       }).retries(3)
 
     })  

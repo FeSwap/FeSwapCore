@@ -10,6 +10,7 @@ const MINIMUM_LIQUIDITY = BigNumber.from(10).pow(3)
 
 chai.use(solidity)
 
+const rateTriggerArbitrage: number = 10
 const overrides = {
   gasLimit: 9999999
 }
@@ -288,7 +289,7 @@ describe('FeSwapPair', () => {
     await mineBlock(provider, (await provider.getBlock('latest')).timestamp + 1)
     const tx = await pairABB.swap(expectedOutputAmount, wallet.address, '0x', overrides)
     const receipt = await tx.wait()
-    expect(receipt.gasUsed).to.eq(72460)      // 73384
+    expect(receipt.gasUsed).to.eq(72482)      // 72460
   })
 
   it('Burn', async () => {
@@ -337,7 +338,7 @@ describe('FeSwapPair', () => {
     await pairAAB.transfer(pairAAB.address, expectedLiquidity.sub(MINIMUM_LIQUIDITY))
     const tx = await pairAAB.burn(wallet.address, overrides)
     const receipt = await tx.wait()
-    expect(receipt.gasUsed).to.eq(148288)     //148216  //different liquity ,gas could be different
+    expect(receipt.gasUsed).to.eq(149961)     //148288  //different liquity ,gas could be different
   })
 
 
@@ -635,7 +636,7 @@ describe('FeSwapPair', () => {
       // Approve router
       await tokenA.approve(router.address, constants.MaxUint256)
       await tokenB.approve(router.address, constants.MaxUint256)   
-      await router.connect(pairOwner).ManageFeswaPair(tokenIDMatch, constants.AddressZero) 
+      await router.connect(pairOwner).ManageFeswaPair(tokenIDMatch, constants.AddressZero, rateTriggerArbitrage) 
       await factory.setFeeTo(constants.AddressZero) 
 
       // Add liquidity to two pools
@@ -668,14 +669,14 @@ describe('FeSwapPair', () => {
       expect(feeCreateAAB).to.eq(0)                         
                                     
       const receipt = await tx.wait()
-      expect(receipt.gasUsed).to.eq(114748)      //  165464 157206  //241214
+      expect(receipt.gasUsed).to.eq(129297)      //  114748 157206  //241214
     }).retries(3)
 
     it('Swap Arbitrage Gas：no  feeTo, but pairOwner fee on', async () => {
       // Approve router
       await tokenA.approve(router.address, constants.MaxUint256)
       await tokenB.approve(router.address, constants.MaxUint256)   
-      await router.connect(pairOwner).ManageFeswaPair(tokenIDMatch, constants.AddressZero) 
+      await router.connect(pairOwner).ManageFeswaPair(tokenIDMatch, constants.AddressZero, rateTriggerArbitrage) 
 //      await factory.setFeeTo(constants.AddressZero) 
   
       // Add liquidity to two pools
@@ -708,14 +709,14 @@ describe('FeSwapPair', () => {
       expect(feeCreateAAB).to.eq(0)                         
                                     
       const receipt = await tx.wait()
-      expect(receipt.gasUsed).to.eq(163954)      //  163910 157206  //241214
+      expect(receipt.gasUsed).to.eq(178503)      //  163954 157206  //241214
     }).retries(3)
 
     it('Swap Arbitrage Gas：feeTo on, pairOwner fee off', async () => {
       // Approve router
       await tokenA.approve(router.address, constants.MaxUint256)
       await tokenB.approve(router.address, constants.MaxUint256)   
-//    await router.connect(pairOwner).ManageFeswaPair(tokenIDMatch, constants.AddressZero) 
+//    await router.connect(pairOwner).ManageFeswaPair(tokenIDMatch, constants.AddressZero, rateTriggerArbitrage) 
       await factory.setFeeTo(constants.AddressZero) 
   
       // Add liquidity to two pools
@@ -748,14 +749,14 @@ describe('FeSwapPair', () => {
       expect(feeCreateAAB).to.not.eq(0)                         
                                     
       const receipt = await tx.wait()
-      expect(receipt.gasUsed).to.eq(165580)      //  165536 157206  //241214
+      expect(receipt.gasUsed).to.eq(180129)      //  165580 157206  //241214
     }).retries(3)
 
     it('Swap Arbitrage Gas：feeTo on, pairOwner fee on', async () => {
       // Approve router
       await tokenA.approve(router.address, constants.MaxUint256)
       await tokenB.approve(router.address, constants.MaxUint256)   
-//    await router.connect(pairOwner).ManageFeswaPair(tokenIDMatch, constants.AddressZero) 
+//    await router.connect(pairOwner).ManageFeswaPair(tokenIDMatch, constants.AddressZero, rateTriggerArbitrage) 
 //    await factory.setFeeTo(constants.AddressZero) 
   
       // Add liquidity to two pools
@@ -788,7 +789,7 @@ describe('FeSwapPair', () => {
       expect(feeCreateAAB).to.not.eq(0)             // "618801031771281"            
                                     
       const receipt = await tx.wait()
-      expect(receipt.gasUsed).to.eq(189342)      //  189298 157206  //241214
+      expect(receipt.gasUsed).to.eq(203891)      //  189342 157206  //241214
     }).retries(3)
 
     it('Swap Arbitrage Gas comparsion', async () => {
@@ -810,7 +811,7 @@ describe('FeSwapPair', () => {
         const tx = await router.swapExactTokensForTokens( swapAmount, 0,  [tokenB.address, tokenA.address],
                                                 wallet.address, constants.MaxUint256,  overrides )
         const receipt = await tx.wait()
-        expect(receipt.gasUsed).to.eq(90892)     //132896 90889
+        expect(receipt.gasUsed).to.eq(134645)     //90892 90889
       }
       {
         const swapAmount = expandTo18Decimals(10)
@@ -820,7 +821,7 @@ describe('FeSwapPair', () => {
         const tx = await router.swapExactTokensForTokens( swapAmount, 0,  [tokenB.address, tokenA.address],
                                               wallet.address, constants.MaxUint256,  overrides )
         const receipt = await tx.wait()
-        expect(receipt.gasUsed).to.eq(157209)   //  157206  //241214
+        expect(receipt.gasUsed).to.eq(171820)   //  157209  //241214
       }
     }).retries(3)
 })

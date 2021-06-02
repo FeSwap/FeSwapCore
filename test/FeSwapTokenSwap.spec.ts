@@ -142,7 +142,7 @@ describe('FeSwapTokenSwap', () => {
             overrides
           )
           const receipt = await tx.wait()
-          expect(receipt.gasUsed).to.eq(102798)     // 175729 192574 // 110796
+          expect(receipt.gasUsed).to.eq(104547)     // 102798 192574 // 110796
         }).retries(3)
         
       })
@@ -214,7 +214,7 @@ describe('FeSwapTokenSwap', () => {
               overrides
             )
           const receipt = await tx.wait()
-          expect(receipt.gasUsed).to.eq(91338)     // 133339 192574 // 110796
+          expect(receipt.gasUsed).to.eq(135091)     // 91338 192574 // 110796
         }).retries(3)
 
       })
@@ -289,7 +289,7 @@ describe('FeSwapTokenSwap', () => {
             }
           )
           const receipt = await tx.wait()
-          expect(receipt.gasUsed).to.eq(97603)    // 171159,  //  213437, Why increase so much 118034
+          expect(receipt.gasUsed).to.eq(99352)    // 97603,  //  213437, Why increase so much 118034
         }).retries(3)
       })
 
@@ -361,7 +361,7 @@ describe('FeSwapTokenSwap', () => {
               overrides
             )
             const receipt = await tx.wait()
-            expect(receipt.gasUsed).to.eq(109085)    // 182619,  Why increase so much 118034
+            expect(receipt.gasUsed).to.eq(152816)    // 109085,  Why increase so much 118034
         }).retries(3)                      
       })
 
@@ -434,7 +434,7 @@ describe('FeSwapTokenSwap', () => {
             overrides
           )
           const receipt = await tx.wait()
-          expect(receipt.gasUsed).to.eq(108661)    // 182217,  Why increase so much 118034
+          expect(receipt.gasUsed).to.eq(152414)    // 110410,  Why increase so much 118034
         }).retries(3)
       })
 
@@ -507,7 +507,7 @@ describe('FeSwapTokenSwap', () => {
               }
           )
           const receipt = await tx.wait()
-          expect(receipt.gasUsed).to.eq(97833)    // 171389,  
+          expect(receipt.gasUsed).to.eq(141586)    // 97833,  
         }).retries(3)
       })
     })
