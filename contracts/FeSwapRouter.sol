@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity =0.6.12;
+pragma experimental ABIEncoderV2;
 
 import './interfaces/IFeSwapFactory.sol';
 import './libraries/TransferHelper.sol';
@@ -9,7 +10,31 @@ import './libraries/FeSwapLibrary.sol';
 import './libraries/SafeMath.sol';
 import './interfaces/IERC20.sol';
 import './interfaces/IWETH.sol';
-import './interfaces/IFeswaNFT.sol';
+
+    enum PoolRunningPhase {
+        BidToStart,
+        BidPhase, 
+        BidDelaying,
+        BidSettled,
+        PoolHolding, 
+        PoolForSale
+    }
+
+    struct FeswaPair {
+        address tokenA;
+        address tokenB;
+        uint256 currentPrice;
+        uint64  timeCreated;
+        uint64  lastBidTime; 
+        PoolRunningPhase  poolState;
+    }
+
+    
+interface IFeswaNFT {
+    // Views
+    function ownerOf(uint256 tokenId) external view returns (address owner);
+    function getPoolInfo(uint256 tokenId) external view returns (address, FeswaPair memory);
+}
 
 contract FeSwapRouter is IFeSwapRouter{
     using SafeMath for uint;
@@ -38,8 +63,10 @@ contract FeSwapRouter is IFeSwapRouter{
                 external virtual override 
                 returns (address pairAAB, address pairABB) 
     {
-        require(msg.sender == IFeswaNFT(feswaNFT).ownerOf(tokenID), 'FeSwap: NOT TOKEN OWNER');
-        (address tokenA, address tokenB) = IFeswaNFT(feswaNFT).getPoolTokens(tokenID);
+        (address nftOwner, FeswaPair memory NftBidInfo) = IFeswaNFT(feswaNFT).getPoolInfo(tokenID);
+        require(msg.sender == nftOwner, 'FeSwap: NOT TOKEN OWNER');
+        require(NftBidInfo.poolState >= PoolRunningPhase.BidSettled, 'FeSwap: NOT ALLOWED');
+        (address tokenA, address tokenB) = (NftBidInfo.tokenA, NftBidInfo.tokenB);
         (pairAAB, pairABB) = IFeSwapFactory(factory).createUpdatePair(tokenA, tokenB, pairOwner, rateTrigger); 
     }
 

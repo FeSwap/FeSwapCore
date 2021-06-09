@@ -1,8 +1,27 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity =0.6.12;
+pragma experimental ABIEncoderV2;
+
+    enum PoolRunningPhase {
+        BidToStart,
+        BidPhase, 
+        BidDelaying,
+        BidSettled,
+        PoolHolding, 
+        PoolForSale
+    }
+
+    struct FeswaPair {
+        address tokenA;
+        address tokenB;
+        uint256 currentPrice;
+        uint64  timeCreated;
+        uint64  lastBidTime; 
+        PoolRunningPhase  poolState;
+    }
 
 interface IFeswaNFT {
     // Views
     function ownerOf(uint256 tokenId) external view returns (address owner);
-    function getPoolTokens(uint256 tokenId) external view returns (address tokenA, address tokenB);
+    function getPoolInfo(uint256 tokenId) external view returns (address, FeswaPair memory);
 }

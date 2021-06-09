@@ -1,17 +1,16 @@
 {
-    "name": "feswap-core",
+    "name": "@feswap/core",
     "version": "1.0.0",
     "description": "🌈 Core contracts for the FeSwap DEX and FreeSwap protocol",
-    "author": "Derik Lu",
+    "author": "Daoru Lu",
     "license": "GPL-3.0-or-later",
     "keywords": [
         "FeSwap",
         "ethereum",
         "FESW",
-        "core"
+        "AMM"
     ],
     "files": [
-        "contracts",
         "build"
     ],
     "engines": {
@@ -22,15 +21,15 @@
         "@types/chai": "^4.2.6",
         "@types/mocha": "^5.2.7",
         "chai": "^4.2.0",
+        "ethereum-waffle": "^3.1.0",
+        "ethereumjs-util": "^6.2.0",
         "mocha": "^6.2.2",
         "prettier": "^1.19.1",
         "rimraf": "^3.0.0",
         "solc": "0.6.12",
         "ts-node": "^8.5.4",
-        "typescript": "^3.7.3",
-        "ethereumjs-util": "^6.2.0",
-        "ethereum-waffle": "^3.1.0"
-     },
+        "typescript": "^3.7.3"
+    },
     "scripts": {
         "lint": "yarn prettier ./test/*.ts --check",
         "lint:fix": "yarn prettier ./test/*.ts --write",
