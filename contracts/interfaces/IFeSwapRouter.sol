@@ -1,9 +1,29 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity =0.6.12;
+pragma experimental ABIEncoderV2;
 
 import './IFeSwapRouter.sol';
 
 interface IFeSwapRouter {
+
+    struct AddLiquidityParams {
+        address tokenA;
+        address tokenB;
+        uint    amountADesired;
+        uint    amountBDesired;
+        uint    amountAMin;
+        uint    amountBMin;
+        uint    ratio;
+    }
+
+    struct AddLiquidityETHParams {
+        address token;
+        uint    amountTokenDesired;
+        uint    amountTokenMin;
+        uint    amountETHMin;
+        uint    ratio;
+    }
+
     function factory() external pure returns (address);
     function feswaNFT() external pure returns (address);
     function WETH() external pure returns (address);
@@ -15,19 +35,13 @@ interface IFeSwapRouter {
     ) external returns (address pairAAB, address pairABB);
 
     function addLiquidity(
-        address tokenA,
-        address tokenB,
-        uint amountADesired,
-        uint amountBDesired,
-        uint ratio,        
+        AddLiquidityParams calldata addParams,
         address to,
         uint deadline
     ) external returns (uint amountA, uint amountB, uint liquidityAAB, uint liquidityABB);
 
     function addLiquidityETH(
-        address token,
-        uint amountTokenDesired,
-        uint ratio,
+        AddLiquidityETHParams calldata addParams,
         address to,
         uint deadline
     ) external payable returns (uint amountToken, uint amountETH, uint liquidityTTE, uint liquidityTEE);

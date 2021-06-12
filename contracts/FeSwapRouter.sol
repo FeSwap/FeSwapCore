@@ -71,10 +71,13 @@ contract FeSwapRouter is IFeSwapRouter{
     }
 
     // **** ADD LIQUIDITY ****
-    function _addLiquidity( address tokenIn, address tokenOut, uint amountInDesired, uint amountOutDesired ) 
-                    internal virtual view 
-                    returns (uint amountIn, uint amountOut, address pair) 
-    {
+    function _addLiquidity( address tokenIn, 
+                            address tokenOut, 
+                            uint amountInDesired, 
+                            uint amountOutDesired,
+                            uint amountInMin,
+                            uint amountOutMin 
+    ) internal virtual view returns (uint amountIn, uint amountOut, address pair) {
         pair = IFeSwapFactory(factory).getPair(tokenIn, tokenOut);
         require(pair != address(0), 'FeSwap: NOT CREATED');
         (uint reserveIn, uint reserveOut, ,) = IFeSwapPair(pair).getReserves();
@@ -83,70 +86,88 @@ contract FeSwapRouter is IFeSwapRouter{
         } else {
             uint amountOutOptimal = FeSwapLibrary.quote(amountInDesired, reserveIn, reserveOut);
             if (amountOutOptimal <= amountOutDesired) {
+                require(amountOutOptimal >= amountOutMin, 'FeSwap: LESS_OUT_AMOUNT');
                 (amountIn, amountOut) = (amountInDesired, amountOutOptimal);
             } else {
                 uint amountInOptimal = FeSwapLibrary.quote(amountOutDesired, reserveOut, reserveIn);
                 assert(amountInOptimal <= amountInDesired);
+                require(amountInOptimal >= amountInMin, 'FeSwap: LESS_IN_AMOUNT');
                 (amountIn, amountOut) = (amountInOptimal, amountOutDesired);
             }
         }
     }
 
-    function addLiquidity(  address tokenA, address tokenB, 
-                            uint amountADesired, uint amountBDesired,
-                            uint ratio, address to, uint deadline ) 
+    function addLiquidity(  AddLiquidityParams calldata addParams, 
+                            address to, 
+                            uint deadline ) 
                 external virtual override ensure(deadline) 
                 returns (uint amountA, uint amountB, uint liquidityAAB, uint liquidityABB)
     {
-        require(ratio <= 100,  'FeSwap: RATIO EER');
-        if(ratio != uint(0)) {
-            // (liquidityAAB, liquidityABB) reused to solve "Stack too deep" issue
+        require(addParams.ratio <= 100,  'FeSwap: RATIO EER');
+        if(addParams.ratio != uint(0)) {
             address pairA2B;
-            liquidityAAB = amountADesired.mul(ratio)/100; 
-            liquidityABB = amountBDesired.mul(ratio)/100;
-            (amountA, amountB, pairA2B) = _addLiquidity(tokenA, tokenB, liquidityAAB, liquidityABB);
-            TransferHelper.safeTransferFrom(tokenA, msg.sender, pairA2B, amountA);
-            TransferHelper.safeTransferFrom(tokenB, msg.sender, pairA2B, amountB);
+            uint liquidityA = addParams.amountADesired.mul(addParams.ratio)/100; 
+            uint liquidityB = addParams.amountBDesired.mul(addParams.ratio)/100;
+            uint amountAMin = addParams.amountAMin.mul(addParams.ratio)/100; 
+            uint amountBMin = addParams.amountBMin.mul(addParams.ratio)/100;
+            (amountA, amountB, pairA2B) = 
+                            _addLiquidity(addParams.tokenA, addParams.tokenB, liquidityA, liquidityB, amountAMin, amountBMin);
+            TransferHelper.safeTransferFrom(addParams.tokenA, msg.sender, pairA2B, amountA);
+            TransferHelper.safeTransferFrom(addParams.tokenB, msg.sender, pairA2B, amountB);
             liquidityAAB = IFeSwapPair(pairA2B).mint(to);
         }
-        if(ratio != uint(100)) {
-            // (amountBDesired, amountADesired) reused to solve "Stack too deep" issue
+        if(addParams.ratio != uint(100)) {
+            // (addParams.amountBDesired, addParams.amountADesired) reused to solve "Stack too deep" issue
             address pairB2A; 
-            (amountBDesired, amountADesired, pairB2A) = 
-                    _addLiquidity(tokenB, tokenA, amountBDesired-amountB, amountADesired-amountA);
-            TransferHelper.safeTransferFrom(tokenA, msg.sender, pairB2A, amountADesired);
-            TransferHelper.safeTransferFrom(tokenB, msg.sender, pairB2A, amountBDesired);
+            uint liquidityA = addParams.amountADesired-amountA; 
+            uint liquidityB = addParams.amountBDesired-amountB;
+            uint amountAMin = addParams.amountAMin-amountA; 
+            uint amountBMin = addParams.amountBMin-amountB;
+            (liquidityB, liquidityA, pairB2A) = 
+                        _addLiquidity(addParams.tokenB, addParams.tokenA, liquidityB, liquidityA, amountBMin, amountAMin);
+            TransferHelper.safeTransferFrom(addParams.tokenA, msg.sender, pairB2A, liquidityA);
+            TransferHelper.safeTransferFrom(addParams.tokenB, msg.sender, pairB2A, liquidityB);
             liquidityABB = IFeSwapPair(pairB2A).mint(to);
-            amountA += amountADesired;
-            amountB += amountBDesired;
+            amountA += liquidityA;
+            amountB += liquidityB;
         }
     }
 
-    function addLiquidityETH(   address token, uint amountTokenDesired, uint ratio, address to, uint deadline ) 
-                external virtual override payable ensure(deadline) 
-                returns (uint amountToken, uint amountETH, uint liquidityTTE, uint liquidityTEE) 
+    function addLiquidityETH(   AddLiquidityETHParams calldata addParams,
+                                address to,
+                                uint deadline
+    )   external virtual override payable ensure(deadline) 
+        returns (uint amountToken, uint amountETH, uint liquidityTTE, uint liquidityTEE) 
     {
-        require(ratio <= 100,  'FeSwap: RATIO EER');
-        if(ratio != uint(0)) {        
+        require(addParams.ratio <= 100,  'FeSwap: RATIO EER');
+        if(addParams.ratio != uint(0)) {        
             address pairTTE;
+            uint liquidityToken = addParams.amountTokenDesired.mul(addParams.ratio)/100; 
+            uint liquidityETH   = msg.value.mul(addParams.ratio)/100;
+            uint amountTokenMin = addParams.amountTokenMin.mul(addParams.ratio)/100; 
+            uint amountETHMin   = addParams.amountETHMin.mul(addParams.ratio)/100;
             (amountToken, amountETH, pairTTE) =
-                    _addLiquidity(token, WETH, amountTokenDesired.mul(ratio)/100, msg.value.mul(ratio)/100);
-            TransferHelper.safeTransferFrom(token, msg.sender, pairTTE, amountToken);
+                        _addLiquidity(addParams.token, WETH, liquidityToken, liquidityETH, amountTokenMin, amountETHMin);
+            TransferHelper.safeTransferFrom(addParams.token, msg.sender, pairTTE, amountToken);
             IWETH(WETH).deposit{value: amountETH}();
             assert(IWETH(WETH).transfer(pairTTE, amountETH));
             liquidityTTE = IFeSwapPair(pairTTE).mint(to);
         }
-        if(ratio != uint(100)){
+        if(addParams.ratio != uint(100)){
             address pairTEE;
-            uint amountETHDesired;            // (amountTokenDesired) reused to solve "Stack too deep" issue
-            (amountETHDesired, amountTokenDesired, pairTEE) = 
-                    _addLiquidity(WETH, token, msg.value-amountETH,  amountTokenDesired-amountToken);
-            TransferHelper.safeTransferFrom(token, msg.sender, pairTEE, amountTokenDesired);
-            IWETH(WETH).deposit{value: amountETHDesired}();
-            assert(IWETH(WETH).transfer(pairTEE, amountETHDesired));
+            uint liquidityToken = addParams.amountTokenDesired-amountToken; 
+            uint liquidityETH   = msg.value-amountETH;
+            uint amountTokenMin = addParams.amountTokenMin-amountToken;
+            uint amountETHMin   = addParams.amountETHMin-amountETH;
+
+            (liquidityETH, liquidityToken, pairTEE) = 
+                    _addLiquidity(WETH, addParams.token, liquidityETH,  liquidityToken, amountETHMin, amountTokenMin);
+            TransferHelper.safeTransferFrom(addParams.token, msg.sender, pairTEE, liquidityToken);
+            IWETH(WETH).deposit{value: liquidityETH}();
+            assert(IWETH(WETH).transfer(pairTEE, liquidityETH));
             liquidityTEE = IFeSwapPair(pairTEE).mint(to);     
-            amountToken += amountTokenDesired;
-            amountETH += amountETHDesired;       
+            amountToken += liquidityToken;
+            amountETH += liquidityETH;       
         }
 
         // refund dust eth, if any
