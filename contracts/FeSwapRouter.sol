@@ -142,12 +142,12 @@ contract FeSwapRouter is IFeSwapRouter{
         require(addParams.ratio <= 100,  'FeSwap: RATIO EER');
         if(addParams.ratio != uint(0)) {        
             address pairTTE;
-            uint liquidityToken = addParams.amountTokenDesired.mul(addParams.ratio)/100; 
-            uint liquidityETH   = msg.value.mul(addParams.ratio)/100;
+            uint addTokenAmount = addParams.amountTokenDesired.mul(addParams.ratio)/100; 
+            uint addETHAmount   = msg.value.mul(addParams.ratio)/100;
             uint amountTokenMin = addParams.amountTokenMin.mul(addParams.ratio)/100; 
             uint amountETHMin   = addParams.amountETHMin.mul(addParams.ratio)/100;
             (amountToken, amountETH, pairTTE) =
-                        _addLiquidity(addParams.token, WETH, liquidityToken, liquidityETH, amountTokenMin, amountETHMin);
+                        _addLiquidity(addParams.token, WETH, addTokenAmount, addETHAmount, amountTokenMin, amountETHMin);
             TransferHelper.safeTransferFrom(addParams.token, msg.sender, pairTTE, amountToken);
             IWETH(WETH).deposit{value: amountETH}();
             assert(IWETH(WETH).transfer(pairTTE, amountETH));
@@ -155,19 +155,19 @@ contract FeSwapRouter is IFeSwapRouter{
         }
         if(addParams.ratio != uint(100)){
             address pairTEE;
-            uint liquidityToken = addParams.amountTokenDesired-amountToken; 
-            uint liquidityETH   = msg.value-amountETH;
+            uint addTokenAmount = addParams.amountTokenDesired-amountToken; 
+            uint addETHAmount   = msg.value-amountETH;
             uint amountTokenMin = addParams.amountTokenMin-amountToken;
             uint amountETHMin   = addParams.amountETHMin-amountETH;
 
-            (liquidityETH, liquidityToken, pairTEE) = 
-                    _addLiquidity(WETH, addParams.token, liquidityETH,  liquidityToken, amountETHMin, amountTokenMin);
-            TransferHelper.safeTransferFrom(addParams.token, msg.sender, pairTEE, liquidityToken);
-            IWETH(WETH).deposit{value: liquidityETH}();
-            assert(IWETH(WETH).transfer(pairTEE, liquidityETH));
+            (addETHAmount, addTokenAmount, pairTEE) = 
+                    _addLiquidity(WETH, addParams.token, addETHAmount,  addTokenAmount, amountETHMin, amountTokenMin);
+            TransferHelper.safeTransferFrom(addParams.token, msg.sender, pairTEE, addTokenAmount);
+            IWETH(WETH).deposit{value: addETHAmount}();
+            assert(IWETH(WETH).transfer(pairTEE, addETHAmount));
             liquidityTEE = IFeSwapPair(pairTEE).mint(to);     
-            amountToken += liquidityToken;
-            amountETH += liquidityETH;       
+            amountToken += addTokenAmount;
+            amountETH += addETHAmount;       
         }
 
         // refund dust eth, if any

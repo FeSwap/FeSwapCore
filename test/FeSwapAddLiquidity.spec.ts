@@ -1,5 +1,5 @@
 import chai, { expect } from 'chai'
-import { Contract, constants } from 'ethers'
+import { Contract, constants, utils } from 'ethers'
 import { solidity, MockProvider, createFixtureLoader } from 'ethereum-waffle'
 
 import { BigNumberPercent, expandTo18Decimals, MINIMUM_LIQUIDITY, getFeSwapCodeHash } from './shared/utilities'
@@ -53,7 +53,7 @@ describe('FeSwapAddLiquidity', () => {
     it('FeSwapAddLiquidity Get Feswap pair Code Hash', async () => {
       getFeSwapCodeHash()
     })
-  
+
     describe("FeSwapAddLiquidity Basic", () => {
       it('addLiquidity: Ration Error', async () => {
         const tokenAAmount = expandTo18Decimals(1)
@@ -63,11 +63,15 @@ describe('FeSwapAddLiquidity', () => {
         await tokenB.approve(router.address, constants.MaxUint256)
         await expect(
           router.addLiquidity(
-            tokenA.address,
-            tokenB.address,
-            tokenAAmount,
-            tokenBAmount,
-            101,
+            {
+              tokenA:         tokenA.address,
+              tokenB:         tokenB.address,
+              amountADesired: tokenAAmount,
+              amountBDesired: tokenBAmount,
+              amountAMin:     0,
+              amountBMin:     0,
+              ratio:          101,
+            },
             wallet.address,
             constants.MaxUint256,
             overrides
@@ -84,9 +88,13 @@ describe('FeSwapAddLiquidity', () => {
         await WETHPartner.approve(router.address, constants.MaxUint256)
         await expect(
           router.addLiquidityETH(
-            WETHPartner.address,
-            WETHPartnerAmount,
-            101,
+            {
+              token:              WETHPartner.address,
+              amountTokenDesired: WETHPartnerAmount,
+              amountTokenMin:     0,
+              amountETHMin:       0,
+              ratio:              101,
+            },
             wallet.address,
             constants.MaxUint256,
             { ...overrides, value: ETHAmount }
@@ -107,11 +115,15 @@ describe('FeSwapAddLiquidity', () => {
         await tokenB.approve(router.address, constants.MaxUint256)
         await expect(
           router.addLiquidity(
-            tokenA.address,
-            tokenB.address,
-            tokenAAmount.mul(constants.Two),
-            tokenBAmount.mul(constants.Two),
-            50,
+            {
+              tokenA:         tokenA.address,
+              tokenB:         tokenB.address,
+              amountADesired: tokenAAmount.mul(constants.Two),
+              amountBDesired: tokenBAmount.mul(constants.Two),
+              amountAMin:     tokenAAmount.mul(constants.Two),
+              amountBMin:     tokenAAmount.mul(constants.Two),
+              ratio:          50,
+            },
             wallet.address,
             constants.MaxUint256,
             overrides
@@ -155,11 +167,15 @@ describe('FeSwapAddLiquidity', () => {
         await tokenB.approve(router.address, constants.MaxUint256)
         await expect(
           router.addLiquidity(
-            tokenA.address,
-            tokenB.address,
-            tokenAAmount,
-            tokenBAmount,
-            100,
+            {
+              tokenA:         tokenA.address,
+              tokenB:         tokenB.address,
+              amountADesired: tokenAAmount,
+              amountBDesired: tokenBAmount,
+              amountAMin:     0,
+              amountBMin:     0,
+              ratio:          100,
+            },
             wallet.address,
             constants.MaxUint256,
             overrides
@@ -191,11 +207,15 @@ describe('FeSwapAddLiquidity', () => {
         await tokenB.approve(router.address, constants.MaxUint256)
         await expect(
           router.addLiquidity(
-            tokenA.address,
-            tokenB.address,
-            tokenAAmount,
-            tokenBAmount,
-            0,
+            {
+              tokenA:         tokenA.address,
+              tokenB:         tokenB.address,
+              amountADesired: tokenAAmount,
+              amountBDesired: tokenBAmount,
+              amountAMin:     tokenAAmount,
+              amountBMin:     tokenBAmount,
+              ratio:          0,
+            },
             wallet.address,
             constants.MaxUint256,
             overrides
@@ -229,11 +249,15 @@ describe('FeSwapAddLiquidity', () => {
 
         await expect(
           router.addLiquidity(
-            tokenA.address,
-            tokenB.address,
-            tokenAAmount,
-            tokenBAmount,
-            ratio,
+            {
+              tokenA:         tokenA.address,
+              tokenB:         tokenB.address,
+              amountADesired: tokenAAmount,
+              amountBDesired: tokenBAmount,
+              amountAMin:     tokenAAmount,
+              amountBMin:     tokenBAmount,
+              ratio,
+            },
             wallet.address,
             constants.MaxUint256,
             overrides
@@ -271,11 +295,15 @@ describe('FeSwapAddLiquidity', () => {
         const ratioA = 73         // could be any ratio
         await expect(
           router.addLiquidity(
-            tokenA.address,
-            tokenB.address,
-            tokenAAmount,
-            tokenBAmount,
-            ratioA,
+            {
+              tokenA:         tokenA.address,
+              tokenB:         tokenB.address,
+              amountADesired: tokenAAmount,
+              amountBDesired: tokenBAmount,
+              amountAMin:     tokenAAmount,
+              amountBMin:     tokenBAmount,
+              ratio:          ratioA
+            },
             wallet.address,
             constants.MaxUint256,
             overrides
@@ -319,18 +347,22 @@ describe('FeSwapAddLiquidity', () => {
         await tokenA.approve(router.address, constants.MaxUint256)
         await tokenB.approve(router.address, constants.MaxUint256)
         const tx = await router.addLiquidity(
-            tokenA.address,
-            tokenB.address,
-            tokenAAmount,
-            tokenBAmount,
-            ratio,
+            {
+              tokenA:         tokenA.address,
+              tokenB:         tokenB.address,
+              amountADesired: tokenAAmount,
+              amountBDesired: tokenBAmount,
+              amountAMin:     tokenAAmount,
+              amountBMin:     tokenBAmount,
+              ratio:          ratio
+            },
             wallet.address,
             constants.MaxUint256,
             overrides
           )
 
         const receipt = await tx.wait()
-        expect(receipt.gasUsed).to.eq(236197)    // 233652, 228994  Uniswap 213957
+        expect(receipt.gasUsed).to.eq(238708)    // 236197, 228994  Uniswap 213957
       }).retries(3)
 
       it('Add Liquidity GAS usage： Double Pool ', async () => {
@@ -341,18 +373,22 @@ describe('FeSwapAddLiquidity', () => {
         await tokenA.approve(router.address, constants.MaxUint256)
         await tokenB.approve(router.address, constants.MaxUint256)
         const tx = await router.addLiquidity(
-            tokenA.address,
-            tokenB.address,
-            tokenAAmount,
-            tokenBAmount,
-            ratio,
+            {
+              tokenA:         tokenA.address,
+              tokenB:         tokenB.address,
+              amountADesired: tokenAAmount,
+              amountBDesired: tokenBAmount,
+              amountAMin:     tokenAAmount,
+              amountBMin:     tokenBAmount,
+              ratio:          ratio
+            },
             wallet.address,
             constants.MaxUint256,
             overrides
           )
 
         const receipt = await tx.wait()
-        expect(receipt.gasUsed).to.eq(439527)    // 434437, 425406
+        expect(receipt.gasUsed).to.eq(443744)    // 439527, 425406
       }).retries(3)
 
     })
@@ -366,9 +402,13 @@ describe('FeSwapAddLiquidity', () => {
         await WETHPartner.approve(router.address, constants.MaxUint256)
         await expect(
           router.addLiquidityETH(
-            WETHPartner.address,
-            WETHPartnerAmount.mul(constants.Two),
-            50,
+            {
+              token:              WETHPartner.address,
+              amountTokenDesired: WETHPartnerAmount.mul(constants.Two),
+              amountTokenMin:     0,
+              amountETHMin:       0,
+              ratio:              50,
+            },
             wallet.address,
             constants.MaxUint256,
             { ...overrides, value: ETHAmount.mul(constants.Two) }
@@ -415,9 +455,13 @@ describe('FeSwapAddLiquidity', () => {
         await WETHPartner.approve(router.address, constants.MaxUint256)
         await expect(
           router.addLiquidityETH(
-            WETHPartner.address,
-            WETHPartnerAmount,
-            100,
+            {
+              token:              WETHPartner.address,
+              amountTokenDesired: WETHPartnerAmount,
+              amountTokenMin:     WETHPartnerAmount,
+              amountETHMin:       ETHAmount,
+              ratio:              100,
+            },
             wallet.address,
             constants.MaxUint256,
             { ...overrides, value: ETHAmount }
@@ -450,9 +494,13 @@ describe('FeSwapAddLiquidity', () => {
         await WETHPartner.approve(router.address, constants.MaxUint256)
         await expect(
           router.addLiquidityETH(
-            WETHPartner.address,
-            WETHPartnerAmount,
-            0,
+            {
+              token:              WETHPartner.address,
+              amountTokenDesired: WETHPartnerAmount,
+              amountTokenMin:     WETHPartnerAmount,
+              amountETHMin:       ETHAmount,
+              ratio:              0,
+            },
             wallet.address,
             constants.MaxUint256,
             { ...overrides, value: ETHAmount }
@@ -487,9 +535,13 @@ describe('FeSwapAddLiquidity', () => {
 
         await expect(
           router.addLiquidityETH(
-            WETHPartner.address,
-            WETHPartnerAmount,
-            ratio,
+            {
+              token:              WETHPartner.address,
+              amountTokenDesired: WETHPartnerAmount,
+              amountTokenMin:     WETHPartnerAmount,
+              amountETHMin:       ETHAmount,
+              ratio:              ratio,
+            },
             wallet.address,
             constants.MaxUint256,
             { ...overrides, value: ETHAmount }
@@ -530,9 +582,13 @@ describe('FeSwapAddLiquidity', () => {
         const ratioA = 65
         await expect(
           router.addLiquidityETH(
-            WETHPartner.address,
-            WETHPartnerAmount,
-            ratioA,
+            {
+              token:              WETHPartner.address,
+              amountTokenDesired: WETHPartnerAmount,
+              amountTokenMin:     WETHPartnerAmount,
+              amountETHMin:       ETHAmount,
+              ratio:              ratioA,
+            },
             wallet.address,
             constants.MaxUint256,
             { ...overrides, value: ETHAmount }
@@ -578,16 +634,20 @@ describe('FeSwapAddLiquidity', () => {
         const ratio = 0
         await WETHPartner.approve(router.address, constants.MaxUint256)
         const tx = await router.addLiquidityETH(
-            WETHPartner.address,
-            WETHPartnerAmount,
-            ratio,
+            {
+              token:              WETHPartner.address,
+              amountTokenDesired: WETHPartnerAmount,
+              amountTokenMin:     WETHPartnerAmount,
+              amountETHMin:       ETHAmount,
+              ratio:              ratio,
+            },
             wallet.address,
             constants.MaxUint256,
             { ...overrides, value: ETHAmount }
           )
 
         const receipt = await tx.wait()
-        expect(receipt.gasUsed).to.eq(242642)    // 240097, Uniswap 220495
+        expect(receipt.gasUsed).to.eq(244564)    // 242642, Uniswap 220495
       }).retries(3)
 
       it('Add-Liquidity-ETH GAS usage： Double Pool ', async () => {
@@ -597,17 +657,22 @@ describe('FeSwapAddLiquidity', () => {
         const ratio = 40
         await WETHPartner.approve(router.address, constants.MaxUint256)
         const tx = await router.addLiquidityETH(
-            WETHPartner.address,
-            WETHPartnerAmount,
-            ratio,
+            {
+              token:              WETHPartner.address,
+              amountTokenDesired: WETHPartnerAmount,
+              amountTokenMin:     WETHPartnerAmount,
+              amountETHMin:       ETHAmount,
+              ratio:              ratio,
+            },
             wallet.address,
             constants.MaxUint256,
             { ...overrides, value: ETHAmount }
           )
 
         const receipt = await tx.wait()
-        expect(receipt.gasUsed).to.eq(457867)  //452777,  443817
+        expect(receipt.gasUsed).to.eq(461503)  //457867,  443817
       }).retries(3)
 
     })  
+    
 })
