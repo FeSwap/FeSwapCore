@@ -24,6 +24,21 @@ interface IFeSwapRouter {
         uint    ratio;
     }
 
+    struct RemoveLiquidityParams {
+        address tokenA;
+        address tokenB;
+        uint    liquidityAAB;
+        uint    liquidityABB;        
+        uint    amountAMin;
+        uint    amountBMin;
+    }
+
+    struct Signature {
+        uint8       v;
+        bytes32     r;
+        bytes32     s;
+    }
+
     function factory() external pure returns (address);
     function feswaNFT() external pure returns (address);
     function WETH() external pure returns (address);
@@ -47,59 +62,48 @@ interface IFeSwapRouter {
     ) external payable returns (uint amountToken, uint amountETH, uint liquidityTTE, uint liquidityTEE);
 
     function removeLiquidity(
-        address tokenA,
-        address tokenB,
-        uint liquidityAAB,
-        uint liquidityABB,
-        uint amountAMin,
-        uint amountBMin,
+        RemoveLiquidityParams calldata removeParams,
         address to,
         uint deadline
     ) external returns (uint amountA, uint amountB);
+
     function removeLiquidityETH(
-        address token,
-        uint liquidityTTE,
-        uint liquidityTEE,       
-        uint amountTokenMin,
-        uint amountETHMin,
+        RemoveLiquidityParams calldata removeParams,
         address to,
         uint deadline
     ) external returns (uint amountToken, uint amountETH);
+
     function removeLiquidityWithPermit(
-        address tokenA,
-        address tokenB,
-        uint liquidityAAB,
-        uint amountAMin,
-        uint amountBMin,        
+        RemoveLiquidityParams calldata removeParams,
         address to,
         uint deadline,
-        bool approveMax, uint8 v, bytes32 r, bytes32 s
-    ) external returns (uint amountA, uint amountB);
+        bool approveMax, 
+        Signature   calldata sigAAB,
+        Signature   calldata sigABB
+    ) external returns (uint amountA, uint amountB);        
+
     function removeLiquidityETHWithPermit(
-        address token,
-        uint liquidityTTE,
-        uint amountTokenMin,
-        uint amountETHMin,             
+        RemoveLiquidityParams calldata removeParams,
         address to,
         uint deadline,
-        bool approveMax, uint8 v, bytes32 r, bytes32 s
+        bool approveMax, 
+        Signature   calldata sigTTE,
+        Signature   calldata sigTEE
     ) external returns (uint amountToken, uint amountETH);
+
     function removeLiquidityETHFeeOnTransfer(
-        address token,
-        uint liquidityTTE,
-        uint liquidityTEE,        
-        uint amountTokenMin,
-        uint amountETHMin,
+        RemoveLiquidityParams calldata removeParams,
         address to,
         uint deadline
     ) external returns (uint amountETH);
+
     function removeLiquidityETHWithPermitFeeOnTransfer(
-        address token,
-        uint liquidityTTE,
-        uint liquidityTEE,        
+        RemoveLiquidityParams calldata removeParams,
         address to,
         uint deadline,
-        bool approveMax, uint8 v, bytes32 r, bytes32 s
+        bool approveMax, 
+        Signature   calldata sigTTE,
+        Signature   calldata sigTEE
     ) external returns (uint amountETH);
 
     function swapExactTokensForTokens(
@@ -109,6 +113,7 @@ interface IFeSwapRouter {
         address to,
         uint deadline
     ) external returns (uint[] memory amounts);
+
     function swapTokensForExactTokens(
         uint amountOut,
         uint amountInMax,
@@ -116,20 +121,36 @@ interface IFeSwapRouter {
         address to,
         uint deadline
     ) external returns (uint[] memory amounts);
-    function swapExactETHForTokens(uint amountOutMin, address[] calldata path, address to, uint deadline)
-        external
-        payable
-        returns (uint[] memory amounts);
-    function swapTokensForExactETH(uint amountOut, uint amountInMax, address[] calldata path, address to, uint deadline)
-        external
-        returns (uint[] memory amounts);
-    function swapExactTokensForETH(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline)
-        external
-        returns (uint[] memory amounts);
-    function swapETHForExactTokens(uint amountOut, address[] calldata path, address to, uint deadline)
-        external
-        payable
-        returns (uint[] memory amounts);     
+
+    function swapExactETHForTokens(
+        uint amountOutMin, 
+        address[] calldata path, 
+        address to, 
+        uint deadline
+    ) external payable returns (uint[] memory amounts);
+
+    function swapTokensForExactETH(
+        uint amountOut,
+        uint amountInMax,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external returns (uint[] memory amounts);
+
+    function swapExactTokensForETH(
+        uint amountIn,
+        uint amountOutMin,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external returns (uint[] memory amounts);
+
+    function swapETHForExactTokens(
+        uint amountOut,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external payable returns (uint[] memory amounts);     
 
     function swapExactTokensForTokensFeeOnTransfer(
         uint amountIn,
@@ -138,12 +159,14 @@ interface IFeSwapRouter {
         address to,
         uint deadline
     ) external;
+
     function swapExactETHForTokensFeeOnTransfer(
         uint amountOutMin,
         address[] calldata path,
         address to,
         uint deadline
     ) external payable;
+
     function swapExactTokensForETHFeeOnTransfer(
         uint amountIn,
         uint amountOutMin,

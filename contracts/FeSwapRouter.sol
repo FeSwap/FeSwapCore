@@ -117,7 +117,6 @@ contract FeSwapRouter is IFeSwapRouter{
             liquidityAAB = IFeSwapPair(pairA2B).mint(to);
         }
         if(addParams.ratio != uint(100)) {
-            // (addParams.amountBDesired, addParams.amountADesired) reused to solve "Stack too deep" issue
             address pairB2A; 
             uint liquidityA = addParams.amountADesired-amountA; 
             uint liquidityB = addParams.amountBDesired-amountB;
@@ -142,12 +141,12 @@ contract FeSwapRouter is IFeSwapRouter{
         require(addParams.ratio <= 100,  'FeSwap: RATIO EER');
         if(addParams.ratio != uint(0)) {        
             address pairTTE;
-            uint addTokenAmount = addParams.amountTokenDesired.mul(addParams.ratio)/100; 
-            uint addETHAmount   = msg.value.mul(addParams.ratio)/100;
+            uint liquidityToken = addParams.amountTokenDesired.mul(addParams.ratio)/100; 
+            uint liquidityETH   = msg.value.mul(addParams.ratio)/100;
             uint amountTokenMin = addParams.amountTokenMin.mul(addParams.ratio)/100; 
             uint amountETHMin   = addParams.amountETHMin.mul(addParams.ratio)/100;
             (amountToken, amountETH, pairTTE) =
-                        _addLiquidity(addParams.token, WETH, addTokenAmount, addETHAmount, amountTokenMin, amountETHMin);
+                        _addLiquidity(addParams.token, WETH, liquidityToken, liquidityETH, amountTokenMin, amountETHMin);
             TransferHelper.safeTransferFrom(addParams.token, msg.sender, pairTTE, amountToken);
             IWETH(WETH).deposit{value: amountETH}();
             assert(IWETH(WETH).transfer(pairTTE, amountETH));
@@ -155,19 +154,18 @@ contract FeSwapRouter is IFeSwapRouter{
         }
         if(addParams.ratio != uint(100)){
             address pairTEE;
-            uint addTokenAmount = addParams.amountTokenDesired-amountToken; 
-            uint addETHAmount   = msg.value-amountETH;
+            uint liquidityToken = addParams.amountTokenDesired-amountToken; 
+            uint liquidityETH   = msg.value-amountETH;
             uint amountTokenMin = addParams.amountTokenMin-amountToken;
             uint amountETHMin   = addParams.amountETHMin-amountETH;
-
-            (addETHAmount, addTokenAmount, pairTEE) = 
-                    _addLiquidity(WETH, addParams.token, addETHAmount,  addTokenAmount, amountETHMin, amountTokenMin);
-            TransferHelper.safeTransferFrom(addParams.token, msg.sender, pairTEE, addTokenAmount);
-            IWETH(WETH).deposit{value: addETHAmount}();
-            assert(IWETH(WETH).transfer(pairTEE, addETHAmount));
+            (liquidityETH, liquidityToken, pairTEE) = 
+                    _addLiquidity(WETH, addParams.token, liquidityETH,  liquidityToken, amountETHMin, amountTokenMin);
+            TransferHelper.safeTransferFrom(addParams.token, msg.sender, pairTEE, liquidityToken);
+            IWETH(WETH).deposit{value: liquidityETH}();
+            assert(IWETH(WETH).transfer(pairTEE, liquidityETH));
             liquidityTEE = IFeSwapPair(pairTEE).mint(to);     
-            amountToken += addTokenAmount;
-            amountETH += addETHAmount;       
+            amountToken += liquidityToken;
+            amountETH   += liquidityETH;       
         }
 
         // refund dust eth, if any
@@ -176,125 +174,115 @@ contract FeSwapRouter is IFeSwapRouter{
 
     // **** REMOVE LIQUIDITY ****
     function removeLiquidity(
-        address tokenA,
-        address tokenB,
-        uint liquidityAAB,
-        uint liquidityABB,        
-        uint amountAMin,
-        uint amountBMin,
+        RemoveLiquidityParams calldata removeParams,
         address to,
         uint deadline
     ) public virtual override ensure(deadline) returns (uint amountA, uint amountB) {
-        if(liquidityAAB != uint(0)) {
-            address pairAAB = FeSwapLibrary.pairFor(factory, tokenA, tokenB);
-            IFeSwapPair(pairAAB).transferFrom(msg.sender, pairAAB, liquidityAAB); // send liquidity to pair
+        if(removeParams.liquidityAAB != uint(0)) {
+            address pairAAB = FeSwapLibrary.pairFor(factory, removeParams.tokenA, removeParams.tokenB);
+            IFeSwapPair(pairAAB).transferFrom(msg.sender, pairAAB, removeParams.liquidityAAB);  // send liquidity to pair
             (amountA, amountB) = IFeSwapPair(pairAAB).burn(to);
         }
-        if(liquidityABB != uint(0)) {
-            address pairABB = FeSwapLibrary.pairFor(factory, tokenB, tokenA);
-            IFeSwapPair(pairABB).transferFrom(msg.sender, pairABB, liquidityABB); // send liquidity to pair
+        if(removeParams.liquidityABB != uint(0)) {
+            address pairABB = FeSwapLibrary.pairFor(factory, removeParams.tokenB, removeParams.tokenA);
+            IFeSwapPair(pairABB).transferFrom(msg.sender, pairABB, removeParams.liquidityABB);  // send liquidity to pair
             (uint amountB0, uint amountA0) = IFeSwapPair(pairABB).burn(to);
             amountA += amountA0;
             amountB += amountB0;
         }
-        require(amountA >= amountAMin, 'FeSwapRouter: INSUFFICIENT_A_AMOUNT');
-        require(amountB >= amountBMin, 'FeSwapRouter: INSUFFICIENT_B_AMOUNT');
+        require(amountA >= removeParams.amountAMin, 'FeSwapRouter: INSUFFICIENT_A_AMOUNT');
+        require(amountB >= removeParams.amountBMin, 'FeSwapRouter: INSUFFICIENT_B_AMOUNT');
     }
+
     function removeLiquidityETH(
-        address token,
-        uint liquidityTTE,
-        uint liquidityTEE,       
-        uint amountTokenMin,
-        uint amountETHMin,
+        RemoveLiquidityParams calldata removeParams,
         address to,
         uint deadline
     ) public virtual override ensure(deadline) returns (uint amountToken, uint amountETH) {
+        require(removeParams.tokenB == WETH,  'FeSwap: WRONG WETH');
         (amountToken, amountETH) = removeLiquidity(
-            token,
-            WETH,
-            liquidityTTE,
-            liquidityTEE,
-            amountTokenMin,
-            amountETHMin,
+            removeParams,    
             address(this),
             deadline
         );
-        TransferHelper.safeTransfer(token, to, amountToken);
+        TransferHelper.safeTransfer(removeParams.tokenA, to, amountToken);
         IWETH(WETH).withdraw(amountETH);
         TransferHelper.safeTransferETH(to, amountETH);
     }
-    function removeLiquidityWithPermit(
-        address tokenA,
-        address tokenB,
-        uint liquidityAAB,
-        uint amountAMin,
-        uint amountBMin,
-        address to,
+
+    function removePermit(
+        RemoveLiquidityParams calldata removeParams,
         uint deadline,
-        bool approveMax, uint8 v, bytes32 r, bytes32 s
-    ) external virtual override returns (uint amountA, uint amountB) {
-        {   // To save stack
-            address pairAAB = FeSwapLibrary.pairFor(factory, tokenA, tokenB);
-            uint value = approveMax ? uint(-1) : liquidityAAB; 
-            IFeSwapPair(pairAAB).permit(msg.sender, address(this), value, deadline, v, r, s);
+        bool approveMax, 
+        Signature   calldata sigAAB,
+        Signature   calldata sigABB
+    ) internal {
+        if(sigAAB.r != 0){
+            address pairAAB = FeSwapLibrary.pairFor(factory, removeParams.tokenA, removeParams.tokenB);
+            uint value = approveMax ? uint(-1) : removeParams.liquidityAAB; 
+            IFeSwapPair(pairAAB).permit(msg.sender, address(this), value, deadline, sigAAB.v, sigAAB.r, sigAAB.s);
         }
-        (amountA, amountB) = removeLiquidity(tokenA, tokenB, liquidityAAB, 0, amountAMin, amountBMin, to, deadline);
+        if(sigABB.r != 0){
+            address pairABB = FeSwapLibrary.pairFor(factory, removeParams.tokenB, removeParams.tokenA);
+            uint value = approveMax ? uint(-1) : removeParams.liquidityABB; 
+            IFeSwapPair(pairABB).permit(msg.sender, address(this), value, deadline, sigABB.v, sigABB.r, sigABB.s);
+        }    
     }
-    function removeLiquidityETHWithPermit(
-        address token,
-        uint liquidityTTE,
-        uint amountTokenMin,
-        uint amountETHMin,              
+
+    function removeLiquidityWithPermit(
+        RemoveLiquidityParams calldata removeParams,
         address to,
         uint deadline,
-        bool approveMax, uint8 v, bytes32 r, bytes32 s
+        bool approveMax, 
+        Signature   calldata sigAAB,
+        Signature   calldata sigABB
+    ) external virtual override returns (uint amountA, uint amountB) {
+        removePermit(removeParams, deadline, approveMax, sigAAB, sigABB);
+        (amountA, amountB) = removeLiquidity(removeParams, to, deadline);
+    }
+
+    function removeLiquidityETHWithPermit(
+        RemoveLiquidityParams calldata removeParams,
+        address to,
+        uint deadline,
+        bool approveMax, 
+        Signature   calldata sigTTE,
+        Signature   calldata sigTEE
     ) external virtual override returns (uint amountToken, uint amountETH) {
-        address pairTTE = FeSwapLibrary.pairFor(factory, token, WETH);
-        uint value = approveMax ? uint(-1) : liquidityTTE;
-        IFeSwapPair(pairTTE).permit(msg.sender, address(this), value, deadline, v, r, s);
-        (amountToken, amountETH) = removeLiquidityETH(token, liquidityTTE, 0, amountTokenMin, amountETHMin, to, deadline);
+        require(removeParams.tokenB == WETH,  'FeSwap: WRONG WETH');
+        removePermit(removeParams, deadline, approveMax, sigTTE, sigTEE);
+        (amountToken, amountETH) = removeLiquidity(removeParams, to, deadline);
     }
 
     // **** REMOVE LIQUIDITY (supporting deflation tokens) ****
     function removeLiquidityETHFeeOnTransfer(
-        address token,
-        uint liquidityTTE,
-        uint liquidityTEE,        
-        uint amountTokenMin,
-        uint amountETHMin,
+        RemoveLiquidityParams calldata removeParams,
         address to,
         uint deadline
     ) public virtual override ensure(deadline) returns (uint amountETH) {
-        (, amountETH) = removeLiquidity(
-            token,
-            WETH,
-            liquidityTTE,
-            liquidityTEE,            
-            amountTokenMin,
-            amountETHMin,
+        require(removeParams.tokenB == WETH,  'FeSwap: WRONG WETH');
+        ( , amountETH) = removeLiquidity(
+            removeParams,    
             address(this),
             deadline
         );
-        TransferHelper.safeTransfer(token, to, IERC20(token).balanceOf(address(this)));
+        TransferHelper.safeTransfer(removeParams.tokenA, to, IERC20(removeParams.tokenA).balanceOf(address(this)));
         IWETH(WETH).withdraw(amountETH);
         TransferHelper.safeTransferETH(to, amountETH);
     }
+
     function removeLiquidityETHWithPermitFeeOnTransfer(
-        address token,
-        uint liquidityTTE,
-        uint liquidityTEE,        
+        RemoveLiquidityParams calldata removeParams,
         address to,
         uint deadline,
-        bool approveMax, uint8 v, bytes32 r, bytes32 s
+        bool approveMax, 
+        Signature   calldata sigTTE,
+        Signature   calldata sigTEE
     ) external virtual override returns (uint amountETH) {
-        address pair = FeSwapLibrary.pairFor(factory, token, WETH);
-        uint value = approveMax ? uint(-1) : liquidityTTE;
-        IFeSwapPair(pair).permit(msg.sender, address(this), value, deadline, v, r, s);
-        amountETH = removeLiquidityETHFeeOnTransfer(
-            token, liquidityTTE, liquidityTEE, 0, 0, to, deadline
-        );
+        require(removeParams.tokenB == WETH,  'FeSwap: WRONG WETH');
+        removePermit(removeParams, deadline, approveMax, sigTTE, sigTEE);
+        amountETH = removeLiquidityETHFeeOnTransfer(removeParams, to, deadline);
     }
-
 
     // **** SWAP ****
     // requires the initial amount to have already been sent to the first pair

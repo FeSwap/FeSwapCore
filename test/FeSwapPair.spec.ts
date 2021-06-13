@@ -554,8 +554,16 @@ describe('FeSwapPair', () => {
       const PairAAB_BAmount = PairAAB_AAmount.mul(N_B).div(N_AA)
       const newLiquidityAAB = PairAAB_AAmount.mul(InitLiquidity.add(NewLiquid_Mined_AAB)).div(N_AA)
 
-      await expect(router.addLiquidity(  tokenA.address, tokenB.address, PairAAB_AAmount, expandTo18Decimals(20),
-                                  100, wallet.address, constants.MaxUint256, overrides  ))
+      await expect(router.addLiquidity( 
+                                        {
+                                          tokenA:         tokenA.address,
+                                          tokenB:         tokenB.address,
+                                          amountADesired: PairAAB_AAmount,
+                                          amountBDesired: expandTo18Decimals(20),
+                                          amountAMin:     0,
+                                          amountBMin:     0,
+                                          ratio:          100,
+                                        }, wallet.address, constants.MaxUint256, overrides  ))
               .to.emit(tokenA, 'Transfer')
               .withArgs(wallet.address, pairAAB.address, PairAAB_AAmount)
               .to.emit(tokenB, 'Transfer')
@@ -572,8 +580,16 @@ describe('FeSwapPair', () => {
       // const newLiquidityABB = PairABB_BAmount.mul(InitLiquidity.add(NewLiquid_Mined_ABB)).div(N_BB)  // round out 
       const newLiquidityABB = PairABB_AAmount.mul(InitLiquidity.add(NewLiquid_Mined_ABB)).div(N_A)
 
-      await expect(router.addLiquidity(  tokenA.address, tokenB.address, expandTo18Decimals(20), PairABB_BAmount,
-              0, wallet.address, constants.MaxUint256, overrides  ))
+      await expect(router.addLiquidity(  
+                                        {
+                                          tokenA:         tokenA.address,
+                                          tokenB:         tokenB.address,
+                                          amountADesired: expandTo18Decimals(20),
+                                          amountBDesired: PairABB_BAmount,
+                                          amountAMin:     0,
+                                          amountBMin:     0,
+                                          ratio:          0,
+                                        }, wallet.address, constants.MaxUint256, overrides  ))
               .to.emit(tokenA, 'Transfer')
               .withArgs(wallet.address, pairABB.address, PairABB_AAmount)
               .to.emit(tokenB, 'Transfer')
@@ -660,16 +676,23 @@ describe('FeSwapPair', () => {
       await router.swapExactTokensForTokens(  swapAmount, 0, [tokenB.address, tokenA.address],
                                           wallet.address, constants.MaxUint256, overrides)
 
-      const tx = await router.addLiquidity(  tokenA.address, tokenB.address, expandTo18Decimals(10), expandTo18Decimals(20),
-                                    100, wallet.address, constants.MaxUint256, overrides  )
-      
+      const tx = await router.addLiquidity(  
+                                            {
+                                              tokenA:         tokenA.address,
+                                              tokenB:         tokenB.address,
+                                              amountADesired: expandTo18Decimals(10),
+                                              amountBDesired: expandTo18Decimals(20),
+                                              amountAMin:     0,
+                                              amountBMin:     0,
+                                              ratio:          100,
+                                            }, wallet.address, constants.MaxUint256, overrides  )
       const feeToAAB = await pairAAB.balanceOf(feeTo.address)
       const feeCreateAAB = await pairAAB.balanceOf(pairOwner.address)  
       expect(feeToAAB).to.eq(0)           
       expect(feeCreateAAB).to.eq(0)                         
                                     
       const receipt = await tx.wait()
-      expect(receipt.gasUsed).to.eq(129297)      //  114748 157206  //241214
+      expect(receipt.gasUsed).to.eq(119686)      //  129297 157206  //241214
     }).retries(3)
 
     it('Swap Arbitrage Gas：no  feeTo, but pairOwner fee on', async () => {
@@ -700,8 +723,16 @@ describe('FeSwapPair', () => {
       await router.swapExactTokensForTokens(  swapAmount, 0, [tokenB.address, tokenA.address],
                                           wallet.address, constants.MaxUint256, overrides)
 
-      const tx = await router.addLiquidity(  tokenA.address, tokenB.address, expandTo18Decimals(10), expandTo18Decimals(20),
-                                    100, wallet.address, constants.MaxUint256, overrides  )
+      const tx = await router.addLiquidity(  
+                                              {
+                                                tokenA:         tokenA.address,
+                                                tokenB:         tokenB.address,
+                                                amountADesired: expandTo18Decimals(10),
+                                                amountBDesired: expandTo18Decimals(20),
+                                                amountAMin:     0,
+                                                amountBMin:     0,
+                                                ratio:          100,
+                                              }, wallet.address, constants.MaxUint256, overrides  )
       
       const feeToAAB = await pairAAB.balanceOf(feeTo.address)
       const feeCreateAAB = await pairAAB.balanceOf(pairOwner.address)  
@@ -709,7 +740,7 @@ describe('FeSwapPair', () => {
       expect(feeCreateAAB).to.eq(0)                         
                                     
       const receipt = await tx.wait()
-      expect(receipt.gasUsed).to.eq(178503)      //  163954 157206  //241214
+      expect(receipt.gasUsed).to.eq(180896)      //  178503 157206  //241214
     }).retries(3)
 
     it('Swap Arbitrage Gas：feeTo on, pairOwner fee off', async () => {
@@ -740,8 +771,15 @@ describe('FeSwapPair', () => {
       await router.swapExactTokensForTokens(  swapAmount, 0, [tokenB.address, tokenA.address],
                                           wallet.address, constants.MaxUint256, overrides)
 
-      const tx = await router.addLiquidity(  tokenA.address, tokenB.address, expandTo18Decimals(10), expandTo18Decimals(20),
-                                    100, wallet.address, constants.MaxUint256, overrides  )
+      const tx = await router.addLiquidity( {
+                                              tokenA:         tokenA.address,
+                                              tokenB:         tokenB.address,
+                                              amountADesired: expandTo18Decimals(10),
+                                              amountBDesired: expandTo18Decimals(20),
+                                              amountAMin:     0,
+                                              amountBMin:     0,
+                                              ratio:          100,
+                                            }, wallet.address, constants.MaxUint256, overrides  )
       
       const feeToAAB = await pairAAB.balanceOf(feeTo.address)
       const feeCreateAAB = await pairAAB.balanceOf(pairOwner.address)  
@@ -749,7 +787,7 @@ describe('FeSwapPair', () => {
       expect(feeCreateAAB).to.not.eq(0)                         
                                     
       const receipt = await tx.wait()
-      expect(receipt.gasUsed).to.eq(180129)      //  165580 157206  //241214
+      expect(receipt.gasUsed).to.eq(182522)      //  180129 157206  //241214
     }).retries(3)
 
     it('Swap Arbitrage Gas：feeTo on, pairOwner fee on', async () => {
@@ -780,8 +818,15 @@ describe('FeSwapPair', () => {
       await router.swapExactTokensForTokens(  swapAmount, 0, [tokenB.address, tokenA.address],
                                           wallet.address, constants.MaxUint256, overrides)
 
-      const tx = await router.addLiquidity(  tokenA.address, tokenB.address, expandTo18Decimals(10), expandTo18Decimals(20),
-                                    100, wallet.address, constants.MaxUint256, overrides  )
+      const tx = await router.addLiquidity( {
+                                              tokenA:         tokenA.address,
+                                              tokenB:         tokenB.address,
+                                              amountADesired: expandTo18Decimals(10),
+                                              amountBDesired: expandTo18Decimals(20),
+                                              amountAMin:     0,
+                                              amountBMin:     0,
+                                              ratio:          100,
+                                            },  wallet.address, constants.MaxUint256, overrides  )
       
       const feeToAAB = await pairAAB.balanceOf(feeTo.address)
       const feeCreateAAB = await pairAAB.balanceOf(pairOwner.address)  
@@ -789,7 +834,7 @@ describe('FeSwapPair', () => {
       expect(feeCreateAAB).to.not.eq(0)             // "618801031771281"            
                                     
       const receipt = await tx.wait()
-      expect(receipt.gasUsed).to.eq(203891)      //  189342 157206  //241214
+      expect(receipt.gasUsed).to.eq(206284)      //  203891 157206  //241214
     }).retries(3)
 
     it('Swap Arbitrage Gas comparsion', async () => {
@@ -811,7 +856,7 @@ describe('FeSwapPair', () => {
         const tx = await router.swapExactTokensForTokens( swapAmount, 0,  [tokenB.address, tokenA.address],
                                                 wallet.address, constants.MaxUint256,  overrides )
         const receipt = await tx.wait()
-        expect(receipt.gasUsed).to.eq(134645)     //90892 90889
+        expect(receipt.gasUsed).to.eq(136343)     //134645 90889
       }
       {
         const swapAmount = expandTo18Decimals(10)
@@ -821,7 +866,7 @@ describe('FeSwapPair', () => {
         const tx = await router.swapExactTokensForTokens( swapAmount, 0,  [tokenB.address, tokenA.address],
                                               wallet.address, constants.MaxUint256,  overrides )
         const receipt = await tx.wait()
-        expect(receipt.gasUsed).to.eq(171820)   //  157209  //241214
+        expect(receipt.gasUsed).to.eq(174757)   //  171820  //241214
       }
     }).retries(3)
 })
