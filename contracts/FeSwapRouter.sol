@@ -118,10 +118,10 @@ contract FeSwapRouter is IFeSwapRouter{
         }
         if(addParams.ratio != uint(100)) {
             address pairB2A; 
-            uint liquidityA = addParams.amountADesired-amountA; 
-            uint liquidityB = addParams.amountBDesired-amountB;
-            uint amountAMin = addParams.amountAMin-amountA; 
-            uint amountBMin = addParams.amountBMin-amountB;
+            uint liquidityA = addParams.amountADesired - amountA; 
+            uint liquidityB = addParams.amountBDesired - amountB;
+            uint amountAMin = (addParams.amountAMin != 0) ? (addParams.amountAMin - amountA) : 0 ; 
+            uint amountBMin = (addParams.amountBMin != 0) ? (addParams.amountBMin - amountB) : 0 ;
             (liquidityB, liquidityA, pairB2A) = 
                         _addLiquidity(addParams.tokenB, addParams.tokenA, liquidityB, liquidityA, amountBMin, amountAMin);
             TransferHelper.safeTransferFrom(addParams.tokenA, msg.sender, pairB2A, liquidityA);
@@ -154,10 +154,10 @@ contract FeSwapRouter is IFeSwapRouter{
         }
         if(addParams.ratio != uint(100)){
             address pairTEE;
-            uint liquidityToken = addParams.amountTokenDesired-amountToken; 
-            uint liquidityETH   = msg.value-amountETH;
-            uint amountTokenMin = addParams.amountTokenMin-amountToken;
-            uint amountETHMin   = addParams.amountETHMin-amountETH;
+            uint liquidityToken = addParams.amountTokenDesired - amountToken; 
+            uint liquidityETH   = msg.value - amountETH;
+            uint amountTokenMin = (addParams.amountTokenMin !=0) ? (addParams.amountTokenMin - amountToken) : 0 ;
+            uint amountETHMin   = (addParams.amountETHMin != 0) ? (addParams.amountETHMin - amountETH) : 0 ;
             (liquidityETH, liquidityToken, pairTEE) = 
                     _addLiquidity(WETH, addParams.token, liquidityETH,  liquidityToken, amountETHMin, amountTokenMin);
             TransferHelper.safeTransferFrom(addParams.token, msg.sender, pairTEE, liquidityToken);

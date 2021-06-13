@@ -60,19 +60,23 @@ describe('FeSwapRemoveLiquidity', () => {
         await tokenA.approve(router.address, constants.MaxUint256)
         await tokenB.approve(router.address, constants.MaxUint256)
         await router.addLiquidity(
-            tokenA.address,
-            tokenB.address,
-            tokenAAmount,
-            tokenBAmount,
-            ratio,
+            {
+              tokenA:         tokenA.address,
+              tokenB:         tokenB.address,
+              amountADesired: tokenAAmount,
+              amountBDesired: tokenBAmount,
+              amountAMin:     0,
+              amountBMin:     0,
+              ratio:          ratio,
+            },
             wallet.address,
             constants.MaxUint256,
             overrides
           )
       }
 
-    [10, 30, 50, 69, 80].forEach( (ratio) => {
-//    [10].forEach( (ratio) => {
+//    [10, 30, 50, 69, 80].forEach( (ratio) => {
+    [10].forEach( (ratio) => {
       it(`removeLiquidity ratio is ${ratio}-${100-ratio} `, async () => {
         const tokenAAmount = expandTo18Decimals(100)
         const tokenBAmount = expandTo18Decimals(4)
@@ -86,12 +90,14 @@ describe('FeSwapRemoveLiquidity', () => {
 
         await expect(
           router.removeLiquidity(
-            tokenA.address,
-            tokenB.address,
-            expectedLiquidityAAB.sub(MINIMUM_LIQUIDITY),
-            expectedLiquidityABB.sub(MINIMUM_LIQUIDITY),
-            0,
-            0,
+            {
+              tokenA:         tokenA.address,
+              tokenB:         tokenB.address,
+              liquidityAAB:   expectedLiquidityAAB.sub(MINIMUM_LIQUIDITY),
+              liquidityABB:   expectedLiquidityABB.sub(MINIMUM_LIQUIDITY), 
+              amountAMin:     0,
+              amountBMin:     0,
+            },
             other.address,
             constants.MaxUint256,
             overrides
@@ -164,12 +170,14 @@ describe('FeSwapRemoveLiquidity', () => {
 
           await expect(
             router.removeLiquidity(
-              tokenA.address,
-              tokenB.address,
-              expectedLiquidityAAB,
-              expectedLiquidityABB,
-              0,
-              0,
+              {
+                tokenA:         tokenA.address,
+                tokenB:         tokenB.address,
+                liquidityAAB:   expectedLiquidityAAB,
+                liquidityABB:   expectedLiquidityABB, 
+                amountAMin:     0,
+                amountBMin:     0,
+              },
               wallet.address,
               constants.MaxUint256,
               overrides
@@ -226,19 +234,21 @@ describe('FeSwapRemoveLiquidity', () => {
         await pairABB.approve(router.address, constants.MaxUint256)
 
         const tx = await router.removeLiquidity(
-            tokenA.address,
-            tokenB.address,
-            expectedLiquidityAAB.sub(MINIMUM_LIQUIDITY),
-            expectedLiquidityABB.sub(MINIMUM_LIQUIDITY),
-            0,
-            0,
+            {
+              tokenA:         tokenA.address,
+              tokenB:         tokenB.address,
+              liquidityAAB:   expectedLiquidityAAB.sub(MINIMUM_LIQUIDITY),
+              liquidityABB:   expectedLiquidityABB.sub(MINIMUM_LIQUIDITY), 
+              amountAMin:     0,
+              amountBMin:     0,
+            },
             wallet.address,
             constants.MaxUint256,
             overrides
           )
 
           const receipt = await tx.wait()
-          expect(receipt.gasUsed).to.eq(294280)    //207058, 246129 258878  Uniswap: 253427
+          expect(receipt.gasUsed).to.eq(295816)    //294280, 246129 258878  Uniswap: 253427
       }).retries(3) 
 
       it(`removeLiquidity ratio AAB: 100-0 `, async () => {
@@ -252,12 +262,14 @@ describe('FeSwapRemoveLiquidity', () => {
 
         await expect(
           router.removeLiquidity(
-            tokenA.address,
-            tokenB.address,
-            expectedLiquidityAAB.sub(MINIMUM_LIQUIDITY),
-            0,
-            0,
-            0,
+            {
+              tokenA:         tokenA.address,
+              tokenB:         tokenB.address,
+              liquidityAAB:   expectedLiquidityAAB.sub(MINIMUM_LIQUIDITY),
+              liquidityABB:   0, 
+              amountAMin:     0,
+              amountBMin:     0,
+            },
             wallet.address,
             constants.MaxUint256,
             overrides
@@ -298,18 +310,20 @@ describe('FeSwapRemoveLiquidity', () => {
         await pairAAB.approve(router.address, constants.MaxUint256)
 
         const tx = await router.removeLiquidity(
-            tokenA.address,
-            tokenB.address,
-            expectedLiquidityAAB.sub(MINIMUM_LIQUIDITY),
-            0,
-            0,
-            0,
+            {
+              tokenA:         tokenA.address,
+              tokenB:         tokenB.address,
+              liquidityAAB:   expectedLiquidityAAB.sub(MINIMUM_LIQUIDITY),
+              liquidityABB:   0, 
+              amountAMin:     0,
+              amountBMin:     0,
+            },
             wallet.address,
             constants.MaxUint256,
             overrides
           )
           const receipt = await tx.wait()
-          expect(receipt.gasUsed).to.eq(163444)    // 119833, 139258,  246129,  Uniswap: ???
+          expect(receipt.gasUsed).to.eq(164280)    // 163444, 139258,  246129,  Uniswap: ???
       }).retries(3) 
 
       it(`removeLiquidity ratio AAB: 0-100 `, async () => {
@@ -323,12 +337,14 @@ describe('FeSwapRemoveLiquidity', () => {
 
         await expect( 
           router.removeLiquidity(
-            tokenA.address,
-            tokenB.address,
-            0,
-            expectedLiquidityABB.sub(MINIMUM_LIQUIDITY),
-            0,
-            0,
+            {
+              tokenA:         tokenA.address,
+              tokenB:         tokenB.address,
+              liquidityAAB:   0,
+              liquidityABB:   expectedLiquidityABB.sub(MINIMUM_LIQUIDITY), 
+              amountAMin:     0,
+              amountBMin:     0,
+            },
             wallet.address,
             constants.MaxUint256,
             overrides
@@ -378,19 +394,24 @@ describe('FeSwapRemoveLiquidity', () => {
 
         const { v, r, s } = ecsign(Buffer.from(digest.slice(2), 'hex'), Buffer.from(wallet.privateKey.slice(2), 'hex'))
 
+        console.log('v, r, s',  v, r, s)   
+        console.log('router',  router)
+
         await expect( 
           router.removeLiquidityWithPermit(
-            tokenA.address,
-            tokenB.address,
-            expectedLiquidityAAB.sub(MINIMUM_LIQUIDITY),
-            0,
-            0,
+            {
+              tokenA:         tokenA.address,
+              tokenB:         tokenB.address,
+              liquidityAAB:   expectedLiquidityAAB.sub(MINIMUM_LIQUIDITY),
+              liquidityABB:   0, 
+              amountAMin:     0,
+              amountBMin:     0,
+            },
             wallet.address,
             constants.MaxUint256,
             false,
-            v,
-            r,
-            s,
+            {v, r, s},
+            {v: 0, r: constants.AddressZero, s:constants.AddressZero },
             overrides
           )
         )
@@ -422,14 +443,19 @@ describe('FeSwapRemoveLiquidity', () => {
     })
    
 /////////////////////////
+/*
     describe( "FeSwap Remove LiquidityETH", () => {
           
       async function addLiquidityETH(WETHPartnerAmount: BigNumber, ETHAmount: BigNumber, ratio: Number) {
         await WETHPartner.approve(router.address, constants.MaxUint256)
         await router.addLiquidityETH(
-            WETHPartner.address,
-            WETHPartnerAmount,
-            ratio,
+            {
+              token:              WETHPartner.address,
+              amountTokenDesired: WETHPartnerAmount,
+              amountTokenMin:     0,
+              amountETHMin:       0,
+              ratio:              ratio,
+            },
             wallet.address,
             constants.MaxUint256,
             { ...overrides, value: ETHAmount }
@@ -452,11 +478,14 @@ describe('FeSwapRemoveLiquidity', () => {
 
           await expect(
             router.removeLiquidityETH(
-              WETHPartner.address,
-              expectedLiquidityTTE.sub(MINIMUM_LIQUIDITY),
-              expectedLiquidityTEE.sub(MINIMUM_LIQUIDITY),
-              0,
-              0,
+              {
+                tokenA:         WETHPartner.address,
+                tokenB:         WETH.address,
+                liquidityAAB:   expectedLiquidityTTE.sub(MINIMUM_LIQUIDITY),
+                liquidityABB:   expectedLiquidityTEE.sub(MINIMUM_LIQUIDITY), 
+                amountAMin:     0,
+                amountBMin:     0,
+              },
               wallet.address,
               constants.MaxUint256,
               overrides
@@ -521,11 +550,14 @@ describe('FeSwapRemoveLiquidity', () => {
   
             await expect(
               router.removeLiquidityETH(
-                WETHPartner.address,
-                expectedLiquidityTTE,
-                expectedLiquidityTEE,
-                0,
-                0,
+                {
+                  tokenA:         WETHPartner.address,
+                  tokenB:         WETH.address,
+                  liquidityAAB:   expectedLiquidityTTE,
+                  liquidityABB:   expectedLiquidityTEE, 
+                  amountAMin:     0,
+                  amountBMin:     0,
+                },
                 wallet.address,
                 constants.MaxUint256,
                 overrides
@@ -592,11 +624,14 @@ describe('FeSwapRemoveLiquidity', () => {
         await WETHPairTEE.approve(router.address, constants.MaxUint256)
 
         const tx = await router.removeLiquidityETH(
-            WETHPartner.address,
-            expectedLiquidityTTE.sub(MINIMUM_LIQUIDITY),
-            expectedLiquidityTEE.sub(MINIMUM_LIQUIDITY),
-            0,
-            0,
+            {
+              tokenA:         WETHPartner.address,
+              tokenB:         WETH.address,
+              liquidityAAB:   expectedLiquidityTTE.sub(MINIMUM_LIQUIDITY),
+              liquidityABB:   expectedLiquidityTEE.sub(MINIMUM_LIQUIDITY), 
+              amountAMin:     0,
+              amountBMin:     0,
+            },
             wallet.address,
             constants.MaxUint256,
             overrides
@@ -619,11 +654,14 @@ describe('FeSwapRemoveLiquidity', () => {
 
         await expect(
           router.removeLiquidityETH(
-            WETHPartner.address,
-            expectedLiquidityTTE.sub(MINIMUM_LIQUIDITY),
-            0,
-            0,
-            0,
+            {
+              tokenA:         WETHPartner.address,
+              tokenB:         WETH.address,
+              liquidityAAB:   expectedLiquidityTTE.sub(MINIMUM_LIQUIDITY),
+              liquidityABB:   0, 
+              amountAMin:     0,
+              amountBMin:     0,
+            },
             wallet.address,
             constants.MaxUint256,
             overrides
@@ -669,11 +707,14 @@ describe('FeSwapRemoveLiquidity', () => {
         await WETHPairTEE.approve(router.address, constants.MaxUint256)
 
         const tx = await router.removeLiquidityETH(
-            WETHPartner.address,
-            expectedLiquidityTTE.sub(MINIMUM_LIQUIDITY),
-            0,
-            0,
-            0,
+            {
+              tokenA:         WETHPartner.address,
+              tokenB:         WETH.address,
+              liquidityAAB:   expectedLiquidityTTE.sub(MINIMUM_LIQUIDITY),
+              liquidityABB:   0, 
+              amountAMin:     0,
+              amountBMin:     0,
+            },
             wallet.address,
             constants.MaxUint256,
             overrides
@@ -699,11 +740,14 @@ describe('FeSwapRemoveLiquidity', () => {
 
         await expect(
           router.removeLiquidityETH(
-            WETHPartner.address,
-            0,
-            expectedLiquidityTEE.sub(MINIMUM_LIQUIDITY),
-            0,
-            0,
+            {
+              tokenA:         WETHPartner.address,
+              tokenB:         WETH.address,
+              liquidityAAB:   0,
+              liquidityABB:   expectedLiquidityTEE.sub(MINIMUM_LIQUIDITY), 
+              amountAMin:     0,
+              amountBMin:     0,
+            },
             wallet.address,
             constants.MaxUint256,
             overrides
@@ -758,16 +802,19 @@ describe('FeSwapRemoveLiquidity', () => {
 
         await expect(
           router.removeLiquidityETHWithPermit(
-            WETHPartner.address,
-            expectedLiquidityTTE.sub(MINIMUM_LIQUIDITY),
-            0,
-            0,
+            {
+              tokenA:         WETHPartner.address,
+              tokenB:         WETH.address,
+              liquidityAAB:   expectedLiquidityTTE.sub(MINIMUM_LIQUIDITY),
+              liquidityABB:   0, 
+              amountAMin:     0,
+              amountBMin:     0,
+            },
             wallet.address,
             constants.MaxUint256,
             false,
-            v,
-            r,
-            s,
+            {v,r,s},
+            {v:0, r:0, s:0},           
             overrides
           )
         )
@@ -799,4 +846,5 @@ describe('FeSwapRemoveLiquidity', () => {
         expect(await WETH.balanceOf(WETHPairTTE.address)).to.eq(RemoveLeftPercent(ETHAmount,ratio,expectedLiquidityTTE))   
       })
     })
+    */
 })
