@@ -112,8 +112,16 @@ describe('FeSwapRouter', () => {
   it('getAmountsOutMinor', async () => {
     await tokenA.approve(router.address, constants.MaxUint256)
     await tokenB.approve(router.address, constants.MaxUint256)
-    await router.addLiquidity( tokenA.address, tokenB.address, expandTo18Decimals(1000), expandTo18Decimals(1000),
-                                50, wallet.address, constants.MaxUint256, overrides)
+    await router.addLiquidity(  {
+                                  tokenA:         tokenA.address,
+                                  tokenB:         tokenB.address,
+                                  amountADesired: expandTo18Decimals(1000),
+                                  amountBDesired: expandTo18Decimals(1000),
+                                  amountAMin:     0,
+                                  amountBMin:     0,
+                                  ratio:          50,
+                                },
+                                wallet.address, constants.MaxUint256, overrides)
 
     await expect(router.estimateAmountsOut(BigNumber.from(2), [tokenA.address])).to.be.revertedWith(
       'FeSwapLibrary: INVALID_PATH'
@@ -127,8 +135,16 @@ describe('FeSwapRouter', () => {
   it('getAmountsOutNormal', async () => {
     await tokenA.approve(router.address, constants.MaxUint256)
     await tokenB.approve(router.address, constants.MaxUint256)
-    await router.addLiquidity( tokenA.address, tokenB.address, expandTo18Decimals(1000), expandTo18Decimals(1000),
-                                50, wallet.address, constants.MaxUint256, overrides)
+    await router.addLiquidity(  {
+                                  tokenA:         tokenA.address,
+                                  tokenB:         tokenB.address,
+                                  amountADesired: expandTo18Decimals(1000),
+                                  amountBDesired: expandTo18Decimals(1000),
+                                  amountAMin:     0,
+                                  amountBMin:     0,
+                                  ratio:          50,
+                                },
+                                wallet.address, constants.MaxUint256, overrides)
 
     const path = [tokenA.address, tokenB.address]
     const estimateAmountsOut = await router.estimateAmountsOut(expandTo18Decimals(2), path)
@@ -140,11 +156,27 @@ describe('FeSwapRouter', () => {
     await tokenA.approve(router.address, constants.MaxUint256)
     await tokenB.approve(router.address, constants.MaxUint256)
     await WETHPartner.approve(router.address, constants.MaxUint256)   
-    await router.addLiquidity( tokenA.address, tokenB.address, expandTo18Decimals(1000), expandTo18Decimals(2000),
-                                50, wallet.address, constants.MaxUint256, overrides)
+    await router.addLiquidity(  {
+                                  tokenA:         tokenA.address,
+                                  tokenB:         tokenB.address,
+                                  amountADesired: expandTo18Decimals(1000),
+                                  amountBDesired: expandTo18Decimals(2000),
+                                  amountAMin:     0,
+                                  amountBMin:     0,
+                                  ratio:          50,
+                                },
+                                wallet.address, constants.MaxUint256, overrides)
 
-    await router.addLiquidity( tokenB.address, WETHPartner.address, expandTo18Decimals(3000), expandTo18Decimals(5000),
-                                50, wallet.address, constants.MaxUint256, overrides)                                
+    await router.addLiquidity(  {
+                                  tokenA:         tokenB.address,
+                                  tokenB:         WETHPartner.address,
+                                  amountADesired: expandTo18Decimals(3000),
+                                  amountBDesired: expandTo18Decimals(5000),
+                                  amountAMin:     0,
+                                  amountBMin:     0,
+                                  ratio:          50,
+                                },
+                                wallet.address, constants.MaxUint256, overrides)                                
 
     const tokenBOut = expandTo18Decimals(2).mul(1000).div(502)
     const WETHPartnerOut = expandTo18Decimals(2500).mul(tokenBOut).div(expandTo18Decimals(1500).add(tokenBOut))
@@ -159,8 +191,16 @@ describe('FeSwapRouter', () => {
   it('getAmountsIn', async () => {
     await tokenA.approve(router.address, constants.MaxUint256)
     await tokenB.approve(router.address, constants.MaxUint256)
-    await router.addLiquidity( tokenA.address, tokenB.address, expandTo18Decimals(1000), expandTo18Decimals(1000),
-                                50, wallet.address, constants.MaxUint256, overrides)
+    await router.addLiquidity(  {
+                                  tokenA:         tokenA.address,
+                                  tokenB:         tokenB.address,
+                                  amountADesired: expandTo18Decimals(1000),
+                                  amountBDesired: expandTo18Decimals(1000),
+                                  amountAMin:     0,
+                                  amountBMin:     0,
+                                  ratio:          50,
+                                },
+                                wallet.address, constants.MaxUint256, overrides)
 
     await expect(router.estimateAmountsIn(BigNumber.from(1), [tokenA.address]))
             .to.be.revertedWith('FeSwapLibrary: INVALID_PATH')
@@ -174,11 +214,27 @@ describe('FeSwapRouter', () => {
     await tokenA.approve(router.address, constants.MaxUint256)
     await tokenB.approve(router.address, constants.MaxUint256)
     await WETHPartner.approve(router.address, constants.MaxUint256)   
-    await router.addLiquidity( tokenA.address, tokenB.address, expandTo18Decimals(1000), expandTo18Decimals(2000),
-                                50, wallet.address, constants.MaxUint256, overrides)
+    await router.addLiquidity(  {
+                                  tokenA:         tokenA.address,
+                                  tokenB:         tokenB.address,
+                                  amountADesired: expandTo18Decimals(1000),
+                                  amountBDesired: expandTo18Decimals(2000),
+                                  amountAMin:     0,
+                                  amountBMin:     0,
+                                  ratio:          50,
+                                },
+                                wallet.address, constants.MaxUint256, overrides)
 
-    await router.addLiquidity( tokenB.address, WETHPartner.address, expandTo18Decimals(3000), expandTo18Decimals(5000),
-                                50, wallet.address, constants.MaxUint256, overrides)                                
+    await router.addLiquidity(  {
+                                  tokenA:         tokenB.address,
+                                  tokenB:         WETHPartner.address,
+                                  amountADesired: expandTo18Decimals(3000),
+                                  amountBDesired: expandTo18Decimals(5000),
+                                  amountAMin:     0,
+                                  amountBMin:     0,
+                                  ratio:          50,
+                                },
+                                wallet.address, constants.MaxUint256, overrides)                                
 
     const tokenBIn = expandTo18Decimals(2).mul(1500).div(2498).add(1)
     const tokenAIn = expandTo18Decimals(500).mul(tokenBIn).div(expandTo18Decimals(1000).sub(tokenBIn)).add(1)
@@ -216,7 +272,7 @@ describe('FeSwapRouter: ManageFeswaPair', () => {
 
   it('ManageFeswaPair: Invalide TokenID', async () => {
     await expect(router.ManageFeswaPair('0xFFFFFFFFFFF', pairOwner.address, rateTriggerArbitrage))
-            .to.be.revertedWith('ERC721: owner query for nonexistent token')
+            .to.be.revertedWith('FeSwap: NOT TOKEN OWNER')
   })
 
   it('ManageFeswaPair: Check Owner', async () => {
@@ -275,10 +331,18 @@ describe('FeSwapRouter: Deflation Token Test', () => {
 
   async function addLiquidity(DTTAmount: BigNumber, WETHAmount: BigNumber, ratio: Number){
     await DTT.approve(router.address, constants.MaxUint256)
-    await router.addLiquidityETH(DTT.address, DTTAmount, ratio, wallet.address, constants.MaxUint256, {
-      ...overrides,
-      value: WETHAmount
-    })
+    await router.addLiquidityETH(
+                                  {
+                                    token:              DTT.address,
+                                    amountTokenDesired: DTTAmount,
+                                    amountTokenMin:     0,
+                                    amountETHMin:       0,
+                                    ratio:              ratio,
+                                  },
+                                  wallet.address, constants.MaxUint256, {
+                                  ...overrides,
+                                  value: WETHAmount
+                                })
   }
 
   it('removeLiquidityETHFeeOnTransfer: Single Pool Liquidity', async () => {
@@ -297,11 +361,14 @@ describe('FeSwapRouter: Deflation Token Test', () => {
 
     await WETHPairTTE.approve(router.address, constants.MaxUint256)
     await router.removeLiquidityETHFeeOnTransfer(
-      DTT.address,
-      liquidity,
-      0,
-      NaiveDTTExpected,
-      WETHExpected,
+      {
+        tokenA:         DTT.address,
+        tokenB:         WETH.address,
+        liquidityAAB:   liquidity,
+        liquidityABB:   0, 
+        amountAMin:     NaiveDTTExpected,
+        amountBMin:     WETHExpected,
+      },
       pairOwner.address,
       constants.MaxUint256,
       overrides
@@ -324,50 +391,58 @@ describe('FeSwapRouter: Deflation Token Test', () => {
 
     await WETHPairTEE.approve(router.address, constants.MaxUint256)
     await router.removeLiquidityETHFeeOnTransfer(
-      DTT.address,
-      0, 
-      liquidityTEE,
-      NaiveDTTExpectedTEE,
-      WETHExpectedTEE,
+      {
+        tokenA:         DTT.address,
+        tokenB:         WETH.address,
+        liquidityAAB:   0,
+        liquidityABB:   liquidityTEE, 
+        amountAMin:     NaiveDTTExpectedTEE,
+        amountBMin:     WETHExpectedTEE,
+      },
       pairOwner.address,
       constants.MaxUint256,
       overrides
     )
   })
 
-  it('removeLiquidityETHWithPermitFeeOnTransfer', async () => {
-    const DTTAmount = expandTo18Decimals(1)
-      .mul(100)
-      .div(99)
-    const ETHAmount = expandTo18Decimals(4)
+    it('removeLiquidityETHWithPermitFeeOnTransfer', async () => {
+      const DTTAmount = expandTo18Decimals(1)
+        .mul(100)
+        .div(99)
+      const ETHAmount = expandTo18Decimals(4)
 
-     await addLiquidity(DTTAmount, ETHAmount, 100)
-    const expectedLiquidity = expandTo18Decimals(2)
+      await addLiquidity(DTTAmount, ETHAmount, 100)
+      const expectedLiquidity = expandTo18Decimals(2)
 
-    const nonce = await WETHPairTTE.nonces(wallet.address)
-    const digest = await getApprovalDigest(
-      WETHPairTTE,
-      { owner: wallet.address, spender: router.address, value: expectedLiquidity.sub(MINIMUM_LIQUIDITY) },
-      nonce,
-      constants.MaxUint256
-    )
-    const { v, r, s } = ecsign(Buffer.from(digest.slice(2), 'hex'), Buffer.from(wallet.privateKey.slice(2), 'hex'))
-    const liquidity = await WETHPairTTE.balanceOf(wallet.address)
-    await WETHPairTTE.approve(router.address, constants.MaxUint256)
+      const nonce = await WETHPairTTE.nonces(wallet.address)
+      const digest = await getApprovalDigest(
+        WETHPairTTE,
+        { owner: wallet.address, spender: router.address, value: expectedLiquidity.sub(MINIMUM_LIQUIDITY) },
+        nonce,
+        constants.MaxUint256
+      )
+      const { v, r, s } = ecsign(Buffer.from(digest.slice(2), 'hex'), Buffer.from(wallet.privateKey.slice(2), 'hex'))
+      const liquidity = await WETHPairTTE.balanceOf(wallet.address)
+      await WETHPairTTE.approve(router.address, constants.MaxUint256)
+      const ZeroBuffer = Buffer.alloc(32)
 
-    await router.removeLiquidityETHWithPermitFeeOnTransfer(
-      DTT.address,
-      liquidity,
-      0,
-      wallet.address,
-      constants.MaxUint256,
-      false,
-      v,
-      r,
-      s,
-      overrides
-    )
-  })
+      await router.removeLiquidityETHWithPermitFeeOnTransfer(
+        {
+          tokenA:         DTT.address,
+          tokenB:         WETH.address,
+          liquidityAAB:   liquidity,
+          liquidityABB:   0, 
+          amountAMin:     0,
+          amountBMin:     0,
+        },
+        wallet.address,
+        constants.MaxUint256,
+        false,
+        {v, r, s},
+        {v: 0, r: ZeroBuffer, s: ZeroBuffer },    
+        overrides
+      )
+    })
 
     it('swapExactTokensForTokensFeeOnTransfer: DTT -> WETH', async () => {
       const DTTAmount = expandTo18Decimals(5)
@@ -521,11 +596,15 @@ describe('FeSwapRouter: fee-on-transfer tokens: reloaded', () => {
     await DTT.approve(router.address, constants.MaxUint256)
     await DTT2.approve(router.address, constants.MaxUint256)
     await router.addLiquidity(
-      DTT.address,
-      DTT2.address,
-      DTTAmount,
-      DTT2Amount,
-      100,
+      {
+        tokenA:         DTT.address,
+        tokenB:         DTT2.address,
+        amountADesired: DTTAmount,
+        amountBDesired: DTT2Amount,
+        amountAMin:     0,
+        amountBMin:     0,
+        ratio:          100,
+      },
       wallet.address,
       constants.MaxUint256,
       overrides

@@ -251,7 +251,7 @@ contract FeSwapRouter is IFeSwapRouter{
     ) external virtual override returns (uint amountToken, uint amountETH) {
         require(removeParams.tokenB == WETH,  'FeSwap: WRONG WETH');
         removePermit(removeParams, deadline, approveMax, sigTTE, sigTEE);
-        (amountToken, amountETH) = removeLiquidity(removeParams, to, deadline);
+        (amountToken, amountETH) = removeLiquidityETH(removeParams, to, deadline);
     }
 
     // **** REMOVE LIQUIDITY (supporting deflation tokens) ****

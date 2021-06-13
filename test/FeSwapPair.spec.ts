@@ -692,7 +692,7 @@ describe('FeSwapPair', () => {
       expect(feeCreateAAB).to.eq(0)                         
                                     
       const receipt = await tx.wait()
-      expect(receipt.gasUsed).to.eq(119686)      //  129297 157206  //241214
+      expect(receipt.gasUsed).to.eq(131668)      //  119686 157206  //241214
     }).retries(3)
 
     it('Swap Arbitrage Gas：no  feeTo, but pairOwner fee on', async () => {
@@ -740,7 +740,7 @@ describe('FeSwapPair', () => {
       expect(feeCreateAAB).to.eq(0)                         
                                     
       const receipt = await tx.wait()
-      expect(receipt.gasUsed).to.eq(180896)      //  178503 157206  //241214
+      expect(receipt.gasUsed).to.eq(180874)      //  180896 157206  //241214
     }).retries(3)
 
     it('Swap Arbitrage Gas：feeTo on, pairOwner fee off', async () => {
@@ -787,7 +787,7 @@ describe('FeSwapPair', () => {
       expect(feeCreateAAB).to.not.eq(0)                         
                                     
       const receipt = await tx.wait()
-      expect(receipt.gasUsed).to.eq(182522)      //  180129 157206  //241214
+      expect(receipt.gasUsed).to.eq(182500)      //  182522 157206  //241214
     }).retries(3)
 
     it('Swap Arbitrage Gas：feeTo on, pairOwner fee on', async () => {
@@ -834,7 +834,7 @@ describe('FeSwapPair', () => {
       expect(feeCreateAAB).to.not.eq(0)             // "618801031771281"            
                                     
       const receipt = await tx.wait()
-      expect(receipt.gasUsed).to.eq(206284)      //  203891 157206  //241214
+      expect(receipt.gasUsed).to.eq(206262)      //  206284 157206  //241214
     }).retries(3)
 
     it('Swap Arbitrage Gas comparsion', async () => {
@@ -856,7 +856,7 @@ describe('FeSwapPair', () => {
         const tx = await router.swapExactTokensForTokens( swapAmount, 0,  [tokenB.address, tokenA.address],
                                                 wallet.address, constants.MaxUint256,  overrides )
         const receipt = await tx.wait()
-        expect(receipt.gasUsed).to.eq(136343)     //134645 90889
+        expect(receipt.gasUsed).to.eq(136321)     //136343 90889
       }
       {
         const swapAmount = expandTo18Decimals(10)
@@ -866,7 +866,7 @@ describe('FeSwapPair', () => {
         const tx = await router.swapExactTokensForTokens( swapAmount, 0,  [tokenB.address, tokenA.address],
                                               wallet.address, constants.MaxUint256,  overrides )
         const receipt = await tx.wait()
-        expect(receipt.gasUsed).to.eq(174757)   //  171820  //241214
+        expect(receipt.gasUsed).to.eq(186739)   //  174757  //241214
       }
     }).retries(3)
 })

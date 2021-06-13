@@ -207,11 +207,27 @@ describe('FeSwapSimuStress: ', () => {
 
       const AAmount = expandTo18Decimals(10)
       const BAmount = expandTo18Decimals(10)
-      await router.addLiquidity(  tokenA.address, tokenB.address, AAmount, expandTo18Decimals(20),
-                                  100, wallet.address, constants.MaxUint256, overrides  )
-                                   
-      await router.addLiquidity(  tokenA.address, tokenB.address, expandTo18Decimals(20), BAmount,
-                                  0, wallet.address, constants.MaxUint256, overrides  )
+      await router.addLiquidity(  {
+                                    tokenA:         tokenA.address,
+                                    tokenB:         tokenB.address,
+                                    amountADesired: AAmount,
+                                    amountBDesired: expandTo18Decimals(20),
+                                    amountAMin:     0,
+                                    amountBMin:     0,
+                                    ratio:          100,
+                                  },
+                                  wallet.address, constants.MaxUint256, overrides  )
+
+      await router.addLiquidity(  {
+                                    tokenA:         tokenA.address,
+                                    tokenB:         tokenB.address,
+                                    amountADesired: expandTo18Decimals(20),
+                                    amountBDesired: BAmount,
+                                    amountAMin:     0,
+                                    amountBMin:     0,
+                                    ratio:          0,
+                                  },                                  
+                                  wallet.address, constants.MaxUint256, overrides  )
 
       let AmountTokeAofWallet = await tokenA.balanceOf(wallet.address)
       let AmountTokeBofWallet = await tokenB.balanceOf(wallet.address)                                   
@@ -253,11 +269,25 @@ describe('FeSwapSimuStress: ', () => {
       expect(TotalLiquityBA).to.eq('1009950800241056335856')
       expect(KValueLastBA).to.eq('1020023762474014930152445391114223486703365')   
 
-      await router.removeLiquidity( tokenA.address, tokenB.address, LiquityWalletAB, 0,
-                                  0, 0, wallet.address, constants.MaxUint256, overrides  )
+      await router.removeLiquidity( {
+                                      tokenA:         tokenA.address,
+                                      tokenB:         tokenB.address,
+                                      liquidityAAB:   LiquityWalletAB,
+                                      liquidityABB:   0, 
+                                      amountAMin:     0,
+                                      amountBMin:     0,
+                                    },                                    
+                                    wallet.address, constants.MaxUint256, overrides  )
 
-      await router.removeLiquidity( tokenA.address, tokenB.address, 0, LiquityWalletBA,
-                                    0, 0, wallet.address, constants.MaxUint256, overrides  )   
+      await router.removeLiquidity( {
+                                      tokenA:         tokenA.address,
+                                      tokenB:         tokenB.address,
+                                      liquidityAAB:   0,
+                                      liquidityABB:   LiquityWalletBA, 
+                                      amountAMin:     0,
+                                      amountBMin:     0,
+                                    },                                          
+                                    wallet.address, constants.MaxUint256, overrides  )   
                                     
       AmountTokeAofWallet = await tokenA.balanceOf(wallet.address)
       AmountTokeBofWallet = await tokenB.balanceOf(wallet.address)                                   
@@ -345,10 +375,27 @@ describe('FeSwapSimuStress: ', () => {
 
                 const AAmount = expandTo18Decimals(10)
                 const BAmount = expandTo18Decimals(10)
-                await router.addLiquidity(  tokenA.address, tokenB.address, AAmount, expandTo18Decimals(1000000),
-                                            100, wallet.address, constants.MaxUint256, overrides )
-                await router.addLiquidity(  tokenA.address, tokenB.address, expandTo18Decimals(1000000), BAmount,
-                                            0, wallet.address, constants.MaxUint256, overrides  )
+                await router.addLiquidity(  {
+                                              tokenA:         tokenA.address,
+                                              tokenB:         tokenB.address,
+                                              amountADesired: AAmount,
+                                              amountBDesired: expandTo18Decimals(1000000),
+                                              amountAMin:     0,
+                                              amountBMin:     0,
+                                              ratio:          100,                                            
+                                            },                                        
+                                            wallet.address, constants.MaxUint256, overrides )
+  
+                await router.addLiquidity(  {
+                                              tokenA:         tokenA.address,
+                                              tokenB:         tokenB.address,
+                                              amountADesired: expandTo18Decimals(1000000),
+                                              amountBDesired: BAmount,
+                                              amountAMin:     0,
+                                              amountBMin:     0,
+                                              ratio:          0,                                            
+                                            },                                                
+                                            wallet.address, constants.MaxUint256, overrides  )
             }
 
             await FeSwapSimuContract.SwapAB (1, 10 ) 
@@ -373,11 +420,25 @@ describe('FeSwapSimuStress: ', () => {
     it(`Swap Arbitrage Stress: Remove All`, async () => {
         let LiquityWalletAB = await pairAAB.balanceOf(wallet.address)
         let LiquityWalletBA = await pairABB.balanceOf(wallet.address) 
-        await router.removeLiquidity(   tokenA.address, tokenB.address, LiquityWalletAB, 0,
-                                        0, 0, wallet.address, constants.MaxUint256, overrides  )
+        await router.removeLiquidity(   {
+                                          tokenA:         tokenA.address,
+                                          tokenB:         tokenB.address,
+                                          liquidityAAB:   LiquityWalletAB,
+                                          liquidityABB:   0, 
+                                          amountAMin:     0,
+                                          amountBMin:     0,
+                                        },  
+                                        wallet.address, constants.MaxUint256, overrides  )
 
-        await router.removeLiquidity( tokenA.address, tokenB.address, 0, LiquityWalletBA,
-                                        0, 0, wallet.address, constants.MaxUint256, overrides  )    
+        await router.removeLiquidity(   {
+                                          tokenA:         tokenA.address,
+                                          tokenB:         tokenB.address,
+                                          liquidityAAB:   0,
+                                          liquidityABB:   LiquityWalletBA, 
+                                          amountAMin:     0,
+                                          amountBMin:     0,
+                                        },                                      
+                                        wallet.address, constants.MaxUint256, overrides  )    
 
         await FeSwapSimuContract.removeLiquidityAB(1,LiquityWalletAB)
         await FeSwapSimuContract.removeLiquidityBA(1,LiquityWalletBA)
