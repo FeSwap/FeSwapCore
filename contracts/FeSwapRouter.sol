@@ -385,16 +385,11 @@ contract FeSwapRouter is IFeSwapRouter{
     function _swapTokensFeeOnTransfer(address[] memory path, address _to) internal virtual {
         for (uint i = 0; i < path.length - 1; i++) {
             (address input, address output) = (path[i], path[i + 1]);
-            IFeSwapPair pair = IFeSwapPair(FeSwapLibrary.pairFor(factory, input, output));
-            uint amountInput;
-            uint amountOutput;
-            {   // scope to avoid stack too deep errors
-                (uint reserveInput, uint reserveOutput, ,) = pair.getReserves();
-                amountInput = IERC20(input).balanceOf(address(pair)).sub(reserveInput);
-                amountOutput = FeSwapLibrary.getAmountOut(amountInput, reserveInput, reserveOutput);
-            }
+            (uint reserveInput, uint reserveOutput, address pair, uint tokeASwapOut) = FeSwapLibrary.arbitragePairPools(factory, input, output);
+            uint amountInput = IERC20(input).balanceOf(pair).sub(reserveInput).sub(tokeASwapOut);
+            uint amountOutput = FeSwapLibrary.getAmountOut(amountInput, reserveInput, reserveOutput);
             address to = i < path.length - 2 ? FeSwapLibrary.pairFor(factory, output, path[i + 2]) : _to;
-            pair.swap(amountOutput, to, new bytes(0));
+            IFeSwapPair(pair).swap(amountOutput, to, new bytes(0));
         }
     }
 
@@ -444,12 +439,7 @@ contract FeSwapRouter is IFeSwapRouter{
         address[] calldata path,
         address to,
         uint deadline
-    )
-        external
-        virtual
-        override
-        ensure(deadline)
-    {
+    ) external virtual override ensure(deadline) {
         require(path[path.length - 1] == WETH, 'FeSwapRouter: INVALID_PATH');
         TransferHelper.safeTransferFrom(
             path[0], msg.sender, FeSwapLibrary.pairFor(factory, path[0], path[1]), amountIn
