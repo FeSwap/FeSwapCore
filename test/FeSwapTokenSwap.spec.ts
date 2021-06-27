@@ -146,7 +146,7 @@ describe('FeSwapTokenSwap', () => {
             overrides
           )
           const receipt = await tx.wait()
-          expect(receipt.gasUsed).to.eq(106228)     // 104547 192574 // 110796
+          expect(receipt.gasUsed).to.eq(106223)     // 104547 192574 // 110796
         }).retries(3)
         
       })
@@ -218,7 +218,7 @@ describe('FeSwapTokenSwap', () => {
               overrides
             )
           const receipt = await tx.wait()
-          expect(receipt.gasUsed).to.eq(136816)     // 135091 192574 // 110796
+          expect(receipt.gasUsed).to.eq(136811)     // 135091 192574 // 110796
         }).retries(3)
 
       })
@@ -293,7 +293,7 @@ describe('FeSwapTokenSwap', () => {
             }
           )
           const receipt = await tx.wait()
-          expect(receipt.gasUsed).to.eq(101064)    // 143068,  //  213437, Why increase so much 118034
+          expect(receipt.gasUsed).to.eq(143063)    // 143068,  //  213437, Why increase so much 118034
         }).retries(3)
       })
 
@@ -365,7 +365,7 @@ describe('FeSwapTokenSwap', () => {
               overrides
             )
             const receipt = await tx.wait()
-            expect(receipt.gasUsed).to.eq(154689)    // 152816,  Why increase so much 118034
+            expect(receipt.gasUsed).to.eq(154684)    // 152816,  Why increase so much 118034
         }).retries(3)                      
       })
 
@@ -438,7 +438,7 @@ describe('FeSwapTokenSwap', () => {
             overrides
           )
           const receipt = await tx.wait()
-          expect(receipt.gasUsed).to.eq(154243)    // 152414,  Why increase so much 118034
+          expect(receipt.gasUsed).to.eq(154238)    // 152414,  Why increase so much 118034
         }).retries(3)
       })
 
@@ -511,7 +511,7 @@ describe('FeSwapTokenSwap', () => {
               }
           )
           const receipt = await tx.wait()
-          expect(receipt.gasUsed).to.eq(101294)    // 143298,  
+          expect(receipt.gasUsed).to.eq(143293)    // 143298,  
         }).retries(3)
       })
     })

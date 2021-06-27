@@ -385,8 +385,8 @@ contract FeSwapRouter is IFeSwapRouter{
     function _swapTokensFeeOnTransfer(address[] memory path, address _to) internal virtual {
         for (uint i = 0; i < path.length - 1; i++) {
             (address input, address output) = (path[i], path[i + 1]);
-            (uint reserveInput, uint reserveOutput, address pair, uint tokeASwapOut) = FeSwapLibrary.arbitragePairPools(factory, input, output);
-            uint amountInput = IERC20(input).balanceOf(pair).sub(reserveInput).sub(tokeASwapOut);
+            (uint reserveInput, uint reserveOutput, address pair, ) = FeSwapLibrary.getReserves(factory, input, output);
+            uint amountInput = IERC20(input).balanceOf(pair).sub(reserveInput);
             uint amountOutput = FeSwapLibrary.getAmountOut(amountInput, reserveInput, reserveOutput);
             address to = i < path.length - 2 ? FeSwapLibrary.pairFor(factory, output, path[i + 2]) : _to;
             IFeSwapPair(pair).swap(amountOutput, to, new bytes(0));
@@ -400,7 +400,7 @@ contract FeSwapRouter is IFeSwapRouter{
         address to,
         uint deadline
     ) external virtual override ensure(deadline) {
-        TransferHelper.executeArbitrage(factory, path);
+        FeSwapLibrary.executeArbitrage(factory, path);
         TransferHelper.safeTransferFrom(
             path[0], msg.sender, FeSwapLibrary.pairFor(factory, path[0], path[1]), amountIn
         );
@@ -418,7 +418,7 @@ contract FeSwapRouter is IFeSwapRouter{
         uint deadline
     ) external virtual override payable ensure(deadline) {
         require(path[0] == WETH, 'FeSwapRouter: INVALID_PATH');
-        TransferHelper.executeArbitrage(factory, path);
+        FeSwapLibrary.executeArbitrage(factory, path);
         uint amountIn = msg.value;
         IWETH(WETH).deposit{value: amountIn}();
         assert(IWETH(WETH).transfer(FeSwapLibrary.pairFor(factory, path[0], path[1]), amountIn));
@@ -437,7 +437,7 @@ contract FeSwapRouter is IFeSwapRouter{
         uint deadline
     ) external virtual override ensure(deadline) {
         require(path[path.length - 1] == WETH, 'FeSwapRouter: INVALID_PATH');
-        TransferHelper.executeArbitrage(factory, path);
+        FeSwapLibrary.executeArbitrage(factory, path);
         TransferHelper.safeTransferFrom(
             path[0], msg.sender, FeSwapLibrary.pairFor(factory, path[0], path[1]), amountIn
         );
