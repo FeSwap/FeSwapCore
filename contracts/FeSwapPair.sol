@@ -144,12 +144,11 @@ contract FeSwapPair is IFeSwapPair, FeSwapERC20 {
         uint balanceOut = IERC20(tokenOut).balanceOf(address(this));
         uint amountTokenIn = balanceIn.sub(_reserveIn);
         uint amountTokenOut = balanceOut.sub(_reserveOut);
-        uint _kVlaue = Math.sqrt(amountTokenIn.mul(amountTokenOut));
 
         bool feeOn = _mintFee(_reserveIn, _reserveOut);
         uint _totalSupply = totalSupply; // gas savings, must be defined here since totalSupply can update in _mintFee
         if (_totalSupply == 0) {
-            liquidity = _kVlaue.sub(MINIMUM_LIQUIDITY);
+            liquidity = Math.sqrt(amountTokenIn.mul(amountTokenOut)).sub(MINIMUM_LIQUIDITY);
             _mint(address(0), MINIMUM_LIQUIDITY); // permanently lock the first MINIMUM_LIQUIDITY tokens
         } else {
             liquidity = Math.min(amountTokenIn.mul(_totalSupply) / _reserveIn, amountTokenOut.mul(_totalSupply) / _reserveOut);

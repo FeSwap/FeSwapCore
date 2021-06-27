@@ -16,7 +16,7 @@ library FeSwapLibrary {
                 hex'ff',
                 factory,
                 keccak256(abi.encodePacked(tokenA, tokenB)),
-                hex'baeae6b526d52ab9edea88a8a5991ed61443a0c4d6bea03dc99971664961f4b7' // init code hash // save 9916 gas
+                hex'c5ee0ec25093f139acfe52288620d4ea699603c74a92abbd7678ffdd235ae1bc' // init code hash // save 9916 gas
             ))));
     }
 
@@ -53,20 +53,35 @@ library FeSwapLibrary {
         amountIn = (numerator.add(denominator)) / denominator;
     }
 
-    function arbitragePairPools(address factory, address tokenA, address tokenB) internal returns (uint reserveIn, uint reserveOut, address pair) {
+    function arbitragePairPools(address factory, address tokenA, address tokenB) 
+                                    internal returns (uint reserveIn, uint reserveOut, address pair) {
         (reserveIn, reserveOut, pair, ) = getReserves(factory, tokenA, tokenB);
         (uint reserveInMate, uint reserveOutMate, address PairMate, uint rateTriggerArbitrage) = FeSwapLibrary.getReserves(factory, tokenB, tokenA); 
         uint productIn = uint(reserveIn).mul(reserveInMate);
         uint productOut = uint(reserveOut).mul(reserveOutMate);
         if(productIn.mul(10000) > productOut.mul(rateTriggerArbitrage)){                 
-            uint ArbitatrageIn = productIn.sub(productOut);
+            productIn = productIn.sub(productOut);                                  // productIn are re-used
             uint totalTokenA = (uint(reserveIn).add(reserveOutMate)).mul(2);               
             uint totalTokenB = (uint(reserveOut).add(reserveInMate)).mul(2);
-            TransferHelper.safeTransferFrom(tokenA, pair, PairMate, ArbitatrageIn / totalTokenB);          
-            TransferHelper.safeTransferFrom(tokenB, PairMate, pair, ArbitatrageIn / totalTokenA); 
+            TransferHelper.safeTransferFrom(tokenA, pair, PairMate, productIn / totalTokenB);          
+            TransferHelper.safeTransferFrom(tokenB, PairMate, pair, productIn / totalTokenA); 
             IFeSwapPair(pair).sync();
             IFeSwapPair(PairMate).sync();
             (reserveIn, reserveOut, ,) = getReserves(factory, tokenA, tokenB);
+        }
+    }   
+
+    function culculatePairPools(address factory, address tokenA, address tokenB) internal view returns (uint reserveIn, uint reserveOut, address pair) {
+        (reserveIn, reserveOut, pair, ) = getReserves(factory, tokenA, tokenB);
+        (uint reserveInMate, uint reserveOutMate, , uint rateTriggerArbitrage) = FeSwapLibrary.getReserves(factory, tokenB, tokenA); 
+        uint productIn = uint(reserveIn).mul(reserveInMate);
+        uint productOut = uint(reserveOut).mul(reserveOutMate);
+        if(productIn.mul(10000) > productOut.mul(rateTriggerArbitrage)){                 
+            productIn = productIn.sub(productOut);
+            uint totalTokenA = (uint(reserveIn).add(reserveOutMate)).mul(2);               
+            uint totalTokenB = (uint(reserveOut).add(reserveInMate)).mul(2);
+            reserveIn = reserveIn.sub(productIn / totalTokenB);
+            reserveOut = reserveOut.add(productIn / totalTokenA);
         }
     }   
 
@@ -82,13 +97,22 @@ library FeSwapLibrary {
         }
     }
 
+    // performs aritrage beforehand
+    function executeArbitrage(address factory, address[] calldata path) internal {
+        require(path.length >= 2, 'FeSwapLibrary: INVALID_PATH');
+        for (uint i = 0; i < path.length - 1; i++) {
+            arbitragePairPools(factory, path[i], path[i + 1]);
+        }
+    }
+
     // performs chained estimateAmountsOut calculations on any number of pairs
     function estimateAmountsOut(address factory, uint amountIn, address[] calldata path) internal view returns (uint[] memory amounts) {
         require(path.length >= 2, 'FeSwapLibrary: INVALID_PATH');
         amounts = new uint[](path.length);
         amounts[0] = amountIn;
         for (uint i = 0; i < path.length - 1; i++) {
-            (uint reserveIn, uint reserveOut, , ) = getReserves(factory, path[i], path[i + 1]);
+//            (uint reserveIn, uint reserveOut, , ) = getReserves(factory, path[i], path[i + 1]);
+            (uint reserveIn, uint reserveOut, ) = culculatePairPools(factory, path[i], path[i + 1]);
             amounts[i + 1] = getAmountOut(amounts[i], reserveIn, reserveOut);
         }
     }
@@ -111,7 +135,8 @@ library FeSwapLibrary {
         amounts = new uint[](path.length);
         amounts[amounts.length - 1] = amountOut;
         for (uint i = path.length - 1; i > 0; i--) {
-            (uint reserveIn, uint reserveOut, ,) = getReserves(factory, path[i - 1], path[i]);
+//          (uint reserveIn, uint reserveOut, ,) = getReserves(factory, path[i - 1], path[i]);
+            (uint reserveIn, uint reserveOut, ) = culculatePairPools(factory, path[i - 1], path[i]);
             amounts[i - 1] = getAmountIn(amounts[i], reserveIn, reserveOut);
         }
     }
