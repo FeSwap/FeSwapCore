@@ -692,7 +692,7 @@ describe('FeSwapPair', () => {
       expect(feeCreateAAB).to.eq(0)                         
                                     
       const receipt = await tx.wait()
-      expect(receipt.gasUsed).to.eq(131668)      //  119686 157206  //241214
+      expect(receipt.gasUsed).to.eq(123994)      //  131668 157206  //241214
     }).retries(3)
 
     it('Swap Arbitrage Gas：no  feeTo, but pairOwner fee on', async () => {
@@ -740,7 +740,7 @@ describe('FeSwapPair', () => {
       expect(feeCreateAAB).to.eq(0)                         
                                     
       const receipt = await tx.wait()
-      expect(receipt.gasUsed).to.eq(180874)      //  180896 157206  //241214
+      expect(receipt.gasUsed).to.eq(173200)      //  180874 157206  //241214
     }).retries(3)
 
     it('Swap Arbitrage Gas：feeTo on, pairOwner fee off', async () => {
@@ -787,7 +787,7 @@ describe('FeSwapPair', () => {
       expect(feeCreateAAB).to.not.eq(0)                         
                                     
       const receipt = await tx.wait()
-      expect(receipt.gasUsed).to.eq(182500)      //  182522 157206  //241214
+      expect(receipt.gasUsed).to.eq(162822)      //  182500 157206  //241214
     }).retries(3)
 
     it('Swap Arbitrage Gas：feeTo on, pairOwner fee on', async () => {
@@ -834,7 +834,7 @@ describe('FeSwapPair', () => {
       expect(feeCreateAAB).to.not.eq(0)             // "618801031771281"            
                                     
       const receipt = await tx.wait()
-      expect(receipt.gasUsed).to.eq(206262)      //  206284 157206  //241214
+      expect(receipt.gasUsed).to.eq(198588)      //  206262 157206  //241214
     }).retries(3)
 
     it('Swap Arbitrage Gas comparsion', async () => {

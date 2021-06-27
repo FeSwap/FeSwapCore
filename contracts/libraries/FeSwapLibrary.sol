@@ -16,7 +16,7 @@ library FeSwapLibrary {
                 hex'ff',
                 factory,
                 keccak256(abi.encodePacked(tokenA, tokenB)),
-                hex'baeae6b526d52ab9edea88a8a5991ed61443a0c4d6bea03dc99971664961f4b7' // init code hash // save 9916 gas
+                hex'c5ee0ec25093f139acfe52288620d4ea699603c74a92abbd7678ffdd235ae1bc' // init code hash // save 9916 gas
             ))));
     }
 
@@ -95,6 +95,14 @@ library FeSwapLibrary {
             (uint reserveIn, uint reserveOut, address _firstPair, ) = arbitragePairPools(factory, path[i], path[i + 1]);
             amounts[i + 1] = getAmountOut(amounts[i], reserveIn, reserveOut);
             if ( i == 0 ) firstPair = _firstPair;
+        }
+    }
+
+    // performs aritrage beforehand
+    function executeArbitrage(address factory, address[] calldata path) internal {
+        require(path.length >= 2, 'FeSwapLibrary: INVALID_PATH');
+        for (uint i = 0; i < path.length - 1; i++) {
+            arbitragePairPools(factory, path[i], path[i + 1]);
         }
     }
 

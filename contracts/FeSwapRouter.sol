@@ -400,6 +400,7 @@ contract FeSwapRouter is IFeSwapRouter{
         address to,
         uint deadline
     ) external virtual override ensure(deadline) {
+        TransferHelper.executeArbitrage(factory, path);
         TransferHelper.safeTransferFrom(
             path[0], msg.sender, FeSwapLibrary.pairFor(factory, path[0], path[1]), amountIn
         );
@@ -415,14 +416,9 @@ contract FeSwapRouter is IFeSwapRouter{
         address[] calldata path,
         address to,
         uint deadline
-    )
-        external
-        virtual
-        override
-        payable
-        ensure(deadline)
-    {
+    ) external virtual override payable ensure(deadline) {
         require(path[0] == WETH, 'FeSwapRouter: INVALID_PATH');
+        TransferHelper.executeArbitrage(factory, path);
         uint amountIn = msg.value;
         IWETH(WETH).deposit{value: amountIn}();
         assert(IWETH(WETH).transfer(FeSwapLibrary.pairFor(factory, path[0], path[1]), amountIn));
@@ -441,6 +437,7 @@ contract FeSwapRouter is IFeSwapRouter{
         uint deadline
     ) external virtual override ensure(deadline) {
         require(path[path.length - 1] == WETH, 'FeSwapRouter: INVALID_PATH');
+        TransferHelper.executeArbitrage(factory, path);
         TransferHelper.safeTransferFrom(
             path[0], msg.sender, FeSwapLibrary.pairFor(factory, path[0], path[1]), amountIn
         );
