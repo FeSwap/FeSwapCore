@@ -56,7 +56,7 @@ library FeSwapLibrary {
     function arbitragePairPools(address factory, address tokenA, address tokenB) 
                                     internal returns (uint reserveIn, uint reserveOut, address pair) {
         (reserveIn, reserveOut, pair, ) = getReserves(factory, tokenA, tokenB);
-        (uint reserveInMate, uint reserveOutMate, address PairMate, uint rateTriggerArbitrage) = FeSwapLibrary.getReserves(factory, tokenB, tokenA); 
+        (uint reserveInMate, uint reserveOutMate, address PairMate, uint rateTriggerArbitrage) = getReserves(factory, tokenB, tokenA); 
         uint productIn = uint(reserveIn).mul(reserveInMate);
         uint productOut = uint(reserveOut).mul(reserveOutMate);
         if(productIn.mul(10000) > productOut.mul(rateTriggerArbitrage)){                 
@@ -73,7 +73,7 @@ library FeSwapLibrary {
 
     function culculatePairPools(address factory, address tokenA, address tokenB) internal view returns (uint reserveIn, uint reserveOut, address pair) {
         (reserveIn, reserveOut, pair, ) = getReserves(factory, tokenA, tokenB);
-        (uint reserveInMate, uint reserveOutMate, , uint rateTriggerArbitrage) = FeSwapLibrary.getReserves(factory, tokenB, tokenA); 
+        (uint reserveInMate, uint reserveOutMate, , uint rateTriggerArbitrage) = getReserves(factory, tokenB, tokenA); 
         uint productIn = uint(reserveIn).mul(reserveInMate);
         uint productOut = uint(reserveOut).mul(reserveOutMate);
         if(productIn.mul(10000) > productOut.mul(rateTriggerArbitrage)){                 
