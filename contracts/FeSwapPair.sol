@@ -54,11 +54,6 @@ contract FeSwapPair is IFeSwapPair, FeSwapERC20 {
         require(success && (data.length == 0 || abi.decode(data, (bool))), 'FeSwap: TRANSFER_FAILED');
     }
 
-    function _safeTransferFrom(address token, address from, address to, uint value) private {
-        (bool success, bytes memory data) = token.call(abi.encodeWithSelector(SELECTORFROM, from, to, value));
-        require(success && (data.length == 0 || abi.decode(data, (bool))), 'FeSwap: TRANSFER_FROM_FAILED');
-    }
-
     event Mint(address indexed sender, uint amountIn, uint amountOut);
     event Burn(address indexed sender, uint amountIn, uint amountOut, address indexed to);
     event Swap(
@@ -217,15 +212,14 @@ contract FeSwapPair is IFeSwapPair, FeSwapERC20 {
 
     // force balances to match reserves
     function skim(address to) external lock override {
-        address _tokenIn = tokenIn; // gas savings
-        address _tokenOut = tokenOut; // gas savings
+        address _tokenIn = tokenIn;     // gas savings
+        address _tokenOut = tokenOut;   // gas savings
         _safeTransfer(_tokenIn, to, IERC20(_tokenIn).balanceOf(address(this)).sub(reserveIn));
         _safeTransfer(_tokenOut, to, IERC20(_tokenOut).balanceOf(address(this)).sub(reserveOut));
     }
 
     // force reserves to match balances
-    function sync() external lock override returns(uint112 _reserveIn, uint112 _reserveOut) {
-        (_reserveIn, _reserveOut) = (reserveIn, reserveOut);
-        _update(IERC20(tokenIn).balanceOf(address(this)), IERC20(tokenOut).balanceOf(address(this)), _reserveIn, _reserveOut);
+    function sync() external lock override {
+        _update(IERC20(tokenIn).balanceOf(address(this)), IERC20(tokenOut).balanceOf(address(this)), reserveIn, reserveOut);
     }
 }

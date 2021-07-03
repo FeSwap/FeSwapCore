@@ -154,7 +154,7 @@ describe('FeSwapFactory', () => {
     await factory.setRouterFeSwap( wallet.address)
     let tx = await factory.createUpdatePair(tokenA.address, tokenB.address, wallet.address, rateTriggerArbitrage)
     let receipt = await tx.wait()
-    expect(receipt.gasUsed).to.eq(5371012)        // 5375412, 4913779,   UniSwap: 2512920
+    expect(receipt.gasUsed).to.eq(5341309)        // 5375412, 4913779,   UniSwap: 2512920
 
     // update owneer
     tx = await factory.createUpdatePair(tokenA.address, tokenB.address, other.address, rateTriggerArbitrage)

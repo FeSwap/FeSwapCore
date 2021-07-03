@@ -866,7 +866,7 @@ describe('FeSwapPair', () => {
         const tx = await router.swapExactTokensForTokens( swapAmount, 0,  [tokenB.address, tokenA.address],
                                               wallet.address, constants.MaxUint256,  overrides )
         const receipt = await tx.wait()
-        expect(receipt.gasUsed).to.eq(174730)   //  174757  //241214
+        expect(receipt.gasUsed).to.eq(173915)   //  174757  //241214
       }
     }).retries(3)
 })

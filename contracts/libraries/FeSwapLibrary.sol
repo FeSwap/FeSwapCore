@@ -16,9 +16,13 @@ library FeSwapLibrary {
                 hex'ff',
                 factory,
                 keccak256(abi.encodePacked(tokenA, tokenB)),
-                hex'c5ee0ec25093f139acfe52288620d4ea699603c74a92abbd7678ffdd235ae1bc' // init code hash // save 9916 gas
+                hex'16b14ae75aeec19741e90d10173a0eb31fb8d4217c30cfca036056f4c2e16dbe' // init code hash // save 9916 gas
             ))));
     }
+
+    //c5ee0ec25093f139acfe52288620d4ea699603c74a92abbd7678ffdd235ae1bc
+    //47af96b3af95d6dfb741c1569cf9dd63fb96ea667dbc5710e27b9dcd1f60c79a
+    //0x16b14ae75aeec19741e90d10173a0eb31fb8d4217c30cfca036056f4c2e16dbe
 
     // fetches and sorts the reserves for a pair
     function getReserves(address factory, address tokenA, address tokenB) 
