@@ -10,31 +10,7 @@ import './libraries/FeSwapLibrary.sol';
 import './libraries/SafeMath.sol';
 import './interfaces/IERC20.sol';
 import './interfaces/IWETH.sol';
-
-    enum PoolRunningPhase {
-        BidToStart,
-        BidPhase, 
-        BidDelaying,
-        BidSettled,
-        PoolHolding, 
-        PoolForSale
-    }
-
-    struct FeswaPair {
-        address tokenA;
-        address tokenB;
-        uint256 currentPrice;
-        uint64  timeCreated;
-        uint64  lastBidTime; 
-        PoolRunningPhase  poolState;
-    }
-
-    
-interface IFeswaNFT {
-    // Views
-    function ownerOf(uint256 tokenId) external view returns (address owner);
-    function getPoolInfo(uint256 tokenId) external view returns (address, FeswaPair memory);
-}
+import './interfaces/IFeswaNFT.sol';
 
 contract FeSwapRouter is IFeSwapRouter{
     using SafeMath for uint;
@@ -478,5 +454,4 @@ contract FeSwapRouter is IFeSwapRouter{
     {
         return FeSwapLibrary.estimateAmountsIn(factory, amountOut, path);
     }
-
 }

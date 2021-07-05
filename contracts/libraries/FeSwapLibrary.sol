@@ -20,10 +20,6 @@ library FeSwapLibrary {
             ))));
     }
 
-    //c5ee0ec25093f139acfe52288620d4ea699603c74a92abbd7678ffdd235ae1bc
-    //47af96b3af95d6dfb741c1569cf9dd63fb96ea667dbc5710e27b9dcd1f60c79a
-    //0x16b14ae75aeec19741e90d10173a0eb31fb8d4217c30cfca036056f4c2e16dbe
-
     // fetches and sorts the reserves for a pair
     function getReserves(address factory, address tokenA, address tokenB) 
                         internal view returns (uint reserveA, uint reserveB, address pair, uint rateTriggerArbitrage) {
@@ -53,7 +49,6 @@ library FeSwapLibrary {
         require(reserveIn > 0 && reserveOut > 0, 'FeSwapLibrary: INSUFFICIENT_LIQUIDITY');
         uint numerator = reserveIn.mul(amountOut);
         uint denominator = reserveOut.sub(amountOut);
-//        amountIn = (numerator / denominator).add(1);
         amountIn = (numerator.add(denominator)) / denominator;
     }
 
@@ -115,7 +110,6 @@ library FeSwapLibrary {
         amounts = new uint[](path.length);
         amounts[0] = amountIn;
         for (uint i = 0; i < path.length - 1; i++) {
-//            (uint reserveIn, uint reserveOut, , ) = getReserves(factory, path[i], path[i + 1]);
             (uint reserveIn, uint reserveOut, ) = culculatePairPools(factory, path[i], path[i + 1]);
             amounts[i + 1] = getAmountOut(amounts[i], reserveIn, reserveOut);
         }
@@ -139,10 +133,8 @@ library FeSwapLibrary {
         amounts = new uint[](path.length);
         amounts[amounts.length - 1] = amountOut;
         for (uint i = path.length - 1; i > 0; i--) {
-//          (uint reserveIn, uint reserveOut, ,) = getReserves(factory, path[i - 1], path[i]);
             (uint reserveIn, uint reserveOut, ) = culculatePairPools(factory, path[i - 1], path[i]);
             amounts[i - 1] = getAmountIn(amounts[i], reserveIn, reserveOut);
         }
     }
-
 }
