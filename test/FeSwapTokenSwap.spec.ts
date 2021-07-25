@@ -511,7 +511,7 @@ describe('FeSwapTokenSwap', () => {
               }
           )
           const receipt = await tx.wait()
-          expect(receipt.gasUsed).to.eq(143293)    // 143298,  
+          expect(receipt.gasUsed).to.eq(143293)    // 143293,  
         }).retries(3)
       })
     })
