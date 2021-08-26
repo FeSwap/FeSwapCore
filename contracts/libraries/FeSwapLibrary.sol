@@ -1,10 +1,9 @@
-// SPDX-License-Identifier: GPL-3.0
+// SPDX-License-Identifier: MIT
 pragma solidity =0.6.12;
 
 import '../interfaces/IFeSwapPair.sol';
 import '../interfaces/IFeSwapFactory.sol';
 import './TransferHelper.sol';
-
 import "./SafeMath.sol";
 
 library FeSwapLibrary {
@@ -16,7 +15,7 @@ library FeSwapLibrary {
                 hex'ff',
                 factory,
                 keccak256(abi.encodePacked(tokenA, tokenB)),
-                hex'9ee363bc4a7af5605ef17ba06c2f9447c61c22beacb5c4647efa122f3aefc8db' // init code hash // save 9916 gas
+                hex'235c27e3d008975dad617b3081b116c4f5866b73d1153e5f5322c4e464d6370d' // init code hash // save 9916 gas
             ))));
     }
 

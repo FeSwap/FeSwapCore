@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0
+// SPDX-License-Identifier: MIT
 pragma solidity =0.6.12;
 
 import './interfaces/IFeSwapERC20.sol';
@@ -55,7 +55,7 @@ contract FeSwapERC20 is IFeSwapERC20 {
         emit Approval(owner, spender, value);
     }
 
-    function _transfer(address from, address to, uint value) internal {
+    function _transfer(address from, address to, uint value) private {
         balanceOf[from] = balanceOf[from].sub(value);
         balanceOf[to] = balanceOf[to].add(value);
         emit Transfer(from, to, value);

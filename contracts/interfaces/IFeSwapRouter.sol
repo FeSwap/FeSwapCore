@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0
+// SPDX-License-Identifier: MIT
 pragma solidity =0.6.12;
 pragma experimental ABIEncoderV2;
 
@@ -176,8 +176,8 @@ interface IFeSwapRouter {
     ) external;
     
     function quote(uint amountA, uint reserveA, uint reserveB) external pure returns (uint amountB);
-    function getAmountOut(uint amountIn, uint reserveIn, uint reserveOut) external view returns (uint amountOut);
-    function getAmountIn(uint amountOut, uint reserveIn, uint reserveOut) external view returns (uint amountIn);
+    function getAmountOut(uint amountIn, uint reserveIn, uint reserveOut) external pure returns (uint amountOut);
+    function getAmountIn(uint amountOut, uint reserveIn, uint reserveOut) external pure returns (uint amountIn);
     function estimateAmountsOut(uint amountIn, address[] calldata path) external view returns (uint[] memory amounts);
     function estimateAmountsIn(uint amountOut, address[] calldata path) external view returns (uint[] memory amounts);
 }

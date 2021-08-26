@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0
+// SPDX-License-Identifier: MIT
 pragma solidity =0.6.12;
 pragma experimental ABIEncoderV2;
 
@@ -39,7 +39,7 @@ contract FeSwapRouter is IFeSwapRouter{
                 external virtual override 
                 returns (address pairAAB, address pairABB) 
     {
-        (address nftOwner, FeswaPair memory NftBidInfo) = IFeswaNFT(feswaNFT).getPoolInfo(tokenID);
+        (address nftOwner, FeswaPairNFT memory NftBidInfo) = IFeswaNFT(feswaNFT).getPoolInfo(tokenID);
         require(msg.sender == nftOwner, 'FeSwap: NOT TOKEN OWNER');
         require(NftBidInfo.poolState >= PoolRunningPhase.BidSettled, 'FeSwap: NOT ALLOWED');
         (address tokenA, address tokenB) = (NftBidInfo.tokenA, NftBidInfo.tokenB);
@@ -54,7 +54,7 @@ contract FeSwapRouter is IFeSwapRouter{
                             uint amountInMin,
                             uint amountOutMin 
     ) internal virtual view returns (uint amountIn, uint amountOut, address pair) {
-        pair = IFeSwapFactory(factory).getPair(tokenIn, tokenOut);
+        pair = FeSwapLibrary.pairFor(factory, tokenIn, tokenOut);        
         require(pair != address(0), 'FeSwap: NOT CREATED');
         (uint reserveIn, uint reserveOut, ,) = IFeSwapPair(pair).getReserves();
         if (reserveIn == 0 && reserveOut == 0) {
@@ -96,8 +96,8 @@ contract FeSwapRouter is IFeSwapRouter{
             address pairB2A; 
             uint liquidityA = addParams.amountADesired - amountA; 
             uint liquidityB = addParams.amountBDesired - amountB;
-            uint amountAMin = (addParams.amountAMin != 0) ? (addParams.amountAMin - amountA) : 0 ; 
-            uint amountBMin = (addParams.amountBMin != 0) ? (addParams.amountBMin - amountB) : 0 ;
+            uint amountAMin = (addParams.amountAMin > amountA) ? (addParams.amountAMin - amountA) : 0 ; 
+            uint amountBMin = (addParams.amountBMin > amountB) ? (addParams.amountBMin - amountB) : 0 ;
             (liquidityB, liquidityA, pairB2A) = 
                         _addLiquidity(addParams.tokenB, addParams.tokenA, liquidityB, liquidityA, amountBMin, amountAMin);
             TransferHelper.safeTransferFrom(addParams.tokenA, msg.sender, pairB2A, liquidityA);
@@ -110,9 +110,9 @@ contract FeSwapRouter is IFeSwapRouter{
 
     function addLiquidityETH(   AddLiquidityETHParams calldata addParams,
                                 address to,
-                                uint deadline
-    )   external virtual override payable ensure(deadline) 
-        returns (uint amountToken, uint amountETH, uint liquidityTTE, uint liquidityTEE) 
+                                uint deadline )
+                external virtual override payable ensure(deadline) 
+                returns (uint amountToken, uint amountETH, uint liquidityTTE, uint liquidityTEE) 
     {
         require(addParams.ratio <= 100,  'FeSwap: RATIO EER');
         if(addParams.ratio != uint(0)) {        
@@ -132,8 +132,8 @@ contract FeSwapRouter is IFeSwapRouter{
             address pairTEE;
             uint liquidityToken = addParams.amountTokenDesired - amountToken; 
             uint liquidityETH   = msg.value - amountETH;
-            uint amountTokenMin = (addParams.amountTokenMin !=0) ? (addParams.amountTokenMin - amountToken) : 0 ;
-            uint amountETHMin   = (addParams.amountETHMin != 0) ? (addParams.amountETHMin - amountETH) : 0 ;
+            uint amountTokenMin = (addParams.amountTokenMin > amountToken) ? (addParams.amountTokenMin - amountToken) : 0 ;
+            uint amountETHMin   = (addParams.amountETHMin > amountETH) ? (addParams.amountETHMin - amountETH) : 0 ;
             (liquidityETH, liquidityToken, pairTEE) = 
                     _addLiquidity(WETH, addParams.token, liquidityETH,  liquidityToken, amountETHMin, amountTokenMin);
             TransferHelper.safeTransferFrom(addParams.token, msg.sender, pairTEE, liquidityToken);
@@ -193,12 +193,12 @@ contract FeSwapRouter is IFeSwapRouter{
         Signature   calldata sigAAB,
         Signature   calldata sigABB
     ) internal {
-        if(sigAAB.r != 0){
+        if(sigAAB.s != 0){
             address pairAAB = FeSwapLibrary.pairFor(factory, removeParams.tokenA, removeParams.tokenB);
             uint value = approveMax ? uint(-1) : removeParams.liquidityAAB; 
             IFeSwapPair(pairAAB).permit(msg.sender, address(this), value, deadline, sigAAB.v, sigAAB.r, sigAAB.s);
         }
-        if(sigABB.r != 0){
+        if(sigABB.s != 0){
             address pairABB = FeSwapLibrary.pairFor(factory, removeParams.tokenB, removeParams.tokenA);
             uint value = approveMax ? uint(-1) : removeParams.liquidityABB; 
             IFeSwapPair(pairABB).permit(msg.sender, address(this), value, deadline, sigABB.v, sigABB.r, sigABB.s);
@@ -225,7 +225,6 @@ contract FeSwapRouter is IFeSwapRouter{
         Signature   calldata sigTTE,
         Signature   calldata sigTEE
     ) external virtual override returns (uint amountToken, uint amountETH) {
-        require(removeParams.tokenB == WETH,  'FeSwap: WRONG WETH');
         removePermit(removeParams, deadline, approveMax, sigTTE, sigTEE);
         (amountToken, amountETH) = removeLiquidityETH(removeParams, to, deadline);
     }
@@ -237,12 +236,14 @@ contract FeSwapRouter is IFeSwapRouter{
         uint deadline
     ) public virtual override ensure(deadline) returns (uint amountETH) {
         require(removeParams.tokenB == WETH,  'FeSwap: WRONG WETH');
-        ( , amountETH) = removeLiquidity(
-            removeParams,    
-            address(this),
-            deadline
-        );
-        TransferHelper.safeTransfer(removeParams.tokenA, to, IERC20(removeParams.tokenA).balanceOf(address(this)));
+        uint amountToken;
+        uint balanceToken;
+        (amountToken, amountETH) = removeLiquidity( removeParams,    
+                                                    address(this),
+                                                    deadline );
+        balanceToken = IERC20(removeParams.tokenA).balanceOf(address(this));
+        if(balanceToken < amountToken) amountToken = balanceToken;
+        TransferHelper.safeTransfer(removeParams.tokenA, to, amountToken);
         IWETH(WETH).withdraw(amountETH);
         TransferHelper.safeTransferETH(to, amountETH);
     }
@@ -255,7 +256,6 @@ contract FeSwapRouter is IFeSwapRouter{
         Signature   calldata sigTTE,
         Signature   calldata sigTEE
     ) external virtual override returns (uint amountETH) {
-        require(removeParams.tokenB == WETH,  'FeSwap: WRONG WETH');
         removePermit(removeParams, deadline, approveMax, sigTTE, sigTEE);
         amountETH = removeLiquidityETHFeeOnTransfer(removeParams, to, deadline);
     }
@@ -282,7 +282,7 @@ contract FeSwapRouter is IFeSwapRouter{
         address firstPair;
         (firstPair, amounts) = FeSwapLibrary.getAmountsOut(factory, amountIn, path);
         require(amounts[amounts.length - 1] >= amountOutMin, 'FeSwapRouter: INSUFFICIENT_OUTPUT_AMOUNT');
-        TransferHelper.safeTransferFrom(path[0], msg.sender, firstPair , amounts[0]);
+        TransferHelper.safeTransferFrom(path[0], msg.sender, firstPair , amountIn);
         _swap(amounts, path, to);
     }
 
@@ -294,9 +294,11 @@ contract FeSwapRouter is IFeSwapRouter{
         uint deadline
     ) external virtual override ensure(deadline) returns (uint[] memory amounts) {
         address firstPair;
+        uint amountsTokenIn;
         (firstPair, amounts) = FeSwapLibrary.getAmountsIn(factory, amountOut, path);
-        require(amounts[0] <= amountInMax, 'FeSwapRouter: EXCESSIVE_INPUT_AMOUNT');
-        TransferHelper.safeTransferFrom(path[0], msg.sender, firstPair, amounts[0]);
+        amountsTokenIn = amounts[0];
+        require(amountsTokenIn <= amountInMax, 'FeSwapRouter: EXCESSIVE_INPUT_AMOUNT');
+        TransferHelper.safeTransferFrom(path[0], msg.sender, firstPair, amountsTokenIn);
         _swap(amounts, path, to);
     }
 
@@ -305,11 +307,12 @@ contract FeSwapRouter is IFeSwapRouter{
         returns (uint[] memory amounts)
     {
         require(path[0] == WETH, 'FeSwapRouter: INVALID_PATH');
-        address _firstPair;
-        (_firstPair, amounts) = FeSwapLibrary.getAmountsOut(factory, msg.value, path);            // to save 536 gas
+        address firstPair;
+        uint amountsETHIn = msg.value;
+        (firstPair, amounts) = FeSwapLibrary.getAmountsOut(factory, amountsETHIn, path);
         require(amounts[amounts.length - 1] >= amountOutMin, 'FeSwapRouter: INSUFFICIENT_OUTPUT_AMOUNT');
-        IWETH(WETH).deposit{value: amounts[0]}();
-        assert(IWETH(WETH).transfer(_firstPair, amounts[0]));
+        IWETH(WETH).deposit{value: amountsETHIn}();
+        assert(IWETH(WETH).transfer(firstPair, amountsETHIn));
         _swap(amounts, path, to);
     }
 
@@ -318,13 +321,13 @@ contract FeSwapRouter is IFeSwapRouter{
         returns (uint[] memory amounts)
     {
         require(path[path.length - 1] == WETH, 'FeSwapRouter: INVALID_PATH');
-        address _firstPair;
-        (_firstPair, amounts) = FeSwapLibrary.getAmountsIn(factory, amountOut, path);
+        address firstPair;
+        (firstPair, amounts) = FeSwapLibrary.getAmountsIn(factory, amountOut, path);
         require(amounts[0] <= amountInMax, 'FeSwapRouter: EXCESSIVE_INPUT_AMOUNT');
-        TransferHelper.safeTransferFrom(path[0], msg.sender, _firstPair, amounts[0]);
+        TransferHelper.safeTransferFrom(path[0], msg.sender, firstPair, amounts[0]);
         _swap(amounts, path, address(this));
-        IWETH(WETH).withdraw(amounts[amounts.length - 1]);
-        TransferHelper.safeTransferETH(to, amounts[amounts.length - 1]);
+        IWETH(WETH).withdraw(amountOut);
+        TransferHelper.safeTransferETH(to, amountOut);
     }
 
     function swapExactTokensForETH(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline)
@@ -332,13 +335,15 @@ contract FeSwapRouter is IFeSwapRouter{
         returns (uint[] memory amounts)
     {
         require(path[path.length - 1] == WETH, 'FeSwapRouter: INVALID_PATH');
-        address _firstPair;
-        (_firstPair, amounts) = FeSwapLibrary.getAmountsOut(factory, amountIn, path);
-        require(amounts[amounts.length - 1] >= amountOutMin, 'FeSwapRouter: INSUFFICIENT_OUTPUT_AMOUNT');
-        TransferHelper.safeTransferFrom(path[0], msg.sender, _firstPair, amounts[0]);
+        address firstPair;
+        uint amountsETHOut;
+        (firstPair, amounts) = FeSwapLibrary.getAmountsOut(factory, amountIn, path);
+        amountsETHOut = amounts[amounts.length - 1];
+        require(amountsETHOut >= amountOutMin, 'FeSwapRouter: INSUFFICIENT_OUTPUT_AMOUNT');
+        TransferHelper.safeTransferFrom(path[0], msg.sender, firstPair, amountIn);
         _swap(amounts, path, address(this));
-        IWETH(WETH).withdraw(amounts[amounts.length - 1]);
-        TransferHelper.safeTransferETH(to, amounts[amounts.length - 1]);
+        IWETH(WETH).withdraw(amountsETHOut);
+        TransferHelper.safeTransferETH(to, amountsETHOut);
     }
 
     function swapETHForExactTokens(uint amountOut, address[] calldata path, address to, uint deadline)
@@ -346,14 +351,16 @@ contract FeSwapRouter is IFeSwapRouter{
         returns (uint[] memory amounts)
     {
         require(path[0] == WETH, 'FeSwapRouter: INVALID_PATH');
-        address _firstPair;
-        (_firstPair, amounts) = FeSwapLibrary.getAmountsIn(factory, amountOut, path);
-        require(amounts[0] <= msg.value, 'FeSwapRouter: EXCESSIVE_INPUT_AMOUNT');
-        IWETH(WETH).deposit{value: amounts[0]}();
-        assert(IWETH(WETH).transfer(_firstPair, amounts[0]));
+        address firstPair;
+        uint amountsETHIn;
+        (firstPair, amounts) = FeSwapLibrary.getAmountsIn(factory, amountOut, path);
+        amountsETHIn = amounts[0];
+        require(amountsETHIn <= msg.value, 'FeSwapRouter: EXCESSIVE_INPUT_AMOUNT');
+        IWETH(WETH).deposit{value: amountsETHIn}();
+        assert(IWETH(WETH).transfer(firstPair, amountsETHIn));
         _swap(amounts, path, to);
         // refund dust eth, if any
-        if (msg.value > amounts[0]) TransferHelper.safeTransferETH(msg.sender, msg.value - amounts[0]);
+        if (msg.value > amountsETHIn) TransferHelper.safeTransferETH(msg.sender, msg.value - amountsETHIn);
     }
 
     // **** SWAP (supporting fee-on-transfer tokens) ****
@@ -432,13 +439,13 @@ contract FeSwapRouter is IFeSwapRouter{
     }
 
     function getAmountOut(uint amountIn, uint reserveIn, uint reserveOut)
-                public view virtual override returns (uint amountOut)
+                public pure virtual override returns (uint amountOut)
     {
         return FeSwapLibrary.getAmountOut(amountIn, reserveIn, reserveOut);
     }
 
     function getAmountIn(uint amountOut, uint reserveIn, uint reserveOut)
-                public view virtual override returns (uint amountIn)
+                public pure virtual override returns (uint amountIn)
     {
         return FeSwapLibrary.getAmountIn(amountOut, reserveIn, reserveOut);
     }

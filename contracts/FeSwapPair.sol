@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0
+// SPDX-License-Identifier: MIT
 pragma solidity =0.6.12;
 
 import './interfaces/IFeSwapPair.sol';
@@ -15,10 +15,9 @@ contract FeSwapPair is IFeSwapPair, FeSwapERC20 {
 
     uint public constant override MINIMUM_LIQUIDITY = 10**3;
     bytes4 private constant SELECTOR = bytes4(keccak256(bytes('transfer(address,uint256)')));
-    bytes4 private constant SELECTORFROM = bytes4(keccak256(bytes('transferFrom(address,address,uint256)')));
 
     address public override factory;
-    address public override pairOwner;    
+    address public override pairOwner;
     address public override tokenIn;
     address public override tokenOut;
 
@@ -39,7 +38,7 @@ contract FeSwapPair is IFeSwapPair, FeSwapERC20 {
         _;
         unlocked = 0x5A;
     }
-
+  
     function getReserves() public view override returns ( uint112 _reserveIn, uint112 _reserveOut, 
                                                           uint32 _blockTimestampLast, uint _rateTriggerArbitrage) {
         _reserveIn = reserveIn;

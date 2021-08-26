@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0
+// SPDX-License-Identifier: MIT
 pragma solidity =0.6.12;
 pragma experimental ABIEncoderV2;
 
@@ -11,7 +11,7 @@ pragma experimental ABIEncoderV2;
         PoolForSale
     }
 
-    struct FeswaPair {
+    struct FeswaPairNFT {
         address tokenA;
         address tokenB;
         uint256 currentPrice;
@@ -23,5 +23,5 @@ pragma experimental ABIEncoderV2;
 interface IFeswaNFT {
     // Views
     function ownerOf(uint256 tokenId) external view returns (address owner);
-    function getPoolInfo(uint256 tokenId) external view returns (address, FeswaPair memory);
+    function getPoolInfo(uint256 tokenId) external view returns (address, FeswaPairNFT memory);
 }
