@@ -365,7 +365,7 @@ describe('FeSwapTokenSwap', () => {
               overrides
             )
             const receipt = await tx.wait()
-            expect(receipt.gasUsed).to.eq(112558)    // 154684  152816,  Why increase so much 118034
+            expect(receipt.gasUsed).to.eq(154562)    // 112558 154684  152816,  Why increase so much 118034
         }).retries(3)                      
       })
 

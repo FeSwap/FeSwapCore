@@ -52,6 +52,25 @@ describe('FeSwapAddLiquidity', () => {
 
     it('FeSwapAddLiquidity Get Feswap pair Code Hash', async () => {
       getFeSwapCodeHash()
+
+/*
+//      const WETH = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
+//      const USDT = "0xdAC17F958D2ee523a2206206994597C13D831ec7"
+
+      const WETH = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+      const USDT = "0xdac17f958d2ee523a2206206994597c13d831ec7"
+
+      console.log("AAAAAAAAAAAAAAA")
+      await factory.setRouterFeSwap( pairOwner.address)
+      console.log("XXXXXXXXXXXXXXXXXXXXXX")
+      await expect(factory.createUpdatePair(WETH, USDT, pairOwner.address, 10, overrides))
+        .to.emit(factory, 'PairOwnerChanged')
+      console.log("BBBBBBBBBBBBBBBBB")
+
+      const pairAddressTEE = await factory.getPair(WETH, USDT)
+      const pairAddressTTE = await factory.getPair(USDT, WETH)
+
+      */
     })
 
     describe("FeSwapAddLiquidity Basic", () => {

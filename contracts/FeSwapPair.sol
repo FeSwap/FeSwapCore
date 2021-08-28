@@ -8,6 +8,7 @@ import './libraries/UQ112x112.sol';
 import './interfaces/IERC20.sol';
 import './interfaces/IFeSwapFactory.sol';
 import './interfaces/IFeSwapCallee.sol';
+import './libraries/TransferHelper.sol';
 
 contract FeSwapPair is IFeSwapPair, FeSwapERC20 {
     using SafeMath  for uint;
@@ -75,7 +76,7 @@ contract FeSwapPair is IFeSwapPair, FeSwapERC20 {
         tokenOut    = _tokenOut;
         pairOwner   = _pairOwner;
         if(rateTrigger != 0)  rateTriggerArbitrage = rateTrigger;
-        IERC20(tokenIn).approve(router, uint(-1));      // Approve Rourter to transfer out tokenIn for auto-arbitrage 
+        TransferHelper.safeApprove(tokenIn, router, uint(-1));          // Approve Rourter to transfer out tokenIn for auto-arbitrage
     }
 
     function setOwner(address _pairOwner) external override {
