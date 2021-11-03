@@ -2,8 +2,6 @@
 pragma solidity =0.6.12;
 pragma experimental ABIEncoderV2;
 
-import './IFeSwapRouter.sol';
-
 interface IFeSwapRouter {
 
     struct AddLiquidityParams {
@@ -40,14 +38,7 @@ interface IFeSwapRouter {
     }
 
     function factory() external pure returns (address);
-    function feswaNFT() external pure returns (address);
     function WETH() external pure returns (address);
-
-    function ManageFeswaPair(
-        uint256 tokenID,
-        address pairOwner,
-        uint256 rateTrigger
-    ) external returns (address pairAAB, address pairABB);
 
     function addLiquidity(
         AddLiquidityParams calldata addParams,

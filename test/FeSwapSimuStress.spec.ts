@@ -260,9 +260,9 @@ describe('FeSwapSimuStress: ', () => {
       expect(AmountTokeBofPairABB).to.eq('1015049504950495049505')   
  
       let TotalLiquityAB = await pairAAB.totalSupply()
-      let KValueLastAB = await pairAAB.kLast()
+      var {_kLast: KValueLastAB} = await pairAAB.getOracleInfo()
       let TotalLiquityBA = await pairABB.totalSupply() 
-      let KValueLastBA = await pairABB.kLast()
+      var {_kLast: KValueLastBA} = await pairABB.getOracleInfo()
 
       expect(TotalLiquityAB).to.eq('1009951290353312185489')
       expect(KValueLastAB).to.eq('1020024752475247524753429950495049504950495')
@@ -320,9 +320,9 @@ describe('FeSwapSimuStress: ', () => {
       expect(AmountTokeBofPairABB).to.eq('1036541715386837')   
 
       TotalLiquityAB = await pairAAB.totalSupply()
-      KValueLastAB = await pairAAB.kLast()
+      var {_kLast: KValueLastAB} = await pairAAB.getOracleInfo()
       TotalLiquityBA = await pairABB.totalSupply() 
-      KValueLastBA = await pairABB.kLast()
+      var {_kLast: KValueLastBA} = await pairABB.getOracleInfo()
 
       expect(TotalLiquityAB).to.eq('1031335052953135')
       expect(KValueLastAB).to.eq('1063676125455359084144263220128')

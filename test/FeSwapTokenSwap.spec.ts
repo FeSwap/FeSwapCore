@@ -146,8 +146,8 @@ describe('FeSwapTokenSwap', () => {
             overrides
           )
           const receipt = await tx.wait()
-          expect(receipt.gasUsed).to.eq(106174)     //  106223 104547 192574 // 110796
-        }).retries(3)
+          expect(receipt.gasUsed).to.eq("92626")     // 93268  92279 92330 92352 92373 105372 105560 106207 106174 106223 104547 192574 // 110796
+        })
         
       })
 
@@ -218,8 +218,8 @@ describe('FeSwapTokenSwap', () => {
               overrides
             )
           const receipt = await tx.wait()
-          expect(receipt.gasUsed).to.eq(136775)     //  136811 135091 192574 // 110796
-        }).retries(3)
+          expect(receipt.gasUsed).to.eq("93205")     // 93847 92858 92909  92931 92952 135951 136095 136786 136775 136811 135091 192574 // 110796
+        })
 
       })
 
@@ -293,8 +293,8 @@ describe('FeSwapTokenSwap', () => {
             }
           )
           const receipt = await tx.wait()
-          expect(receipt.gasUsed).to.eq(100960)    // 101059  143063,  143068,  //  213437, Why increase so much 118034
-        }).retries(3)
+          expect(receipt.gasUsed).to.eq("99387")    // 100056 99067 99074 99125 99147 99168  142364 142953 100971 100960 101059  143063,  143068,  //  213437, Why increase so much 118034
+        })
       })
 
       describe('swapTokensForExactETH', () => {
@@ -365,8 +365,8 @@ describe('FeSwapTokenSwap', () => {
               overrides
             )
             const receipt = await tx.wait()
-            expect(receipt.gasUsed).to.eq(154562)    // 112558 154684  152816,  Why increase so much 118034
-        }).retries(3)                      
+            expect(receipt.gasUsed).to.eq("111025")    //111748 110759 110810 110832 110853 153852 111923 154606 154562 112558 154684  152816,  Why increase so much 118034
+        })                    
       })
 
       describe('swapExactTokensForETH', () => {
@@ -438,8 +438,8 @@ describe('FeSwapTokenSwap', () => {
             overrides
           )
           const receipt = await tx.wait()
-          expect(receipt.gasUsed).to.eq(154079)    // 154238 152414,  Why increase so much 118034
-        }).retries(3)
+          expect(receipt.gasUsed).to.eq("110542")    // 111268 110279 110330 110352 110373 153372 111376 154123 154079  154238 152414,  Why increase so much 118034
+        })
       })
 
       describe('swapETHForExactTokens', () => {
@@ -511,8 +511,8 @@ describe('FeSwapTokenSwap', () => {
               }
           )
           const receipt = await tx.wait()
-          expect(receipt.gasUsed).to.eq(101149)    // 143293,  
-        }).retries(3)
+          expect(receipt.gasUsed).to.eq("99605")    // 100274 99285 99336 99358 99379 100218 100415101182 143186 101149 143293,  
+        })
       })
     })
 })

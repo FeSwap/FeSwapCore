@@ -5,7 +5,7 @@ import { solidity, MockProvider, createFixtureLoader } from 'ethereum-waffle'
 import { ecsign } from 'ethereumjs-util'
 
 import {  BigNumberPercent, RemoveOutPercent, RemoveLeftPercent, expandTo18Decimals, 
-          getApprovalDigest, MINIMUM_LIQUIDITY } from './shared/utilities'
+          getApprovalDigest, MINIMUM_LIQUIDITY, mineBlock } from './shared/utilities'
 import { v2Fixture } from './shared/Routerfixtures'
 
 chai.use(solidity)
@@ -233,7 +233,11 @@ describe('FeSwapRemoveLiquidity', () => {
         await pairAAB.approve(router.address, constants.MaxUint256)
         await pairABB.approve(router.address, constants.MaxUint256)
 
-        const tx = await router.removeLiquidity(
+        const lastBlock = await provider.getBlock('latest')
+        const blockTimestamp = lastBlock.timestamp
+        await mineBlock(provider, blockTimestamp + 5)
+
+        let tx = await router.removeLiquidity(
             {
               tokenA:         tokenA.address,
               tokenB:         tokenB.address,
@@ -247,9 +251,28 @@ describe('FeSwapRemoveLiquidity', () => {
             overrides
           )
 
-          const receipt = await tx.wait()
-          expect(receipt.gasUsed).to.eq(295816)    //294280, 246129 258878  Uniswap: 253427
-      }).retries(3) 
+        let receipt = await tx.wait()
+        expect(receipt.gasUsed).to.eq("172196")    // 173551 175130 175327 175288 175376 261297 261216  262816 292738 295958 296217 295951 295862 295816 294280, 246129 258878  Uniswap: 253427
+
+        await addLiquidity(tokenAAmount, tokenBAmount, 50)        
+        await mineBlock(provider, blockTimestamp + 10)
+        tx = await router.removeLiquidity(
+            {
+              tokenA:         tokenA.address,
+              tokenB:         tokenB.address,
+              liquidityAAB:   expectedLiquidityAAB,
+              liquidityABB:   expectedLiquidityABB, 
+              amountAMin:     0,
+              amountBMin:     0,
+            },
+            wallet.address,
+            constants.MaxUint256,
+            overrides
+          )
+
+        receipt = await tx.wait()
+        expect(receipt.gasUsed).to.eq("172148")    // 173503 173510 175082 205130 175130 205327 205376  231297 231216 261216
+      })
 
       it(`removeLiquidity ratio AAB: 100-0 `, async () => {
         const tokenAAmount = expandTo18Decimals(100)
@@ -309,7 +332,11 @@ describe('FeSwapRemoveLiquidity', () => {
         const expectedLiquidityAAB = BigNumberPercent(expandTo18Decimals(20),ratio)
         await pairAAB.approve(router.address, constants.MaxUint256)
 
-        const tx = await router.removeLiquidity(
+        const lastBlock = await provider.getBlock('latest')
+        const blockTimestamp = lastBlock.timestamp
+        await mineBlock(provider, blockTimestamp + 5)
+
+        let tx = await router.removeLiquidity(
             {
               tokenA:         tokenA.address,
               tokenB:         tokenB.address,
@@ -322,9 +349,27 @@ describe('FeSwapRemoveLiquidity', () => {
             constants.MaxUint256,
             overrides
           )
-          const receipt = await tx.wait()
-          expect(receipt.gasUsed).to.eq(164280)    // 163444, 139258,  246129,  Uniswap: ???
-      }).retries(3) 
+        let receipt = await tx.wait()
+        expect(receipt.gasUsed).to.eq("102278")    // 102958 102965 103751 103846 103830 103874 146831 146794 147594 162773 164377 164370 164503 164303 164280 163444, 139258,  246129,  Uniswap: ???
+
+        await addLiquidity(tokenAAmount, tokenBAmount, ratio)
+        await mineBlock(provider, blockTimestamp + 10)
+        tx = await router.removeLiquidity(
+            {
+              tokenA:         tokenA.address,
+              tokenB:         tokenB.address,
+              liquidityAAB:   expectedLiquidityAAB,
+              liquidityABB:   0, 
+              amountAMin:     0,
+              amountBMin:     0,
+            },
+            wallet.address,
+            constants.MaxUint256,
+            overrides
+          )
+        receipt = await tx.wait()
+        expect(receipt.gasUsed).to.eq("102254")    // 102934 102941 103727 118751 118744 118846 118874 131831 131794 146794
+      })
 
       it(`removeLiquidity ratio AAB: 0-100 `, async () => {
         const tokenAAmount = expandTo18Decimals(100)
@@ -720,7 +765,11 @@ describe('FeSwapRemoveLiquidity', () => {
         await WETHPairTTE.approve(router.address, constants.MaxUint256)
         await WETHPairTEE.approve(router.address, constants.MaxUint256)
 
-        const tx = await router.removeLiquidityETH(
+        const lastBlock = await provider.getBlock('latest')
+        const blockTimestamp = lastBlock.timestamp
+        await mineBlock(provider, blockTimestamp + 5)
+
+        let tx = await router.removeLiquidityETH(
             {
               tokenA:         WETHPartner.address,
               tokenB:         WETH.address,
@@ -734,9 +783,28 @@ describe('FeSwapRemoveLiquidity', () => {
             overrides
           )
 
-          const receipt = await tx.wait()
-          expect(receipt.gasUsed).to.eq(322146)        // 319743, 316529, 284451 : Uniswap: 194881
-      }).retries(3) 
+        let receipt = await tx.wait()
+        expect(receipt.gasUsed).to.eq("198503")        //200020 200027 201599  201592 201796  201757 201845 287766 287685 289285 289263 319192 322243 322502 322258 322192 322146 319743, 316529, 284451 : Uniswap: 194881
+          
+        await addLiquidityETH(WETHPartnerAmount, ETHAmount, ratio)
+        await mineBlock(provider, blockTimestamp + 10)
+        tx = await router.removeLiquidityETH(
+            {
+              tokenA:         WETHPartner.address,
+              tokenB:         WETH.address,
+              liquidityAAB:   expectedLiquidityTTE,
+              liquidityABB:   expectedLiquidityTEE, 
+              amountAMin:     0,
+              amountBMin:     0,
+            },
+            wallet.address,
+            constants.MaxUint256,
+            overrides
+          )
+
+        receipt = await tx.wait()
+        expect(receipt.gasUsed).to.eq("198455")        // 199972 199979 201551 231599 231592 231796 231845 257766 257685
+      })
     
       it(`removeLiquidityETH TTE ratio: 100-0 `, async () => {
 
@@ -803,7 +871,11 @@ describe('FeSwapRemoveLiquidity', () => {
         await WETHPairTTE.approve(router.address, constants.MaxUint256)
         await WETHPairTEE.approve(router.address, constants.MaxUint256)
 
-        const tx = await router.removeLiquidityETH(
+        const lastBlock = await provider.getBlock('latest')
+        const blockTimestamp = lastBlock.timestamp
+        await mineBlock(provider, blockTimestamp + 5)
+
+        let tx = await router.removeLiquidityETH(
             {
               tokenA:         WETHPartner.address,
               tokenB:         WETH.address,
@@ -816,9 +888,27 @@ describe('FeSwapRemoveLiquidity', () => {
             constants.MaxUint256,
             overrides
           )
-          const receipt = await tx.wait()
-          expect(receipt.gasUsed).to.eq(189973)        // 188266,   144677,  284451 : Uniswap: 194881
-      }).retries(3) 
+        let receipt = await tx.wait()
+        expect(receipt.gasUsed).to.eq("127948")        // 128790 128797 129583 129678 129662 129706 172663 172626 173426 173404 188592 190025 190151 144677,  284451 : Uniswap: 194881
+ 
+        await addLiquidityETH(WETHPartnerAmount, ETHAmount, ratio)
+        await mineBlock(provider, blockTimestamp + 10) 
+        tx = await router.removeLiquidityETH(
+          {
+            tokenA:         WETHPartner.address,
+            tokenB:         WETH.address,
+            liquidityAAB:   expectedLiquidityTTE,
+            liquidityABB:   0, 
+            amountAMin:     0,
+            amountBMin:     0,
+          },
+          wallet.address,
+          constants.MaxUint256,
+          overrides
+        )
+        receipt = await tx.wait()
+        expect(receipt.gasUsed).to.eq("127924")        // 128766 128773 129559 144583 144678 144662 144706 157663 172626
+      })
 
       it(`removeLiquidityTEE ratio: 0-100 `, async () => {
 

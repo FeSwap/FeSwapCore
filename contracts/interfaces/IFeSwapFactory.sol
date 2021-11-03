@@ -8,19 +8,22 @@ interface IFeSwapFactory {
     function getFeeInfo() external view returns (address, uint256);
     function factoryAdmin() external view returns (address);
     function routerFeSwap() external view returns (address);  
-    function rateTriggerFactory() external view returns (uint64);  
-    function rateCapArbitrage() external view returns (uint64);     
-    function rateProfitShare() external view returns (uint64); 
+    function nftFeSwap() external view returns (address);  
+    function rateTriggerFactory() external view returns (uint16);  
+    function rateCapArbitrage() external view returns (uint16);     
+    function rateProfitShare() external view returns (uint16); 
 
-    function getPair(address tokenA, address tokenB) external view returns (address pair);
+    function getPair(address tokenA, address tokenB) external view returns (address pairAB, address pairBA);
     function allPairs(uint) external view returns (address pair);
     function allPairsLength() external view returns (uint);
 
-    function createUpdatePair(address tokenA, address tokenB, address pairOwner, uint256 rateTrigger) external returns (address pairAAB,address pairABB);
+    function createUpdatePair(address tokenA, address tokenB, address pairOwner, uint256 rateTrigger, uint256 switchOracle) 
+                                external returns (address pairAAB,address pairABB);
 
     function setFeeTo(address) external;
     function setFactoryAdmin(address) external;
     function setRouterFeSwap(address) external;
-    function configFactory(uint64, uint64, uint64) external;
-    function managePair(address, address, address, address) external;
+    function configFactory(uint16, uint16, uint16) external;
+//  function managePair(address, address, address, address, uint256) external;
+    function getPairTokens() external view returns (address pairIn, address pairOut);
 }

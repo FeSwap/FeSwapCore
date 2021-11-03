@@ -18,11 +18,10 @@ library FeSwapOracleLibrary {
         address pair
     ) internal view returns (uint price0Cumulative, uint price1Cumulative, uint32 blockTimestamp) {
         blockTimestamp = currentBlockTimestamp();
-        price0Cumulative = IFeSwapPair(pair).price0CumulativeLast();
-        price1Cumulative = IFeSwapPair(pair).price1CumulativeLast();
+        (price0Cumulative, price1Cumulative, ) = IFeSwapPair(pair).getOracleInfo();
 
         // if time has elapsed since the last update on the pair, mock the accumulated price values
-        (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast, ) = IFeSwapPair(pair).getReserves();
+        (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast) = IFeSwapPair(pair).getReserves();
         if (blockTimestampLast != blockTimestamp) {
             // subtraction overflow is desired
             uint32 timeElapsed = blockTimestamp - blockTimestampLast;

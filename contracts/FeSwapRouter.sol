@@ -11,12 +11,13 @@ import './libraries/SafeMath.sol';
 import './interfaces/IERC20.sol';
 import './interfaces/IWETH.sol';
 import './interfaces/IFeswaNFT.sol';
+import './patch/RouterPatchCaller.sol';
 
-contract FeSwapRouter is IFeSwapRouter{
+contract FeSwapRouter is IFeSwapRouter, RouterPatchCaller{
+
     using SafeMath for uint;
 
     address public immutable override factory;
-    address public immutable override feswaNFT;
     address public immutable override WETH;
 
     modifier ensure(uint deadline) {
@@ -24,26 +25,13 @@ contract FeSwapRouter is IFeSwapRouter{
         _;
     }
 
-    constructor(address _factory, address _feswaNFT, address _WETH) public {
+    constructor(address _factory, address _WETH) public {
         factory = _factory;
-        feswaNFT = _feswaNFT;
         WETH = _WETH;
     }
 
-    receive() external payable {
+    receive() external override payable {
         assert(msg.sender == WETH); // only accept ETH via fallback from the WETH contract
-    }
-
-    // **** CREATE SWAP PAIR ****
-    function ManageFeswaPair( uint256 tokenID, address pairOwner, uint256 rateTrigger ) 
-                external virtual override 
-                returns (address pairAAB, address pairABB) 
-    {
-        (address nftOwner, FeswaPairNFT memory NftBidInfo) = IFeswaNFT(feswaNFT).getPoolInfo(tokenID);
-        require(msg.sender == nftOwner, 'FeSwap: NOT TOKEN OWNER');
-        require(NftBidInfo.poolState >= PoolRunningPhase.BidSettled, 'FeSwap: NOT ALLOWED');
-        (address tokenA, address tokenB) = (NftBidInfo.tokenA, NftBidInfo.tokenB);
-        (pairAAB, pairABB) = IFeSwapFactory(factory).createUpdatePair(tokenA, tokenB, pairOwner, rateTrigger); 
     }
 
     // **** ADD LIQUIDITY ****
@@ -56,7 +44,7 @@ contract FeSwapRouter is IFeSwapRouter{
     ) internal virtual view returns (uint amountIn, uint amountOut, address pair) {
         pair = FeSwapLibrary.pairFor(factory, tokenIn, tokenOut);        
         require(pair != address(0), 'FeSwap: NOT CREATED');
-        (uint reserveIn, uint reserveOut, ,) = IFeSwapPair(pair).getReserves();
+        (uint reserveIn, uint reserveOut, ) = IFeSwapPair(pair).getReserves();
         if (reserveIn == 0 && reserveOut == 0) {
             (amountIn, amountOut) = (amountInDesired, amountOutDesired);
         } else {
@@ -308,11 +296,11 @@ contract FeSwapRouter is IFeSwapRouter{
     {
         require(path[0] == WETH, 'FeSwapRouter: INVALID_PATH');
         address firstPair;
-        uint amountsETHIn = msg.value;
-        (firstPair, amounts) = FeSwapLibrary.getAmountsOut(factory, amountsETHIn, path);
+//      uint amountsETHIn = msg.value;
+        (firstPair, amounts) = FeSwapLibrary.getAmountsOut(factory, msg.value, path);
         require(amounts[amounts.length - 1] >= amountOutMin, 'FeSwapRouter: INSUFFICIENT_OUTPUT_AMOUNT');
-        IWETH(WETH).deposit{value: amountsETHIn}();
-        assert(IWETH(WETH).transfer(firstPair, amountsETHIn));
+        IWETH(WETH).deposit{value: msg.value}();
+        assert(IWETH(WETH).transfer(firstPair, msg.value));
         _swap(amounts, path, to);
     }
 
@@ -368,7 +356,7 @@ contract FeSwapRouter is IFeSwapRouter{
     function _swapTokensFeeOnTransfer(address[] memory path, address _to) internal virtual {
         for (uint i = 0; i < path.length - 1; i++) {
             (address input, address output) = (path[i], path[i + 1]);
-            (uint reserveInput, uint reserveOutput, address pair, ) = FeSwapLibrary.getReserves(factory, input, output);
+            (uint reserveInput, uint reserveOutput, address pair) = FeSwapLibrary.getReserves(factory, input, output);
             uint amountInput = IERC20(input).balanceOf(pair).sub(reserveInput);
             uint amountOutput = FeSwapLibrary.getAmountOut(amountInput, reserveInput, reserveOutput);
             address to = i < path.length - 2 ? FeSwapLibrary.pairFor(factory, output, path[i + 2]) : _to;
@@ -402,9 +390,9 @@ contract FeSwapRouter is IFeSwapRouter{
     ) external virtual override payable ensure(deadline) {
         require(path[0] == WETH, 'FeSwapRouter: INVALID_PATH');
         FeSwapLibrary.executeArbitrage(factory, path);
-        uint amountIn = msg.value;
-        IWETH(WETH).deposit{value: amountIn}();
-        assert(IWETH(WETH).transfer(FeSwapLibrary.pairFor(factory, path[0], path[1]), amountIn));
+//      uint amountIn = msg.value;
+        IWETH(WETH).deposit{value: msg.value}();
+        assert(IWETH(WETH).transfer(FeSwapLibrary.pairFor(factory, path[0], path[1]), msg.value));
         uint balanceBefore = IERC20(path[path.length - 1]).balanceOf(to);
         _swapTokensFeeOnTransfer(path, to);
         require(

@@ -11,26 +11,26 @@ import './interfaces/IFeSwapCallee.sol';
 import './libraries/TransferHelper.sol';
 
 contract FeSwapPair is IFeSwapPair, FeSwapERC20 {
+
     using SafeMath  for uint;
     using UQ112x112 for uint224;
 
     uint public constant override MINIMUM_LIQUIDITY = 10**3;
-    bytes4 private constant SELECTOR = bytes4(keccak256(bytes('transfer(address,uint256)')));
 
-    address public override factory;
+    address public immutable override factory;
+    address public immutable override tokenIn;
+    address public immutable override tokenOut;
     address public override pairOwner;
-    address public override tokenIn;
-    address public override tokenOut;
 
     uint112 private reserveIn;              // uses single storage slot, accessible via getReserves
     uint112 private reserveOut;             // uses single storage slot, accessible via getReserves
     uint32  private blockTimestampLast;     // uses single storage slot, accessible via getReserves
 
-    uint public override price0CumulativeLast;
-    uint public override price1CumulativeLast;
-    uint public override kLast;             // reserveIn * reserveOut, as of immediately after the most recent liquidity event
+    uint private price0CumulativeLast;
+    uint private price1CumulativeLast;
+    uint private kLast;                     // reserveIn * reserveOut, as of immediately after the most recent liquidity event
 
-    uint public override rateTriggerArbitrage;
+    uint private rateTriggerArbitrage;
 
     uint private unlocked = 0x5A;
     modifier lock() {
@@ -40,18 +40,18 @@ contract FeSwapPair is IFeSwapPair, FeSwapERC20 {
         unlocked = 0x5A;
     }
   
-    function getReserves() public view override returns ( uint112 _reserveIn, uint112 _reserveOut, 
-                                                          uint32 _blockTimestampLast, uint _rateTriggerArbitrage) {
+    function getReserves() public view override returns ( uint112 _reserveIn, uint112 _reserveOut, uint32 _blockTimestampLast) {
         _reserveIn = reserveIn;
         _reserveOut = reserveOut;
         _blockTimestampLast = blockTimestampLast;
-        _rateTriggerArbitrage = rateTriggerArbitrage;
-
     }
 
-    function _safeTransfer(address token, address to, uint value) private {
-        (bool success, bytes memory data) = token.call(abi.encodeWithSelector(SELECTOR, to, value));
-        require(success && (data.length == 0 || abi.decode(data, (bool))), 'FeSwap: TRANSFER_FAILED');
+    function getTriggerRate() public view override returns (uint) {
+        return rateTriggerArbitrage;
+    }
+
+    function getOracleInfo() public view override returns ( uint _price0CumulativeLast, uint _price1CumulativeLast, uint _kLast) {
+        return (price0CumulativeLast, price1CumulativeLast, kLast);
     }
 
     event Mint(address indexed sender, uint amountIn, uint amountOut);
@@ -66,38 +66,51 @@ contract FeSwapPair is IFeSwapPair, FeSwapERC20 {
     event Sync(uint112 reserveIn, uint112 reserveOut);
 
     constructor() public {
-        factory = msg.sender;
+        factory     = msg.sender;
+        (tokenIn, tokenOut) = IFeSwapFactory(msg.sender).getPairTokens();
     }
 
-    // called once by the factory at time of deployment
-    function initialize(address _tokenIn, address _tokenOut, address _pairOwner, address router, uint rateTrigger) external override {
+    function initialize(address _pairOwner, address router, uint rateTrigger, uint switchOracle) external override {
         require(msg.sender == factory, 'FeSwap: FORBIDDEN');
-        tokenIn     = _tokenIn;
-        tokenOut    = _tokenOut;
-        pairOwner   = _pairOwner;
-        if(rateTrigger != 0)  rateTriggerArbitrage = rateTrigger;
-        TransferHelper.safeApprove(tokenIn, router, uint(-1));          // Approve Rourter to transfer out tokenIn for auto-arbitrage
-    }
+        
+        address _tokenIn = tokenIn;
+        if(pairOwner == address(type(uint160).max)) {
+            TransferHelper.safeApprove(_tokenIn, router, 0);             // Remove Approve, only from Factory admin
+        } else {
+            pairOwner  = _pairOwner;
+            if(router != address(0))
+                TransferHelper.safeApprove(_tokenIn, router, type(uint).max);  // Approve Rourter to transfer out tokenIn for auto-arbitrage
+        }
 
-    function setOwner(address _pairOwner) external override {
-        require(msg.sender == factory, 'FeSwap: FORBIDDEN');
-        pairOwner = _pairOwner;
-    }
+        if(rateTrigger != 0)  rateTriggerArbitrage = uint16(rateTrigger); 
 
-    function adjusArbitragetRate(uint newRate) external override {
-        require(msg.sender == factory, 'FeSwap: FORBIDDEN');
-        rateTriggerArbitrage = newRate;
-    }  
+        if(switchOracle == 0)  return;                                   // = 0, do not change the oracle setting
+        if(switchOracle == uint(1)) {                                    // = 1, open price oracle setting  
+            blockTimestampLast = uint32(block.timestamp % 2**32);
+            return;
+        }
+        if(switchOracle == type(uint).max) {                                  // = -1, close price oracle setting  
+            blockTimestampLast = 0;
+            price0CumulativeLast = 0;
+            price1CumulativeLast = 0;
+        }
+    }
 
     // update reserves and, on the first call per block, price accumulators
-    function _update(uint balanceIn, uint balanceOut, uint112 _reserveIn, uint112 _reserveOut) private {
-        require(balanceIn <= uint112(-1) && balanceOut <= uint112(-1), 'FeSwap: OVERFLOW');
-        uint32 blockTimestamp = uint32(block.timestamp % 2**32);
-        uint32 timeElapsed = blockTimestamp - blockTimestampLast; // overflow is desired
-        if (timeElapsed > 0 && _reserveIn != 0 && _reserveOut != 0) {
-            // * never overflows, and + overflow is desired
-            price0CumulativeLast += uint(UQ112x112.encode(_reserveOut).uqdiv(_reserveIn)) * timeElapsed;
-            price1CumulativeLast += uint(UQ112x112.encode(_reserveIn).uqdiv(_reserveOut)) * timeElapsed;
+    function _update(uint balanceIn, uint balanceOut, uint112 _reserveIn, uint112 _reserveOut, uint32 _blockTimestampLast) private {
+        require(balanceIn <= type(uint112).max && balanceOut <= type(uint112).max, 'FeSwap: OVERFLOW');
+        uint32 blockTimestamp;
+        if(_blockTimestampLast == 0){
+            blockTimestamp = uint32(0);
+        }
+        else {                             // check if oracle is activated or not
+            blockTimestamp = uint32(block.timestamp % 2**32);
+            uint32 timeElapsed = blockTimestamp - blockTimestampLast; // overflow is desired
+            if (timeElapsed > 0 && _reserveIn != 0 && _reserveOut != 0) {
+                // * never overflows, and + overflow is desired
+                price0CumulativeLast += uint(UQ112x112.encode(_reserveOut).uqdiv(_reserveIn)) * timeElapsed;
+                price1CumulativeLast += uint(UQ112x112.encode(_reserveIn).uqdiv(_reserveOut)) * timeElapsed;
+            }
         }
         reserveIn = uint112(balanceIn);
         reserveOut = uint112(balanceOut);
@@ -112,11 +125,12 @@ contract FeSwapPair is IFeSwapPair, FeSwapERC20 {
         uint _kLast = kLast;            // gas savings
         if (feeOn) {
             if (_kLast != 0) {
-                uint rootK = Math.sqrt(uint(_reserveIn).mul(_reserveOut));
-                uint rootKLast = Math.sqrt(_kLast);
-                if (rootK > rootKLast.add(20)) {     // ignore swap dust increase, select 20 randomly 
-                    uint numerator = totalSupply.mul(rootK.sub(rootKLast)).mul(6);
-                    uint denominator = rootK.mul(rateProfitShare).add(rootKLast);
+                uint rootK = uint(_reserveIn).mul(_reserveOut);
+                if (rootK > _kLast.add(uint(_reserveIn).mul(200))) {     // ignore swap dust increase, select 200 randomly 
+                    rootK = Math.sqrt(rootK);
+                    _kLast = Math.sqrt(_kLast);
+                    uint numerator = totalSupply.mul(rootK.sub(_kLast)).mul(6);
+                    uint denominator = rootK.mul(rateProfitShare).add(_kLast);
                     uint liquidityCreator = numerator / (denominator.mul(10));
                     if((liquidityCreator > 0) && (pairOwner != address(0))) {
                         _mint(pairOwner, liquidityCreator);
@@ -134,7 +148,7 @@ contract FeSwapPair is IFeSwapPair, FeSwapERC20 {
 
     // this low-level function should be called from a contract which performs important safety checks
     function mint(address to) external override lock returns (uint liquidity) {
-        (uint112 _reserveIn, uint112 _reserveOut, ,) = getReserves(); // gas savings
+        (uint112 _reserveIn, uint112 _reserveOut, uint32 _blockTimestampLast) = getReserves(); // gas savings
         uint balanceIn = IERC20(tokenIn).balanceOf(address(this));
         uint balanceOut = IERC20(tokenOut).balanceOf(address(this));
         uint amountTokenIn = balanceIn.sub(_reserveIn);
@@ -151,14 +165,14 @@ contract FeSwapPair is IFeSwapPair, FeSwapERC20 {
         require(liquidity > 0, 'FeSwap: INSUFFICIENT_LIQUIDITY_MINTED');
         _mint(to, liquidity);
 
-        _update(balanceIn, balanceOut, _reserveIn, _reserveOut);
+        _update(balanceIn, balanceOut, _reserveIn, _reserveOut, _blockTimestampLast);
         if (feeOn) kLast = uint(reserveIn).mul(reserveOut);                    // reserve0 and reserve1 are up-to-date
         emit Mint(msg.sender, amountTokenIn, amountTokenOut);
     }
 
     // this low-level function should be called from a contract which performs important safety checks
     function burn(address to) external lock override returns (uint amountIn, uint amountOut) {
-        (uint112 _reserveIn, uint112 _reserveOut, ,) = getReserves();     // gas savings
+        (uint112 _reserveIn, uint112 _reserveOut, uint32 _blockTimestampLast) = getReserves();     // gas savings
         (address _tokenIn, address _tokenOut) = (tokenIn, tokenOut);    // gas savings
         uint balanceIn = IERC20(_tokenIn).balanceOf(address(this));
         uint balanceOut = IERC20(_tokenOut).balanceOf(address(this));
@@ -171,12 +185,12 @@ contract FeSwapPair is IFeSwapPair, FeSwapERC20 {
         require(amountIn > 0 && amountOut > 0, 'FeSwap: INSUFFICIENT_LIQUIDITY_BURNED');
 
         _burn(address(this), liquidity);
-        _safeTransfer(_tokenIn, to, amountIn);
-        _safeTransfer(_tokenOut, to, amountOut);
+        TransferHelper.safeTransfer(_tokenIn, to, amountIn);
+        TransferHelper.safeTransfer(_tokenOut, to, amountOut);
         balanceIn = IERC20(_tokenIn).balanceOf(address(this));
         balanceOut = IERC20(_tokenOut).balanceOf(address(this));
 
-        _update(balanceIn, balanceOut, _reserveIn, _reserveOut);
+        _update(balanceIn, balanceOut, _reserveIn, _reserveOut, _blockTimestampLast);
         if (feeOn) kLast = uint(reserveIn).mul(reserveOut);     // reserve0 and reserve1 are up-to-date
         emit Burn(msg.sender, amountIn, amountOut, to);
     }
@@ -184,7 +198,7 @@ contract FeSwapPair is IFeSwapPair, FeSwapERC20 {
     // this low-level function should be called from a contract which performs important safety checks
     function swap(uint amountOut, address to, bytes calldata data) external lock override {
         require(amountOut > 0, 'FeSwap: INSUFFICIENT_OUTPUT_AMOUNT');
-        (uint112 _reserveIn, uint112 _reserveOut) = (reserveIn, reserveOut);        // gas savings
+        (uint112 _reserveIn, uint112 _reserveOut, uint32 _blockTimestampLast) = (reserveIn, reserveOut, blockTimestampLast);   // gas savings
         require(amountOut < _reserveOut, 'FeSwap: INSUFFICIENT_LIQUIDITY');
 
         uint balanceIn;
@@ -192,7 +206,7 @@ contract FeSwapPair is IFeSwapPair, FeSwapERC20 {
         {   // scope for {_tokenIn, _tokenOut}, avoids stack too deep errors
             (address _tokenIn, address _tokenOut) = (tokenIn, tokenOut);            // gas savings
             require(to != _tokenIn && to != _tokenOut, 'FeSwap: INVALID_TO');
-            _safeTransfer(_tokenOut, to, amountOut); 
+            TransferHelper.safeTransfer(_tokenOut, to, amountOut); 
             if (data.length > 0) IFeSwapCallee(to).FeSwapCall(msg.sender, amountOut, data);
             balanceIn = IERC20(_tokenIn).balanceOf(address(this));
             balanceOut = IERC20(_tokenOut).balanceOf(address(this));
@@ -203,23 +217,23 @@ contract FeSwapPair is IFeSwapPair, FeSwapERC20 {
                                            ? balanceOut - (_reserveOut - amountOut) : 0;  // to support Flash Swap
         require(amountInTokenIn > 0 || amountInTokenOut > 0, 'FeSwap: INSUFFICIENT_INPUT_AMOUNT');
 
-        uint balanceOutAdjusted = balanceOut.mul(1000).sub(amountInTokenOut.mul(3));      // Fee for Flash Swap: 0.3% from tokenOut
-        require(balanceIn.mul(balanceOutAdjusted) >= uint(_reserveIn).mul(_reserveOut).mul(1000), 'FeSwap: K');
-
-        _update(balanceIn, balanceOut, _reserveIn, _reserveOut);
+        {   // avoid stack too deep errors
+            uint balanceOutAdjusted = balanceOut.mul(1000).sub(amountInTokenOut.mul(3));      // Fee for Flash Swap: 0.3% from tokenOut
+            require(balanceIn.mul(balanceOutAdjusted) >= uint(_reserveIn).mul(_reserveOut).mul(1000), 'FeSwap: K');
+        }
+        _update(balanceIn, balanceOut, _reserveIn, _reserveOut, _blockTimestampLast);
         emit Swap(msg.sender, amountInTokenIn, amountInTokenOut, amountOut, to);
     }
 
     // force balances to match reserves
     function skim(address to) external lock override {
-        address _tokenIn = tokenIn;     // gas savings
-        address _tokenOut = tokenOut;   // gas savings
-        _safeTransfer(_tokenIn, to, IERC20(_tokenIn).balanceOf(address(this)).sub(reserveIn));
-        _safeTransfer(_tokenOut, to, IERC20(_tokenOut).balanceOf(address(this)).sub(reserveOut));
+        (address _tokenIn, address _tokenOut) = (tokenIn, tokenOut);         // gas savings
+        TransferHelper.safeTransfer(_tokenIn, to, IERC20(_tokenIn).balanceOf(address(this)).sub(reserveIn));
+        TransferHelper.safeTransfer(_tokenOut, to, IERC20(_tokenOut).balanceOf(address(this)).sub(reserveOut));
     }
 
     // force reserves to match balances
     function sync() external lock override {
-        _update(IERC20(tokenIn).balanceOf(address(this)), IERC20(tokenOut).balanceOf(address(this)), reserveIn, reserveOut);
+        _update(IERC20(tokenIn).balanceOf(address(this)), IERC20(tokenOut).balanceOf(address(this)), reserveIn, reserveOut, blockTimestampLast);
     }
 }
