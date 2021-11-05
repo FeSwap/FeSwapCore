@@ -26,11 +26,11 @@ abstract contract FactoryPatchCaller {
     //                                            = 0x15bfb1132dc67a984de77a9eef294f7e58964d02c62a359fd6f3c0c1d443e35c 
     // address(this): 0xFDFEF9D10d929cB3905C71400ce6be1990EA0F34 (Test) 
     // address(this): 0x8565570A7cB2b2508F9180AD83e8f58F25e41596 (Goerli) 
-    // address(this): 0xc554e3410ba6c6dcd10ef4778d0765fd42081e68 (Rinkeby/BSC/Polygon/Harmoney/Arbitrum/Fantom/Avalance/Heco) 
+    // address(this): 0x6A8FE4753AB456e85E1379432d92ABF1fB49B5Df (Rinkeby/BSC/Polygon/Harmoney/Arbitrum/Fantom/Avalance/Heco) 
    
 //  address public constant DELEGATE_TARGET = 0x92DD76703DACF9BE7F61CBC7ADAF77319084DBF8;   // (Goerli)
-    address public constant DELEGATE_TARGET = 0x8CAF582948011A604d53DBAb24783aC0f0464b3d;   // (Test)
-//  address public constant DELEGATE_TARGET = 0xf70d592d609F3d4ca81ad21b9Ea9ab288F91aBfE;   // (BSC/MATIC)
+//  address public constant DELEGATE_TARGET = 0x8CAF582948011A604d53DBAb24783aC0f0464b3d;   // (Test)
+    address public constant DELEGATE_TARGET = 0x8C80f5aa060fD83faDC384Ffc469ceD5548cF554;   // (BSC/MATIC)
 
     /**
      * @dev Delegates the current call to `DELEGATE_TARGET`.
