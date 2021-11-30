@@ -2,16 +2,13 @@
 pragma solidity =0.6.12;
 pragma experimental ABIEncoderV2;
 
-import './interfaces/IFeSwapFactory.sol';
-import './libraries/TransferHelper.sol';
-
-import './interfaces/IFeSwapRouter.sol';
-import './libraries/FeSwapLibrary.sol';
-import './libraries/SafeMath.sol';
-import './interfaces/IERC20.sol';
-import './interfaces/IWETH.sol';
-import './interfaces/IFeswaNFT.sol';
-import './patch/RouterPatchCaller.sol';
+import "contracts/libraries/TransferHelper.sol";
+import "contracts/interfaces/IFeSwapRouter.sol";
+import "contracts/libraries/FeSwapLibrary.sol";
+import "contracts/libraries/SafeMath.sol";
+import "contracts/interfaces/IERC20.sol";
+import "contracts/interfaces/IWETH.sol";
+import "contracts/patch/RouterPatchCaller.sol";
 
 contract FeSwapRouter is IFeSwapRouter, RouterPatchCaller{
 
