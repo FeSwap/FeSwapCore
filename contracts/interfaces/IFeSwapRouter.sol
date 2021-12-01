@@ -4,7 +4,7 @@ pragma experimental ABIEncoderV2;
 
 interface IFeSwapRouter {
 
-        struct AddLiquidityParams {
+    struct AddLiquidityParams {
         address tokenA;
         address tokenB;
         uint    amountADesired;
