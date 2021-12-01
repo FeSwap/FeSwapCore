@@ -2,7 +2,7 @@
 pragma solidity =0.6.12;
 
 import "./interfaces/IFeSwapFactory.sol";
-//import "./interfaces/IFeSwapERC20.sol";
+import "./interfaces/IFeSwapERC20.sol";
 import "./FeSwapPair.sol";
 import "./patch/FactoryPatchCaller.sol";
 
