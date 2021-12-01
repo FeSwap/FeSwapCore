@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.6.12;
 
-import "contracts/interfaces/IFeSwapPair.sol";
-import "contracts/FeSwapERC20.sol";
-import "contracts/libraries/Math.sol";
-import "contracts/libraries/UQ112x112.sol";
-import "contracts/interfaces/IERC20.sol";
-import "contracts/interfaces/IFeSwapFactory.sol";
-import "contracts/interfaces/IFeSwapCallee.sol";
-import "contracts/libraries/TransferHelper.sol";
+import "./interfaces/IFeSwapPair.sol";
+import "./FeSwapERC20.sol";
+import "./libraries/Math.sol";
+import "./libraries/UQ112x112.sol";
+import "./interfaces/IERC20.sol";
+import "./interfaces/IFeSwapFactory.sol";
+import "./interfaces/IFeSwapCallee.sol";
+import "./libraries/TransferHelper.sol";
 
 contract FeSwapPair is IFeSwapPair, FeSwapERC20 {
 

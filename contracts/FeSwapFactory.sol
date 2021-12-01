@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.6.12;
 
-import "contracts/interfaces/IFeSwapFactory.sol";
-import "contracts/FeSwapPair.sol";
-import "contracts/patch/FactoryPatchCaller.sol";
+import "./interfaces/IFeSwapFactory.sol";
+import "./interfaces/IFeSwapERC20.sol";
+import "./FeSwapPair.sol";
+import "./patch/FactoryPatchCaller.sol";
 
 contract FeSwapFactory is IFeSwapFactory, FactoryPatchCaller {
     uint16 public constant RATE_TRIGGER_FACTORY         = 10;       //  price difference be 1%

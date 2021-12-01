@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.6.12;
 
-import "contracts/interfaces/IFeSwapPair.sol";
-import "contracts/interfaces/IFeSwapFactory.sol";
-import "contracts/libraries/TransferHelper.sol";
-import "contracts/libraries/SafeMath.sol";
+import "../interfaces/IFeSwapPair.sol";
+import "../interfaces/IFeSwapFactory.sol";
+import "./TransferHelper.sol";
+import "./SafeMath.sol";
 
 library FeSwapLibrary {
     using SafeMath for uint;

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.6.12;
 
-import "contracts/interfaces/IFeSwapERC20.sol";
+import "./IFeSwapERC20.sol";
 
 interface IFeSwapPair is IFeSwapERC20 {
     event Mint(address indexed sender, uint amount0, uint amount1);
