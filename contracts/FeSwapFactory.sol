@@ -66,9 +66,8 @@ contract FeSwapFactory is IFeSwapFactory, FactoryPatchCaller {
         // pairOwner allowed to zero to discard the profit
         require(tokenA != address(0) && tokenB != address(0), 'FeSwap: ZERO_ADDRESS');
         require((msg.sender == nftFeSwap) || (msg.sender == factoryAdmin), 'FeSwap: FORBIDDEN');
-        uint16 _rateCapArbitrage = rateCapArbitrage;
         uint16 _rateTriggerFactory = rateTriggerFactory;            // to save gas fee
-        require(rateTrigger <= _rateCapArbitrage, 'FeSwap: GAP TOO MORE');
+        require(rateTrigger <= rateCapArbitrage, 'FeSwap: GAP TOO MORE');
 
         if(tokenA > tokenB) (tokenA, tokenB) = (tokenB, tokenA);
 

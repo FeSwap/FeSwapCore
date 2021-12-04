@@ -75,21 +75,21 @@ contract FeSwapPair is IFeSwapPair, FeSwapERC20 {
         
         address _tokenIn = tokenIn;
         if(pairOwner == address(type(uint160).max)) {
-            TransferHelper.safeApprove(_tokenIn, router, 0);             // Remove Approve, only from Factory admin
+            TransferHelper.safeApprove(_tokenIn, router, 0);                    // Remove Approve, only from Factory admin
         } else {
             pairOwner  = _pairOwner;
             if(router != address(0))
-                TransferHelper.safeApprove(_tokenIn, router, type(uint).max);  // Approve Rourter to transfer out tokenIn for auto-arbitrage
+                TransferHelper.safeApprove(_tokenIn, router, type(uint).max);   // Approve Rourter to transfer out tokenIn for auto-arbitrage
         }
 
         if(rateTrigger != 0)  rateTriggerArbitrage = uint16(rateTrigger); 
 
-        if(switchOracle == 0)  return;                                   // = 0, do not change the oracle setting
-        if(switchOracle == uint(1)) {                                    // = 1, open price oracle setting  
+        if(switchOracle == 0)  return;                                          // = 0, do not change the oracle setting
+        if(switchOracle == uint(1)) {                                           // = 1, open price oracle setting  
             blockTimestampLast = uint32(block.timestamp % 2**32);
             return;
         }
-        if(switchOracle == type(uint).max) {                                  // = -1, close price oracle setting  
+        if(switchOracle == type(uint).max) {                                    // = -1, close price oracle setting  
             blockTimestampLast = 0;
             price0CumulativeLast = 0;
             price1CumulativeLast = 0;
@@ -99,13 +99,10 @@ contract FeSwapPair is IFeSwapPair, FeSwapERC20 {
     // update reserves and, on the first call per block, price accumulators
     function _update(uint balanceIn, uint balanceOut, uint112 _reserveIn, uint112 _reserveOut, uint32 _blockTimestampLast) private {
         require(balanceIn <= type(uint112).max && balanceOut <= type(uint112).max, 'FeSwap: OVERFLOW');
-        uint32 blockTimestamp;
-        if(_blockTimestampLast == 0){
-            blockTimestamp = uint32(0);
-        }
-        else {                             // check if oracle is activated or not
+        uint32 blockTimestamp = 0;
+        if(_blockTimestampLast != 0){           // check if oracle is activated or not
             blockTimestamp = uint32(block.timestamp % 2**32);
-            uint32 timeElapsed = blockTimestamp - blockTimestampLast; // overflow is desired
+            uint32 timeElapsed = blockTimestamp - _blockTimestampLast; // overflow is desired
             if (timeElapsed > 0 && _reserveIn != 0 && _reserveOut != 0) {
                 // * never overflows, and + overflow is desired
                 price0CumulativeLast += uint(UQ112x112.encode(_reserveOut).uqdiv(_reserveIn)) * timeElapsed;

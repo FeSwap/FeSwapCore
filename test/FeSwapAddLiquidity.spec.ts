@@ -646,7 +646,7 @@ describe('FeSwapAddLiquidity', () => {
           )
 
         const receipt = await tx.wait()
-        expect(receipt.gasUsed).to.eq("236215")    //236208 236836 236829 238486 238479 238486 238486 238508 238523 239417 240217 240421 242115 242043 241998 244554 244520, Uniswap 220495
+        expect(receipt.gasUsed).to.eq("236208")    //236208 236836 236829 238486 238479 238486 238486 238508 238523 239417 240217 240421 242115 242043 241998 244554 244520, Uniswap 220495
       })
 
       it('Add-Liquidity-ETH GAS usage： Double Pool ', async () => {
@@ -669,7 +669,7 @@ describe('FeSwapAddLiquidity', () => {
           )
 
         const receipt = await tx.wait()
-        expect(receipt.gasUsed).to.eq("444785")  //444778 446015 446008 449315 449359 449396 451061 451184 452784 456520 4564764 456448 456358 461483 461459,  443817
+        expect(receipt.gasUsed).to.eq("444778")  //444778 446015 446008 449315 449359 449396 451061 451184 452784 456520 4564764 456448 456358 461483 461459,  443817
       })
 
     })  
