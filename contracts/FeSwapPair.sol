@@ -128,9 +128,9 @@ contract FeSwapPair is IFeSwapPair, FeSwapERC20 {
                     _kLast = Math.sqrt(_kLast);
                     uint numerator = totalSupply.mul(rootK.sub(_kLast)).mul(6);
                     uint denominator = rootK.mul(rateProfitShare).add(_kLast);
-                    uint liquidityCreator = numerator / (denominator.mul(10));
-                    if((liquidityCreator > 0) && (pairOwner != address(0))) {
-                        _mint(pairOwner, liquidityCreator);
+                    uint liquidityOwner = numerator / (denominator.mul(10));
+                    if((liquidityOwner > 0) && (pairOwner != address(0))) {
+                        _mint(pairOwner, liquidityOwner);
                     } 
                     uint liquidityFeSwap = numerator / (denominator.mul(15));
                     if((liquidityFeSwap > 0)  && (feeTo != address(0))) {
@@ -184,7 +184,7 @@ contract FeSwapPair is IFeSwapPair, FeSwapERC20 {
         _burn(address(this), liquidity);
         TransferHelper.safeTransfer(_tokenIn, to, amountIn);
         TransferHelper.safeTransfer(_tokenOut, to, amountOut);
-        balanceIn = IERC20(_tokenIn).balanceOf(address(this));
+        balanceIn = IERC20(_tokenIn).balanceOf(address(this));      // can use?: balanceIn = balanceIn.sub(amountIn)
         balanceOut = IERC20(_tokenOut).balanceOf(address(this));
 
         _update(balanceIn, balanceOut, _reserveIn, _reserveOut, _blockTimestampLast);
@@ -215,7 +215,8 @@ contract FeSwapPair is IFeSwapPair, FeSwapERC20 {
         require(amountInTokenIn > 0 || amountInTokenOut > 0, 'FeSwap: INSUFFICIENT_INPUT_AMOUNT');
 
         {   // avoid stack too deep errors
-            uint balanceOutAdjusted = balanceOut.mul(1000).sub(amountInTokenOut.mul(3));      // Fee for Flash Swap: 0.3% from tokenOut
+            uint balanceOutAdjusted = balanceOut.mul(1000);
+            if(amountInTokenOut>0) balanceOutAdjusted = balanceOutAdjusted.sub(amountInTokenOut.mul(3)); // Fee for Flash Swap: 0.3% from tokenOut
             require(balanceIn.mul(balanceOutAdjusted) >= uint(_reserveIn).mul(_reserveOut).mul(1000), 'FeSwap: K');
         }
         _update(balanceIn, balanceOut, _reserveIn, _reserveOut, _blockTimestampLast);

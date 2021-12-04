@@ -362,7 +362,7 @@ describe('FeSwapAddLiquidity', () => {
           )
 
         const receipt = await tx.wait()
-        expect(receipt.gasUsed).to.eq("230339")    // 230346 230981 230988 232632 232639 232654 232683  232618 233577 234377 234456 236182 236131 236108 238676 238686, 228994  Uniswap 213957
+        expect(receipt.gasUsed).to.eq("230333")    // 230346 230981 230988 232632 232639 232654 232683  232618 233577 234377 234456 236182 236131 236108 238676 238686, 228994  Uniswap 213957
       })
 
       it('Add Liquidity GAS usage： Double Pool ', async () => {
@@ -388,7 +388,7 @@ describe('FeSwapAddLiquidity', () => {
           )
 
         const receipt = await tx.wait()
-        expect(receipt.gasUsed).to.eq("427086")    // 427093 428358 428365  431658 431665 431702 431753 431623 433541 435141 435299 438763 438668 438622 443746 443722, 425406
+        expect(receipt.gasUsed).to.eq("427067")    // 427093 428358 428365  431658 431665 431702 431753 431623 433541 435141 435299 438763 438668 438622 443746 443722, 425406
       })
     })
 
@@ -646,7 +646,7 @@ describe('FeSwapAddLiquidity', () => {
           )
 
         const receipt = await tx.wait()
-        expect(receipt.gasUsed).to.eq("236208")    //236208 236836 236829 238486 238479 238486 238486 238508 238523 239417 240217 240421 242115 242043 241998 244554 244520, Uniswap 220495
+        expect(receipt.gasUsed).to.eq("236202")    //236208 236836 236829 238486 238479 238486 238486 238508 238523 239417 240217 240421 242115 242043 241998 244554 244520, Uniswap 220495
       })
 
       it('Add-Liquidity-ETH GAS usage： Double Pool ', async () => {
@@ -669,7 +669,7 @@ describe('FeSwapAddLiquidity', () => {
           )
 
         const receipt = await tx.wait()
-        expect(receipt.gasUsed).to.eq("444778")  //444778 446015 446008 449315 449359 449396 451061 451184 452784 456520 4564764 456448 456358 461483 461459,  443817
+        expect(receipt.gasUsed).to.eq("444759")  //444778 446015 446008 449315 449359 449396 451061 451184 452784 456520 4564764 456448 456358 461483 461459,  443817
       })
 
     })  

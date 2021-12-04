@@ -207,11 +207,11 @@ describe('FeSwapFactory', () => {
   it('createUpdatePair:gas (NFT)', async () => {
     let tx = await factory.connect(other).createUpdatePair(tokenB.address, tokenA.address, wallet.address, rateTriggerArbitrage, 0)
     let receipt = await tx.wait()
-    expect(receipt.gasUsed).to.eq("5416839")        // 5417098 4406407 4406420 4449719 4444905(berfor Rate) 4464153 4468972 4477801 4421126 4509747 4630154 4630215 4630197 5475118 5719377 5475118 5474337 5375412, 4913779,   UniSwap: 2512920
+    expect(receipt.gasUsed).to.eq("5407606")        // 5417098 4406407 4406420 4449719 4444905(berfor Rate) 4464153 4468972 4477801 4421126 4509747 4630154 4630215 4630197 5475118 5719377 5475118 5474337 5375412, 4913779,   UniSwap: 2512920
 
     tx = await factory.connect(other).createUpdatePair(tokenB.address, tokenC.address, wallet.address, rateTriggerArbitrage, 0)
     receipt = await tx.wait()
-    expect(receipt.gasUsed).to.eq("5371848")        // 4361416 4357216 4400519 4395705 4414953 4419772 4428601 4371926 4460547 4580954 4581015 4630197 5475118 5719377 5475118 5474337 5375412, 4913779,   UniSwap: 2512920
+    expect(receipt.gasUsed).to.eq("5362615")        // 4361416 4357216 4400519 4395705 4414953 4419772 4428601 4371926 4460547 4580954 4581015 4630197 5475118 5719377 5475118 5474337 5375412, 4913779,   UniSwap: 2512920
 
     // update owneer
     tx = await factory.connect(other).createUpdatePair(tokenB.address, tokenA.address, other.address, rateTriggerArbitrage, 0)
@@ -222,11 +222,11 @@ describe('FeSwapFactory', () => {
   it('createUpdatePair:gas  (Admin)', async () => {
     let tx = await factory.createUpdatePair(tokenB.address, tokenA.address, wallet.address, rateTriggerArbitrage, 0)
     let receipt = await tx.wait()
-    expect(receipt.gasUsed).to.eq("5417655")        //5417914 4407235 4407248 4450547 4445733 4464981 4469800 4478629 4421954 4510575 4630982 4631043 4630197 5475118 5719377 5475118 5474337 5375412, 4913779,   UniSwap: 2512920
+    expect(receipt.gasUsed).to.eq("5408422")        //5417914 4407235 4407248 4450547 4445733 4464981 4469800 4478629 4421954 4510575 4630982 4631043 4630197 5475118 5719377 5475118 5474337 5375412, 4913779,   UniSwap: 2512920
 
     tx = await factory.createUpdatePair(tokenB.address, tokenC.address, wallet.address, rateTriggerArbitrage, 0)
     receipt = await tx.wait()
-    expect(receipt.gasUsed).to.eq("5372664")        // 4362244 4358044 4401347 4396533 4415781 4420600 4429429 4372754 4461375 4581782 4581843 4630197 5475118 5719377 5475118 5474337 5375412, 4913779,   UniSwap: 2512920
+    expect(receipt.gasUsed).to.eq("5363431")        // 4362244 4358044 4401347 4396533 4415781 4420600 4429429 4372754 4461375 4581782 4581843 4630197 5475118 5719377 5475118 5474337 5375412, 4913779,   UniSwap: 2512920
 
     // update owneer
     tx = await factory.createUpdatePair(tokenB.address, tokenA.address, other.address, rateTriggerArbitrage, 0)

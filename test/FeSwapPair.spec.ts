@@ -291,7 +291,7 @@ describe('FeSwapPair', () => {
     await mineBlock(provider, (await provider.getBlock('latest')).timestamp + 1)
     const tx = await pairABB.swap(expectedOutputAmount, wallet.address, '0x', overrides)
     const receipt = await tx.wait()
-    expect(receipt.gasUsed).to.eq("57924")      // 58257 58308 58330 71350 71365 72482 72460
+    expect(receipt.gasUsed).to.eq("57730")      // 58257 58308 58330 71350 71365 72482 72460
   })
 
   it('Burn', async () => {
@@ -340,7 +340,7 @@ describe('FeSwapPair', () => {
     await pairAAB.transfer(pairAAB.address, expectedLiquidity.sub(MINIMUM_LIQUIDITY))
     const tx = await pairAAB.burn(wallet.address, overrides)
     const receipt = await tx.wait()
-    expect(receipt.gasUsed).to.eq("88277")     // 88808 89594 89696 89673 89695 132725 132681  133481 134278 148203 149984 149961 148288  //different liquity ,gas could be different
+    expect(receipt.gasUsed).to.eq("88264")     // 88808 89594 89696 89673 89695 132725 132681  133481 134278 148203 149984 149961 148288  //different liquity ,gas could be different
   })
 
   it('price{0,1}CumulativeLast', async () => {
@@ -724,7 +724,7 @@ describe('FeSwapPair', () => {
     let feeCreateAAB = await pairAAB.balanceOf(pairOwner.address)  
     expect(feeToAAB).to.eq(0)           
     expect(feeCreateAAB).to.eq(0)   
-    expect(receipt.gasUsed).to.eq("103670")      // 103677 104306 104313 105957 105964 105979 106008 118968 119033 119833 121500 121449  121426 109422 123994 131668 157206  //241214
+    expect(receipt.gasUsed).to.eq("103664")      // 103677 104306 104313 105957 105964 105979 106008 118968 119033 119833 121500 121449  121426 109422 123994 131668 157206  //241214
 
     await router.swapExactTokensForTokens(  swapAmount, 0, [tokenA.address, tokenB.address],
                                           wallet.address, constants.MaxUint256, overrides)
@@ -749,7 +749,7 @@ describe('FeSwapPair', () => {
     feeCreateAAB = await pairAAB.balanceOf(pairOwner.address)  
     expect(feeToAAB).to.eq(0)           
     expect(feeCreateAAB).to.eq(0)   
-    expect(receipt.gasUsed).to.eq("103670")      // 103677 104306 105979 118968 119833 121500 121449  121426 109422 123994 131668 157206  //241214
+    expect(receipt.gasUsed).to.eq("103664")      // 103677 104306 105979 118968 119833 121500 121449  121426 109422 123994 131668 157206  //241214
 
   })
 
@@ -802,7 +802,7 @@ describe('FeSwapPair', () => {
       let feeCreateAAB = await pairAAB.balanceOf(pairOwner.address)  
       expect(feeToAAB).to.not.eq(0)           
       expect(feeCreateAAB).to.eq(0)  
-      expect(receipt.gasUsed).to.eq("153014")      // 153021 153728 153735 155379 155386 155401 155430 168390 168455 169255 157095 170706 170655 170632 173200 180874 157206  //241214
+      expect(receipt.gasUsed).to.eq("153008")      // 153021 153728 153735 155379 155386 155401 155430 168390 168455 169255 157095 170706 170655 170632 173200 180874 157206  //241214
 
       await router.swapExactTokensForTokens(  swapAmount, 0, [tokenA.address, tokenB.address],
                                           wallet.address, constants.MaxUint256, overrides)
@@ -827,7 +827,7 @@ describe('FeSwapPair', () => {
       feeCreateAAB = await pairAAB.balanceOf(pairOwner.address)  
       expect(feeToAAB).to.not.eq(0)           
       expect(feeCreateAAB).to.eq(0)  
-      expect(receipt.gasUsed).to.eq("138014")      // 138728 138735 140379 140401 140430 153390 153455 168455
+      expect(receipt.gasUsed).to.eq("138008")      // 138728 138735 140379 140401 140430 153390 153455 168455
      
     })
 
@@ -881,7 +881,7 @@ describe('FeSwapPair', () => {
       expect(feeToAAB).to.eq(0)           
       expect(feeCreateAAB).to.not.eq(0)                         
 
-      expect(receipt.gasUsed).to.eq("154640")      //155378 155385 157029 157051 157080 170040 170105  170905 158738 159535 172332 160328  172281 172258 174826, 162822 157206  //241214
+      expect(receipt.gasUsed).to.eq("154634")      //155378 155385 157029 157051 157080 170040 170105  170905 158738 159535 172332 160328  172281 172258 174826, 162822 157206  //241214
 
       await router.swapExactTokensForTokens(  swapAmount, 0, [tokenA.address, tokenB.address],
                                           wallet.address, constants.MaxUint256, overrides)
@@ -907,7 +907,7 @@ describe('FeSwapPair', () => {
       expect(feeToAAB).to.eq(0)           
       expect(feeCreateAAB).to.not.eq(0)                         
 
-      expect(receipt.gasUsed).to.eq("139640")      //140378 140385 142029 142051 142080 155040 155105 170105
+      expect(receipt.gasUsed).to.eq("139634")      //140378 140385 142029 142051 142080 155040 155105 170105
 
     })
 
@@ -960,7 +960,7 @@ describe('FeSwapPair', () => {
       expect(feeToAAB).to.not.eq(0)                 // "412534021180854"
       expect(feeCreateAAB).to.not.eq(0)             // "618801031771281"            
 
-      expect(receipt.gasUsed).to.eq("178402")      //179152 179159 180803 180825 180854 193814 193879 194679 182519 183309 194608 196094 184039 196020 206262 157206  //241214
+      expect(receipt.gasUsed).to.eq("178396")      //179152 179159 180803 180825 180854 193814 193879 194679 182519 183309 194608 196094 184039 196020 206262 157206  //241214
 
       await router.swapExactTokensForTokens(  swapAmount, 0, [tokenA.address, tokenB.address],
                                           wallet.address, constants.MaxUint256, overrides)
@@ -985,7 +985,7 @@ describe('FeSwapPair', () => {
       expect(feeToAAB).to.not.eq(0)                 // "412534021180854"
       expect(feeCreateAAB).to.not.eq(0)             // "618801031771281"            
 
-      expect(receipt.gasUsed).to.eq("148402")         // 149152 149159 150803 150825 150854 163814 163879 Less than 1st tx
+      expect(receipt.gasUsed).to.eq("148396")         // 149152 149159 150803 150825 150854 163814 163879 Less than 1st tx
 
     })
 
@@ -1012,7 +1012,7 @@ describe('FeSwapPair', () => {
         let tx = await router.swapExactTokensForTokens( swapAmount, 0,  [tokenB.address, tokenA.address],
                                                 wallet.address, constants.MaxUint256,  overrides )
         let receipt = await tx.wait()
-        expect(receipt.gasUsed).to.eq("92724")     // 93366 92377 92428 92450 135470 135658 136305 94279 136272 94317 136321 136343 90889
+        expect(receipt.gasUsed).to.eq("92530")     // 93366 92377 92428 92450 135470 135658 136305 94279 136272 94317 136321 136343 90889
 
         await router.swapExactTokensForTokens(  swapAmount, 0, [tokenA.address, tokenB.address],
                                                 wallet.address, constants.MaxUint256, overrides )
@@ -1022,7 +1022,7 @@ describe('FeSwapPair', () => {
         tx = await router.swapExactTokensForTokens( swapAmount, 0,  [tokenB.address, tokenA.address],
                                                 wallet.address, constants.MaxUint256,  overrides )
         receipt = await tx.wait()
-        expect(receipt.gasUsed).to.eq("92724")     //92377 105470  93310  105470
+        expect(receipt.gasUsed).to.eq("92530")     //92377 105470  93310  105470
       }
       {
         const swapAmount = expandTo18Decimals(10)
@@ -1034,13 +1034,13 @@ describe('FeSwapPair', () => {
         let tx = await router.swapExactTokensForTokens( swapAmount, 0,  [tokenB.address, tokenA.address],
                                               wallet.address, constants.MaxUint256,  overrides )
                                               let receipt = await tx.wait()
-        expect(receipt.gasUsed).to.eq("154537")   // 155728 155620 155693 182561 170401 173899 173866 161862 173866 185915 173915 174757  //241214
+        expect(receipt.gasUsed).to.eq("154317")   // 155728 155620 155693 182561 170401 173899 173866 161862 173866 185915 173915 174757  //241214
 
         await mineBlock(provider, blockTimestamp + 25)  
         tx = await router.swapExactTokensForTokens( swapAmount, 0,  [tokenB.address, tokenA.address],
                                               wallet.address, constants.MaxUint256,  overrides )
         receipt = await tx.wait()
-        expect(receipt.gasUsed).to.eq("154537")   // 155671 158241 182561 
+        expect(receipt.gasUsed).to.eq("154317")   // 155671 158241 182561 
       }
     })
 })
