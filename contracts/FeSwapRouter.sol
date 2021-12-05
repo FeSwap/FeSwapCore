@@ -280,9 +280,8 @@ contract FeSwapRouter is IFeSwapRouter, RouterPatchCaller{
         uint deadline
     ) external virtual override ensure(deadline) returns (uint[] memory amounts) {
         address firstPair;
-        uint amountsTokenIn;
         (firstPair, amounts) = FeSwapLibrary.getAmountsIn(factory, amountOut, path);
-        amountsTokenIn = amounts[0];
+        uint amountsTokenIn = amounts[0];
         require(amountsTokenIn <= amountInMax, 'FeSwapRouter: EXCESSIVE_INPUT_AMOUNT');
         TransferHelper.safeTransferFrom(path[0], msg.sender, firstPair, amountsTokenIn);
         _swap(amounts, path, to);
@@ -294,7 +293,6 @@ contract FeSwapRouter is IFeSwapRouter, RouterPatchCaller{
     {
         require(path[0] == WETH, 'FeSwapRouter: INVALID_PATH');
         address firstPair;
-//      uint amountsETHIn = msg.value;
         (firstPair, amounts) = FeSwapLibrary.getAmountsOut(factory, msg.value, path);
         require(amounts[amounts.length - 1] >= amountOutMin, 'FeSwapRouter: INSUFFICIENT_OUTPUT_AMOUNT');
         IWETH(WETH).deposit{value: msg.value}();
@@ -322,9 +320,8 @@ contract FeSwapRouter is IFeSwapRouter, RouterPatchCaller{
     {
         require(path[path.length - 1] == WETH, 'FeSwapRouter: INVALID_PATH');
         address firstPair;
-        uint amountsETHOut;
         (firstPair, amounts) = FeSwapLibrary.getAmountsOut(factory, amountIn, path);
-        amountsETHOut = amounts[amounts.length - 1];
+        uint amountsETHOut = amounts[amounts.length - 1];
         require(amountsETHOut >= amountOutMin, 'FeSwapRouter: INSUFFICIENT_OUTPUT_AMOUNT');
         TransferHelper.safeTransferFrom(path[0], msg.sender, firstPair, amountIn);
         _swap(amounts, path, address(this));
@@ -338,9 +335,8 @@ contract FeSwapRouter is IFeSwapRouter, RouterPatchCaller{
     {
         require(path[0] == WETH, 'FeSwapRouter: INVALID_PATH');
         address firstPair;
-        uint amountsETHIn;
         (firstPair, amounts) = FeSwapLibrary.getAmountsIn(factory, amountOut, path);
-        amountsETHIn = amounts[0];
+        uint amountsETHIn = amounts[0];
         require(amountsETHIn <= msg.value, 'FeSwapRouter: EXCESSIVE_INPUT_AMOUNT');
         IWETH(WETH).deposit{value: amountsETHIn}();
         assert(IWETH(WETH).transfer(firstPair, amountsETHIn));
@@ -370,16 +366,13 @@ contract FeSwapRouter is IFeSwapRouter, RouterPatchCaller{
         uint deadline
     ) external virtual override ensure(deadline) {
         FeSwapLibrary.executeArbitrage(factory, path);
-        TransferHelper.safeTransferFrom(
-            path[0], msg.sender, FeSwapLibrary.pairFor(factory, path[0], path[1]), amountIn
-        );
+        TransferHelper.safeTransferFrom(path[0], msg.sender, FeSwapLibrary.pairFor(factory, path[0], path[1]), amountIn);
         uint balanceBefore = IERC20(path[path.length - 1]).balanceOf(to);
         _swapTokensFeeOnTransfer(path, to);
-        require(
-            IERC20(path[path.length - 1]).balanceOf(to).sub(balanceBefore) >= amountOutMin,
-            'FeSwapRouter: INSUFFICIENT_OUTPUT_AMOUNT'
-        );
+        require(IERC20(path[path.length - 1]).balanceOf(to).sub(balanceBefore) >= amountOutMin,
+                'FeSwapRouter: INSUFFICIENT_OUTPUT_AMOUNT');
     }
+
     function swapExactETHForTokensFeeOnTransfer(
         uint amountOutMin,
         address[] calldata path,
@@ -388,16 +381,14 @@ contract FeSwapRouter is IFeSwapRouter, RouterPatchCaller{
     ) external virtual override payable ensure(deadline) {
         require(path[0] == WETH, 'FeSwapRouter: INVALID_PATH');
         FeSwapLibrary.executeArbitrage(factory, path);
-//      uint amountIn = msg.value;
         IWETH(WETH).deposit{value: msg.value}();
         assert(IWETH(WETH).transfer(FeSwapLibrary.pairFor(factory, path[0], path[1]), msg.value));
         uint balanceBefore = IERC20(path[path.length - 1]).balanceOf(to);
         _swapTokensFeeOnTransfer(path, to);
-        require(
-            IERC20(path[path.length - 1]).balanceOf(to).sub(balanceBefore) >= amountOutMin,
-            'FeSwapRouter: INSUFFICIENT_OUTPUT_AMOUNT'
-        );
+        require(IERC20(path[path.length - 1]).balanceOf(to).sub(balanceBefore) >= amountOutMin,
+                'FeSwapRouter: INSUFFICIENT_OUTPUT_AMOUNT');
     }
+
     function swapExactTokensForETHFeeOnTransfer(
         uint amountIn,
         uint amountOutMin,
@@ -407,9 +398,7 @@ contract FeSwapRouter is IFeSwapRouter, RouterPatchCaller{
     ) external virtual override ensure(deadline) {
         require(path[path.length - 1] == WETH, 'FeSwapRouter: INVALID_PATH');
         FeSwapLibrary.executeArbitrage(factory, path);
-        TransferHelper.safeTransferFrom(
-            path[0], msg.sender, FeSwapLibrary.pairFor(factory, path[0], path[1]), amountIn
-        );
+        TransferHelper.safeTransferFrom(path[0], msg.sender, FeSwapLibrary.pairFor(factory, path[0], path[1]), amountIn);
         _swapTokensFeeOnTransfer(path, address(this));
         uint amountOut = IERC20(WETH).balanceOf(address(this));
         require(amountOut >= amountOutMin, 'FeSwapRouter: INSUFFICIENT_OUTPUT_AMOUNT');
