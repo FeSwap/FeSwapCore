@@ -47,7 +47,7 @@ contract FeSwapFactory is IFeSwapFactory, FactoryPatchCaller {
 
         address pairA = address(uint(keccak256(abi.encodePacked( hex'ff', address(this),
                 keccak256(abi.encodePacked(tokenIn, tokenOut)),
-                hex'98d17ce7f66fd63aa829f5573cca3d0e466dbe278970dbccf7434ede1cf499f2' // init code hash // save gas
+                hex'1b68a89c18551451d63580e66fda7aee3ccf09c7317f32b6747ff18b1173ad09' // init code hash // save gas
             ))));
 
         address pairB = twinPairs[pairA];

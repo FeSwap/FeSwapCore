@@ -46,9 +46,11 @@ contract FeSwapPair is IFeSwapPair, FeSwapERC20 {
         _blockTimestampLast = blockTimestampLast;
     }
 
-    function getTriggerRate() public view override returns (uint) {
-        return rateTriggerArbitrage;
-    }
+    function getReservesWithRate() external view override returns ( uint112 _reserveIn, uint112 _reserveOut, uint _rateArbitrage) {
+        _reserveIn = reserveIn;
+        _reserveOut = reserveOut;
+        _rateArbitrage = rateTriggerArbitrage;
+     }
 
     function getOracleInfo() public view override returns ( uint _price0CumulativeLast, uint _price1CumulativeLast, uint _kLast) {
         return (price0CumulativeLast, price1CumulativeLast, kLast);

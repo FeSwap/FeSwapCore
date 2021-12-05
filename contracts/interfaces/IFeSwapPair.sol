@@ -15,7 +15,7 @@ interface IFeSwapPair is IFeSwapERC20 {
     function tokenIn() external view returns (address);
     function tokenOut() external view returns (address);
     function getReserves() external view returns ( uint112 _reserveIn, uint112 _reserveOut, uint32 _blockTimestampLast);
-    function getTriggerRate() external view returns (uint);
+    function getReservesWithRate() external view returns ( uint112 _reserveIn, uint112 _reserveOut, uint _rateArbitrage);
     function getOracleInfo() external view returns (uint, uint, uint);
     
     function mint(address to) external returns (uint liquidity);
