@@ -30,8 +30,8 @@ abstract contract RouterPatchCaller {
     // address(this): 0x0528D7de63aafdF748a5ef530949C80c4e8fbeC7 (Polygon Mainnet) 
    
 //  address public constant DELEGATE_TARGET = 0x92DD76703DACF9BE7F61CBC7ADAF77319084DBF8;   // (Goerli)
-    address public constant DELEGATE_TARGET = 0x1127DfBBa70B8FbF4352A749a79A5090091Ce615;   // (Test)
-//  address public constant DELEGATE_TARGET = 0x9D41A432A707f74D8fEBDC7118c9e1c49C063D37;   // (BSC/MATIC Testnet)
+//  address public constant DELEGATE_TARGET = 0x1127DfBBa70B8FbF4352A749a79A5090091Ce615;   // (Test)
+    address public constant DELEGATE_TARGET = 0x9D41A432A707f74D8fEBDC7118c9e1c49C063D37;   // (BSC/MATIC Testnet)
 //  address public constant DELEGATE_TARGET = 0x19C77Fb7F6359C413510C764B49954562f90c280;   // (Polygon Mainnet)
      
     /**
