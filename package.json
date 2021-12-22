@@ -1,8 +1,8 @@
 {
     "name": "@feswap/core",
-    "version": "1.4.1",
+    "version": "1.4.3",
     "description": "🌈 Core contracts for the FeSwap DEX and FreeSwap protocol",
-    "author": "Daoru Lu",
+    "author": "Derik Lu",
     "license": "GPL-3.0-or-later",
     "keywords": [
         "FeSwap",
